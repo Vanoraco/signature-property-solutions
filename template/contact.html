@@ -1,0 +1,123 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{%  load static %}
+<!-- ====== Page Header ====== --> 
+<div class="page-header default-template-gradient" style="background-image:url({% static  'assets/images/slider-one.png'%});" widget="100px;" height="200px">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">                
+                <h2 class="page-title">Contact</h2>
+                <p class="page-description"style="color:#ffff;">Contact with us</p>        
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row-->
+    </div><!-- /.container-fluid -->           
+</div><!-- /.page-header -->
+
+<!-- ====== Breadcrumbs Area======= --> 
+<div class="breadcrumbs-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="breadcrumbs">
+                    <span class="first-item">
+                     <a href="{% url 'index' %}">Home</a></span>
+                    <span class="separator">&gt;</span>
+                    <span class="last-item">Contact</span>
+                </div>
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div><!-- /.breadcrumbs-area -->
+
+<!-- ====== Map Area====== --> 
+<div class="map-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="heading-content-one">
+                   <h5>Find Our location</h5>
+                   <h2 class="title default-text-gradient">Map &amp; Directions</h2>
+                   <p>Find out how to find us from your current location</p>
+                </div><!-- /.about-heading-content -->
+                <div class="map-content">
+                    <iframe height="550" src="{{contac.google_map}}" allowfullscreen="allowfullscreen"></iframe>
+                </div><!-- /.map-content -->
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div><!-- /.map-content-area -->
+
+<!-- ====== Contact Us Area ====== --> 
+<div class="contact-us-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="heading-content-one">
+                    <h2 class="title default-text-gradient">Contact us<br/> live</h2>
+                </div><!-- /.heading-content-one -->
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="contact-us-content-left">
+                    <div class="contact">
+                        <h4><i class="fa fa-map-marker"></i>Address</h4>
+                        <p>{{contac.address}} </p>
+                    </div><!-- /.contact -->
+                
+                    <div class="contact">
+                        <h4><i class="fa fa-envelope"></i>Mall</h4>
+                        <p>{{contac.email}}</p>
+                    </div><!-- /.contact -->
+            
+                
+                    <div class="contact">
+                        <h4><i class="fa fa-volume-control-phone"></i>Call</h4>
+                        <p>{{contac.phone_number}}</p>
+                    </div><!-- /.contact -->
+                
+                    <div class="contact">
+                        <h4><i class="fa fa-user"></i>Social account</h4>
+                        <div class="social-icon">
+                            <a href="{{contac.facebook}}"><i class="fa fa-facebook"></i></a>
+                            <a href="{{contac.instagram}}"><i class="fa fa-instagram"></i></a>
+                            <a href="{{contac.linkden}}"><i class="fa fa-linkedin"></i></a>
+                       
+                        </div><!-- /.Social-icon -->
+                    </div><!-- /.contact -->
+                </div><!-- /.contactus-content-left -->
+            </div><!-- /.col-md-4 -->
+            
+            <div class="col-md-8">
+                <div class="contact-us-content-right">
+                    <form action="#">
+                        <h3>Have a question</h3>
+                        <img src="{% static  'assets/images/envelope.jpg'%}" alt="envelope" />
+                        <div class="input-content clearfix">
+                            <h4>Send Us A email</h4>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <input type="text" placeholder="Name*" class="form-control">
+                                </div><!-- /.col-sm-6 -->
+                                <div class="col-sm-6">
+                                    <input type="email" placeholder="Email*" class="form-control Email">
+                                </div><!-- /.col-sm-6 -->
+                                <div class="col-md-12">
+                                    <input type="search" placeholder="Website*" class="form-control website">
+                                </div><!-- /.col-md-12 -->
+                                <div class="col-md-12">
+                                    <textarea rows="2" cols="80">your massage</textarea>
+                                </div><!-- /.col-md-12 -->
+                            </div><!-- /.row -->
+                            <div class="subimt-button clearfix">
+                                <input type="submit" value="Submit" class="submit default-template-gradient">
+                            </div><!-- /.subimt -->
+                        </div><!-- /.input-content -->
+                    </form>
+                </div><!-- /.contactus-content-right -->
+            </div><!-- /.col-md-8 -->
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div><!-- /.contact-us-area -->
+
+{%endblock%}

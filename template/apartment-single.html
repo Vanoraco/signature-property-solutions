@@ -1,0 +1,292 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{%  load static %}
+
+<body>
+<body>
+   <!-- ====== Breadcrumbs Area====== --> 
+   <div class="breadcrumbs-area">
+       <div class="container">
+           <div class="row">
+               <div class="col-md-12">
+                   <div class="breadcrumbs">
+                       <span class="first-item">
+                        <a href="index01.html">Home</a></span>
+                       <span class="separator">&gt;</span>
+                       <span class="last-item">Apartment Detail Page</span>
+                   </div>
+               </div><!-- /.col-md-12 -->
+           </div><!-- /.row -->
+       </div><!-- /.container -->
+   </div><!-- /.breadcrumbs-area -->
+ 
+	<!-- ====== Apartments-Single-Area ======= --> 
+	
+	<div class="apartment-single-area">
+	  	<div class="container">
+		  	<div class="row">
+
+			    <div class="col-md-8">
+	
+    				<div class="corousel-gallery-content">
+    					  <div class="gallery" >
+    					       <div class="full-view owl-carousel">
+                                
+    					     	  <a class="item image-pop-up" href="#">
+    					     		  <img src="{{pro.main_image.url}}" alt="corousel">
+    					     	  </a>
+    					     	  <a class="item image-pop-up" href="">
+    					     		  <img src="{{pro.slide_1.url}}" alt="corousel">
+    					     	  </a>
+    					     	  <a class="item image-pop-up" href="#">
+    					     		  <img src="{{pro.slide_2.url}}" alt="corousel">
+    					     	  </a>
+    					     	  <a class="item image-pop-up" href="#">
+    					     		  <img src="{{pro.slide_3.url}}" alt="corousel">
+    					     	  </a>
+    					     	  <a class="item image-pop-up" href="#">
+    					     		  <img src="{{pro.slide_4.url}}" alt="corousel">
+    					     	  </a>
+                                  <a class="item image-pop-up" href="#">
+    					     		  <img src="{{pro.slide_5.url}}" alt="corousel">
+    					     	  </a>
+                                   <button class="pogoSlider-dir-btn pogoSlider-dir-btn--prev"></button>
+                                   <button class="pogoSlider-dir-btn pogoSlider-dir-btn--next"></button>
+                               
+
+    					       </div>
+                              
+    					      <div class="list-view owl-carousel">
+    					          <div class="item">
+    					        	  <img src="{{pro.main_image.url}}" alt="corousel-image">
+    					          </div>
+    					          <div class="item">
+    					        	  <img src="{{pro.slide_1.url}}" alt="corousel-image">
+    					          </div>
+    					          <div class="item">
+    					        	  <img src="{{pro.slide_2.url}}" alt="corousel-image">
+    					          </div>
+    					          <div class="item">
+    					        	  <img src="{{pro.slide_3.url}}" alt="corousel-image">
+    					          </div>
+    					          <div class="item">
+    					        	  <img src="{{pro.slide_4.url}}" alt="corousel-image">
+    					          </div>
+    					          <div class="item">
+    					        	  <img src="{{pro.slide_5.url}}" alt="corousel-image">
+    					          </div>
+    					      </div>  
+    					  </div> <!-- /.gallery-two -->
+    				</div> <!-- /.corousel-gallery-content -->
+
+		
+    				<div class="family-apartment-content mobile-extend">
+                        <div class="tb">
+                            <div class="tb-cell">
+        					   <h3 class="apartment-title">{{pro.property_title}}</h3>
+                            </div><!-- /.tb-cell -->
+                            <div class="tb-cell">
+        					   <p class="pull-right rent">{{pro.price}}</p>
+                            </div><!-- /.tb-cell -->
+                        </div><!-- /.tb -->
+    					<div class="clearfix"></div><!-- /.clearfix -->
+    					<p class="">{{ pro.property_short_discription }}</p>
+    				
+                        <div class="apartment-overview">
+    						<div class="row">
+    							<div class="col-md-12">
+    								<h3>Apartment Overview</h3>
+    								<div class="overview">
+                                        <ul>
+                                            <li>Property ID<span class="pull-right">{{pro.property_id}}</span></li>
+                                            <li>Price <span class="pull-right">{{pro.price}}</span></li>
+                                            <li>Property Type <span class="pull-right">{{pro.property_types}}</span></li>
+                                            <li>Property Size <span class="pull-right">{{ pro.property_size }}</span></li>
+                                            <li>Property Status <span class="pull-right">{{pro.property_status}}</span></li>    
+                                            <li>Land Area <span class="pull-right">{{ pro.property_area }}</span></li>
+                                            <li>Floor <span class="pull-right">{{pro.property_floor}}</span></li>    
+                                            <li>Bedrooms <span class="pull-right">{{pro.bedrooms}}</span></li>
+                                            <li>Furnished <span class="pull-right">{{pro.furnished}}</span></li>
+                                            <li>Bathrooms <span class="pull-right">{{pro.bathrooms}}</span></li>
+                                        </ul>
+                                    </div><!-- /.apartment-overview -->
+    							</div><!-- /.col-md-12 -->
+    						</div><!-- /.row -->
+    					</div><!-- /.overview -->
+    					<div class="property-details">
+    						<h3>Video</h3>
+    						<iframe width="100%" height="500" src="{{pro.video_link}}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    					</div><!-- /.Property -->
+    				
+    					<div class="indoor-features">
+    						<div class="row">
+    							<div class="col-md-12">
+    								<h3 class="features-title">Indoor features:</h3>
+    								<ul class="features-list">
+										{% for pros in pro.facilitie.all %}
+    									<li>{{pros.facilities_name}}</li>
+    								    {% endfor %}
+    								</ul>
+    							</div><!-- /.col-md-6 -->
+    							
+    						</div><!-- /.row -->
+    					</div><!-- /.indoor -->
+
+
+
+    				</div>
+		
+					<!-- /.family-apartment-content -->
+                    <div class="hidden-md hidden-lg text-center extend-btn">
+                        <span class="extend-icon">
+                            <i class="fa fa-angle-down"> Read More</i>
+                        </span>
+                    </div>
+			    </div> 
+				<!-- /.col-md-8 -->
+                 
+    			<div class="col-md-4">
+                    <div class="apartment-sidebar">                    
+        				<div class="widget_rental_search clerafix">					
+        					<div class="form-border gradient-border">
+        						<form action="#" method="get" class="advance_search_query booking-form">
+        							<div class="form-bg seven">
+        								<div class="form-content">
+
+                                            <div class="post-content clearfix">
+                                                <div class="image-content">
+                                                    <a href="#">
+                                                        <img src="{% static 'assets/images/3.jpg' %}" alt="post" />
+                                                    </a>
+                                                </div><!-- /.image-content -->
+                                                <div class="post-title" style="margin-bottom:1px;">
+                                                    <h5><a href="#">{{pro.agent.name}}</a></h5>
+                                                    <span>General Manager</span>
+                                                </div><!-- /.post-title -->
+                                            </div><!-- /.post-content -->
+                                            <div class="form-group">
+        										
+        										<input type="text" name="property_id" placeholder="Property ID">
+        									</div><!-- /.form-group -->
+        									<div class="form-group">
+        									 
+        									   <input type="text" name="FirstName" placeholder="Full name">
+        									</div><!-- /.form-group -->
+        									<div class="form-group">
+                            				
+                                                <input type="tel" name="phone number" placeholder="Phone Number">
+        									</div><!-- /.form-group -->
+        									<div class="form-group">
+        										
+        										<input type="email" name="Email" placeholder="Email">
+        									</div><!-- /.form-group -->
+                                            
+        									<div class="form-group">
+        									  
+        		                                <textarea name="message" placeholder="Message" class="form-controller"></textarea>
+        									</div><!-- /.form-group -->
+        									<div class="form-group">
+        										<button type="submit" class="button default-template-gradient button-radius">Send</button>
+        									</div><!-- /.form-group -->
+                                            <div class="">
+        										
+                                                <a href="tel:+251-960-226-666';" class="button" style="background:#000000; border:none;">Call</a>
+        	
+        									</div><!-- /.form-group -->
+                                            <div style="margin:10px;">
+                                                <a href="https://api.whatsapp.com/send?phone=0960226666';" class="button" style="background:#25D366; border:none;">whatsapp</a>
+        	
+        									</div><!-- /.form-group -->
+                                            <div style="margin:10px;">
+                                                <a href="https://web.telegram.org/k/" class="button" style="background:#27A7E7; border:none;">Telegram</a>
+        					
+        									</div><!-- /.form-group -->
+        								</div><!-- /.form-content -->
+                                       
+        							</div><!-- /.form-bg -->
+                                    
+        						</form> <!-- /.advance_search_query -->
+                                
+        					</div><!-- /.form-border -->
+        				</div><!-- /.widget_rental_search -->
+
+        				<div class="apartments-content seven post clerafix">
+        					<div class="image-content">
+        						<a href="#"><img class="overlay-image" src="{% static  'assets/images/apartment-ad.png'%}" alt="about" /></a>
+        					</div><!-- /.image-content -->
+        				</div><!-- /.partments-content -->
+                    </div><!-- /.apartment-sidebar -->
+    			</div> <!-- .col-md-4 -->
+		  	</div> <!-- /.row -->
+	  	</div> <!-- /.container -->
+  	</div>
+
+	 <!-- /.appartment-single-area -->
+	
+	<!-- ====== Apartments-Related-area ====== --> 
+	<div class="apartments-related-area bg-gray-color">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="heading-content-one">
+					    <h2 class="title default-text-gradient">Related apartments</h2>
+					</div><!-- /.Apartments-heading-content -->
+				</div><!-- /.col-md-12 -->
+			</div><!-- /.row -->
+			<div class="row">
+                 
+                 {%for propertys in propertyss %}
+				<div class="col-md-4 col-sm-6 col-xs-6">
+                    <div class="apartments-content">
+                        <div class="image-content">
+                            <a href="{{ propertys.slug }}"><img src="{{propertys.main_image.url}}" alt="apartment" /></a>
+                        </div><!-- /.image-content -->
+                    
+                        <div class="text-content">
+                            <div class="top-content">
+                                <h3><a href="{{ propertys.slug }}">{{ propertys.property_title }}</a></h3>
+                                <span><a href="{{ propertys.slug }}"><i class="fa fa-map-marker"></i></a> <a href="#">{{ propertys.property_location }}</a>  </span> 
+                            </div><!-- /.top-content -->
+                            <div class="bottom-content clearfix">
+                                <div class="meta-bed-room">
+                                    <i class="fa fa-bed"></i> {{ propertys.bedrooms }} Bedrooms
+                                </div>
+                                <div class="meta-bath-room">                                
+                                    <i class="fa fa-bath"></i>{{ propertys.bathrooms }} Bathroom
+                                </div>
+                                <span class="clearfix"></span>
+                                <div class="rent-price pull-left">
+                                    {{ propertys.price }}
+                                </div>
+                                <div class="share-meta dropup pull-right">
+                                    <ul>
+										<li>
+											<a href="tel:+251960226666';"><i class="fa fa-phone"></i></a>
+										 </li>
+										 <li>
+											 <a href="https://api.whatsapp.com/send?phone=923246237"><i class="fa fa-whatsapp"></i></a>
+											
+										  </li>
+                                    </ul>
+                                </div>
+                            </div><!-- /.bottom-content -->
+                        </div><!-- /.text-content -->
+                    </div><!-- /.partments-content -->
+                </div><!-- /.col-md-4 -->
+				{% endfor %}
+
+			</div><!-- /.row -->
+		</div><!-- /.container -->
+	</div><!-- /.Apartments-Related-area-->
+
+
+
+
+</body>
+
+
+</html>
+
+
+    
+{%endblock%}

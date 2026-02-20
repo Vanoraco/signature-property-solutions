@@ -1,0 +1,150 @@
+    
+{% extends 'layouts/master.html' %}
+{% block content %}
+{%  load static %}
+    <!-- ====== Page Header ====== --> 
+    
+    <div class="page-header default-template-gradient" style="background-image:url({% static  'assets/images/slider-one.png'%});" widget="100px;" height="200px">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">                
+                    <h2 class="page-title">Choose Properties</h2>
+                    <p class="page-description" style="color:#ffff;">Best Properties</p>        
+                </div><!-- /.col-md-12 -->
+            </div><!-- /.row-->
+        </div><!-- /.container-fluid -->           
+    </div><!-- /.page-header -->
+
+    <!-- ====== Breadcrumbs Area======= --> 
+    <div class="breadcrumbs-area bg">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="breadcrumbs">
+                        <span class="first-item">
+                         <a href="{% url 'index' %}">Home</a></span>
+                        <span class="separator">&gt;</span>
+                        <span class="last-item">Properties</span>
+                    </div>
+                </div><!-- /.col-md-12 -->
+            </div><!-- /.row -->
+        </div><!-- /.container -->
+    </div><!-- /.breadcrumbs-area -->
+    <!-- ====== Apartments-area ====== -->
+<div class="apartments-area four bg-gray-color">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="apartment-tab-area">
+                    <ul role="tablist" class="nav nav-tabs apartment-menu hidden-xs hidden-sm">
+                       
+                        <li class="nav-item">
+                            <a class="nav-link {% if selected_filter == 'Sale' %}active{% endif %}" href="?filter=Sale">Sale</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if selected_filter == 'Rent' %}active{% endif %}" href="?filter=Rent">Rent</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if selected_filter == 'LowToHigh' %}active{% endif %}" href="?filter=LowToHigh">Low to high price</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if selected_filter == 'HighToLow' %}active{% endif %}" href="?filter=HighToLow">High to low price</a>
+                        </li>
+                        <li class="pull-right">
+                            <a href="#" role="tab" class="dropdown-toggle" data-toggle="dropdown">Category<i class="fa fa-angle-down"></i></a>
+                            <ul class="dropdown-menu">
+                                <!-- Add categories dynamically -->
+                                {% for category in categories %}
+                                    <li><a href="?category={{ category.catagorys }}">{{ category.catagorys }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li><!-- /.pull-right -->
+                    </ul>
+                    <form class="hidden-md hidden-lg">
+                        <select class="apartment-menu-mobile">
+                            <option value='0'>Popular</option>
+                            <option value='1'>Date Newest to oldest</option>
+                            <option value='2'>Date Older to newest</option>
+                            <option value='3'>Price Low to high </option>
+                            <option value='4'>Price high to low</option>
+                            <optgroup label="Category">
+                                <!-- Add categories dynamically -->
+                                {% for category in categories %}
+                                    <option value=''>{{ category.catagorys }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </form>
+                    <div class="tab-content">
+                        <div role="tabpanel" id="popular-apartment" class="tab-pane fade in active">
+                            <div class="row">
+                                <!-- Loop through properties -->
+                                {% for property in properties %}
+                                    <div class="col-md-4 col-sm-6 col-xs-6">
+                                        <div class="apartments-content">
+                                            <div class="image-content">
+                                                <a href="properteasdet/{{ property.slug }}"><img src="{{ property.main_image.url }}" alt="{{ property.property_title }}" /></a>
+                                            </div><!-- /.image-content -->
+                                            <div class="text-content">
+                                                <div class="top-content">
+                                                    <h3><a href="properteasdet/{{ property.slug }}">{{ property.property_title }}</a></h3>
+                                                    <span>
+                                                        <i class="fa fa-map-marker"></i>
+                                                        {{ property.property_location }}
+                                                    </span> 
+                                                </div><!-- /.top-content -->
+                                                <div class="bottom-content clearfix">
+                                                    <div class="meta-bed-room">
+                                                        <i class="fa fa-bed"></i> {{ property.bedrooms }} Bedrooms
+                                                    </div>
+                                                    <div class="meta-bath-room">                                
+                                                        <i class="fa fa-bath"></i>{{ property.bathrooms }} Bathroom
+                                                    </div>
+                                                    <span class="clearfix"></span>
+                                                    <div class="rent-price pull-left">
+                                                        {{ property.price }}
+                                                    </div>
+                                                    <div class="share-meta dropup pull-right">
+                                                        <ul>
+                                                            <li>
+                                                                <a href="tel:+{{ property.agent.phone_number }}"><i class="fa fa-phone"></i></a>
+                                                             </li>
+                                                             <li>
+                                                                 <a href="https://api.whatsapp.com/send?phone={{ property.agent.phone_number }}"><i class="fa fa-whatsapp"></i></a>
+                                                              </li>
+                                                        </ul>
+                                                    </div>
+                                                </div><!-- /.bottom-content -->
+                                            </div><!-- /.text-content -->
+                                        </div><!-- /.partments-content -->
+                                    </div><!-- /.col-md-4 -->
+                                {% endfor %}
+                            </div><!-- /.row -->
+                            <div class="col-md-12">
+                                <div class="pagination-link">
+                                    <ul class="pagination">
+                                        {% if properties.has_previous %}
+                                            <li><a href="?page=1"><i class="fa fa-angle-left"></i></a></li>
+                                        {% endif %}
+                                        {% for num in properties.paginator.page_range %}
+                                            {% if properties.number == num %}
+                                                <li class="active"><a href="#">{{ num }}</a></li>
+                                            {% else %}
+                                                <li><a href="?page={{ num }}">{{ num }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if properties.has_next %}
+                                            <li><a href="?page={{ properties.paginator.num_pages }}"><i class="fa fa-angle-right"></i></a></li>
+                                        {% endif %}
+                                    </ul>
+                                </div><!-- /.pagination -->
+                            </div><!-- /.col-md-12 -->
+                        </div><!-- /.popular-apartment -->
+                    </div><!-- /.tab-content -->
+                </div><!-- /.apartment-tab-area -->
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div><!-- /.Apartments-area -->
+    
+{%endblock%}

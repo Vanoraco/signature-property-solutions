@@ -1,0 +1,69 @@
+  
+{% extends 'layouts/master.html' %}
+{% block content %}
+{%  load static %}  
+    
+   
+  <!-- ====== Page Header ====== --> 
+  <div class="page-header default-template-gradient" style="background-image:url({% static  'assets/images/slider-one.png'%});" widget="100px;" height="200px">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">                
+                <h2 class="page-title">Services</h2>
+                <p class="page-description">{{ serevice.service_name}}</p>        
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row-->
+    </div><!-- /.container-fluid -->           
+</div><!-- /.page-header -->
+
+<!-- ====== Breadcrumbs Area ======= --> 
+<div class="breadcrumbs-area bg-gray-color">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="breadcrumbs">
+                    <span class="first-item">
+                     <a href="index01.html">Home</a></span>
+                    <span class="separator">&gt;</span>
+                    <span class="last-item">{{ serevice.service_name}}</span>
+                </div>
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div><!-- /.breadcrumbs-area -->
+
+<!-- ====== Single Content Area ====== --> 
+<div class="single-content">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="single-main-content">
+                    <article class="post">
+                        <div class="entry-header">
+                            <h2 class="entry-title">{{ serevice.service_name}}</h2>
+                        </div><!-- /.entry-header -->
+                        <div class="entry-content">
+                        </p>{{ serevice.short_discriptions |safe }}</p>
+                            <p>{{ serevice.Discription |safe}}</p>
+                        </div><!-- /.entry-content -->
+
+                        <div class="entry-share">
+                            <span>Share:</span>
+                            <a href="#"><i class="fa fa-instagram"></i></a>
+                            <a href="#"><i class="fa fa-heart"></i></a>
+                            <a href="#"><i class="fa fa-facebook"></i></a>
+                            <a href="#"><i class="fa fa-twitter"></i></a>
+                        </div><!-- /.entry-share -->
+                        <figure class="post-thumb">
+                            <img src="{{serevice.image.url}}" alt="blog" />
+                        </figure><!-- /.post-thumb -->
+                    </article><!-- /.post -->
+                </div><!-- /.single-main-content -->
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div><!-- /.single-content -->
+
+
+
+    {%endblock%}

@@ -1,0 +1,35 @@
+  
+{% extends 'layouts/master.html' %}
+{% block content %}
+{%  load static %}  
+    
+    <!-- ====== Service Area ====== --> 
+    <div class="service-area">
+        <div class="container">
+            <div class="col-md-12">
+                <div class="heading-content-one">
+                    <h2 class="title">Service we provide</h2>
+                    <h5 class="sub-title">Well come to our service</h5>
+                </div><!-- /.Apartments-heading-content -->
+            </div><!-- /.col-md-12 -->
+            <div class="row">
+
+                {% for service in serevice %}
+                <div class="col-md-4 col-sm-6">
+                    <div class="service-content">
+                        <div class="image-content">
+                            <a href="#"><img src="{{service.icon.url}}" alt="service" /></a>
+                        </div><!-- /.image-content -->
+                     
+                        <div class="text-content">
+                            <h3><a href="servicesdt/{{service.slug}}">{{service.service_name}}</a></h3>
+                            <p>{{service.short_discriptions| safe}}</p>
+                            <a href="servicesdt/{{service.slug}}"><p>Read more</p></a>
+                        </div><!-- /.text-content -->
+                    </div><!-- /.service-content -->
+                </div><!-- /.col-md-4 -->
+                {% endfor %}
+            </div><!-- /.row -->
+        </div><!-- /.container -->
+    </div><!-- /.service-area-->
+    {%endblock%}

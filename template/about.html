@@ -1,0 +1,189 @@
+  
+{% extends 'layouts/master.html' %}
+{% block content %}
+{%  load static %}  
+    
+    <!-- ====== Page Header ====== --> 
+    <div class="page-header default-template-gradient" style="background-image:url({% static  'assets/images/slider-one.png'%});" widget="100px;" height="200px">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">    
+                    <h2 class="page-title">About</h2>
+                    <p class="page-description"style="color:#ffff;">About our company</p>                 
+                </div><!-- /.col-md-12 -->
+            </div><!-- /.row-->
+        </div><!-- /.container-fluid -->           
+    </div><!-- /.page-header -->
+
+    <!-- ====== Breadcrumbs Area ====== --> 
+    <div class="breadcrumbs-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="breadcrumbs">
+                        <span class="first-item">
+                         <a href="{% url 'index' %}">Home</a></span>
+                        <span class="separator">&gt;</span>
+                        <span class="last-item">About</span>
+                    </div>
+                </div><!-- /.col-md-12 -->
+            </div><!-- /.row -->
+        </div><!-- /.container -->
+    </div><!-- /.breadcrumbs-area -->
+<!-- ====== About Us Area ====== --> 
+<div class="aboutus-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="heading-content-one">
+                    <h2 class="title">About Us</h2>
+                    <h5 class="sub-title">Welcome to Signature Property Solutions </h5>
+                </div><!-- /.heading-content -->
+            </div><!-- /.col-md-12 -->
+        </div><!-- /.row -->
+        <div class="row">
+            <div class="col-md-2">
+                <div class="tab-list">
+                    <ul class="nav nav-tabs about-tab hidden-xs hidden-sm" role="tablist">
+                        <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">About Company</a></li>
+                        <li role="presentation"><a href="#vision" aria-controls="vision" role="tab" data-toggle="tab">Our Vision</a></li>
+                        <li role="presentation"><a href="#mission" aria-controls="mission" role="tab" data-toggle="tab">Our Mission</a></li>
+                        <li role="presentation"><a href="#value" aria-controls="value" role="tab" data-toggle="tab">Our Value</a></li>
+                    </ul>
+                    <form class="hidden-md hidden-lg">
+                        <select class="about-mobile">
+                            <option value='0'>About Company</option>
+                            <option value='1'>Our Vision</option>
+                            <option value='2'>Our Mission</option>
+                            <option value='3'>Our Value</option>
+                        </select>
+                    </form>
+                </div> <!-- /.tab-list -->
+            </div> <!-- /.col-md-2 -->
+    
+            <div class="col-md-10">
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active row" id="home">
+                        <div class="col-md-6">
+                            <div class="text-content">
+                                <p>{{ about.aboutus|safe }}</p>
+                            </div><!-- /.text-content -->
+                        </div><!-- /.col-md-6 -->
+                        <div class="col-md-6">
+                            <div class="image-content">
+                                <img src="{{ about.aboutus_image.url }}" alt="About Us Image" class="img-fluid">
+                            </div><!-- /.image-content -->
+                        </div><!-- /.col-md-6 -->
+                    </div> <!-- /.home -->
+    
+                    <div role="tabpanel" class="tab-pane fade row" id="vision">
+                        <div class="col-md-6">
+                            <div class="text-content">
+                                <p>{{ about.vision|safe }}</p>
+                            </div><!-- /.text-content -->
+                        </div><!-- /.col-md-6 -->
+                        <div class="col-md-6">
+                            <div class="image-content">
+                                <img src="{{ about.vision_image.url }}" alt="Vision Image" class="img-fluid">
+                            </div><!-- /.image-content -->
+                        </div><!-- /.col-md-6 -->
+                    </div> <!-- /.profile -->
+    
+                    <div role="tabpanel" class="tab-pane fade row" id="mission">
+                        <div class="col-md-6">
+                            <div class="text-content">
+                                <p>{{ about.mission|safe }}</p>
+                            </div><!-- /.text-content -->
+                        </div><!-- /.col-md-6 -->
+                        <div class="col-md-6">
+                            <div class="image-content">
+                                <img src="{{ about.mission_image.url }}" alt="Mission Image" class="img-fluid">
+                            </div><!-- /.image-content -->
+                        </div><!-- /.col-md-6 -->
+                    </div> <!-- /.messages -->
+    
+                    <div role="tabpanel" class="tab-pane fade row" id="value">
+                        <div class="col-md-6">
+                            <div class="text-content">
+                                <p>{{ about.value|safe }}</p>
+                            </div><!-- /.text-content -->
+                        </div><!-- /.col-md-6 -->
+                        <div class="col-md-6">
+                            <div class="image-content">
+                                <img src="{{ about.value_image.url }}" alt="Value Image" class="img-fluid">
+                            </div><!-- /.image-content -->
+                        </div><!-- /.col-md-6 -->
+                    </div> <!-- /.value -->
+                </div> <!-- /.tab-content -->
+            </div><!-- /.col-md-10 -->
+        </div><!-- /.row -->
+    </div> <!-- /.container -->
+</div> <!-- /.aboutus-area -->
+    <!-- ====== About Main Content ====== --> 
+    <section class="about-main-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="about-top-content">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="section-title-area text-center">
+                                    <h2 class="section-title default-text-gradient">Why <br/>Choose Us</h2>
+                                    <p class="section-description">{{about.why_choose_us_header}}</p>
+                                </div><!-- /.section-title-area -->
+                            </div><!-- /.col-md-12 -->
+                        </div><!-- /.row -->
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="about-content-left">
+                                    <h2>{{ about.tytle }}</h2>
+                                </div><!-- /.about-content-left-->
+                            </div><!-- /.col-md-5 -->
+                            <div class="col-md-7">
+                                <div class="about-content-right">
+                                    <p> {{about.description| safe}} </p>
+                                </div><!-- /.about-conten-right-->
+                            </div><!-- /.col-md-7 -->
+                        </div><!-- /.row -->
+                    </div><!-- /.top-content -->
+                </div><!-- /.col-md-12 -->
+            </div><!-- /.row -->
+        </div><!-- /.container -->
+    </section><!-- /.about-main-content -->
+    
+    
+
+    <!-- ====== About Bottom Content ====== --> 
+    <section class="about-bottom-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-9 full-width-content">
+                    <div class="image-content gradient-circle">
+                        <div>
+                            <span>
+                                <img src="{{about.ceo_image.url}}" alt="mhretab" />
+                            </span>
+                        </div>
+                    </div><!-- /.image-content -->
+                    <div class="author-content">
+                        <div class="author-content-area">                        
+                            <h2 class="author-name default-text-gradient">{{ about.ceo_name }}</h2> 
+                            <p class="author-designation">{{about.ceo_position }}</p>
+                        </div><!-- /.author-content-area -->
+                    </div><!-- /.author-content -->
+                    <p>{{about.ceo_description | safe }} </p>
+                   <div class="social-media footer pull-left">
+                       <span class="pull-left">Follow me :</span>
+                       <a href="{{about.ceo_twitter}}"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+                       <a href="{{about.ceo_facebook}}"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+                       <a href="{{about.ceo_linkden}}"><i class="fa fa-linkden" aria-hidden="true"></i></a>
+                       <a href="#"><i class="fa fa-pinterest-p" aria-hidden="true"></i></a>
+                   </div><!-- /.social-media -->
+                   <div class="author-sign pull-right">
+                       <img src="{% static  'assets/images/sine.png'%}" alt="sine" />
+                   </div><!-- /.author-sign -->
+                </div><!-- /.col-md-7 -->
+            </div><!-- /.riv row -->
+        </div><!-- /.container -->
+    </section><!-- /.about-bottom-content -->
+    {%endblock%}
