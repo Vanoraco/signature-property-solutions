@@ -1,0 +1,134 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{% load static %}
+
+<div class="lux-page-header">
+  <div class="container">
+    <h1>{{ pro.property_title }}</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'properteas' %}">Properties</a></li>
+        <li class="breadcrumb-item active">Detail</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<section class="lux-section lux-section-dark">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <!-- Gallery -->
+        <div class="lux-gallery mb-4">
+          <img id="mainImg" src="{{ pro.main_image.url }}" alt="{{ pro.property_title }}">
+          <div class="lux-gallery-thumbs">
+            <img src="{{ pro.main_image.url }}" alt="thumb" class="active" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">
+            {% if pro.slide_1 %}<img src="{{ pro.slide_1.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
+            {% if pro.slide_2 %}<img src="{{ pro.slide_2.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
+            {% if pro.slide_3 %}<img src="{{ pro.slide_3.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
+            {% if pro.slide_4 %}<img src="{{ pro.slide_4.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
+            {% if pro.slide_5 %}<img src="{{ pro.slide_5.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
+          </div>
+        </div>
+
+        <!-- Title & Price -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h3>{{ pro.property_title }}</h3>
+          <span class="prop-price" style="font-size:1.5rem">{{ pro.price }}</span>
+        </div>
+        <p style="color:var(--gray)">{{ pro.property_short_discription }}</p>
+
+        <!-- Overview -->
+        <h4 class="mt-4 mb-3" style="color:var(--gold)">Overview</h4>
+        <table class="lux-overview-table">
+          <tr><td>Property ID</td><td>{{ pro.property_id }}</td></tr>
+          <tr><td>Price</td><td>{{ pro.price }}</td></tr>
+          <tr><td>Type</td><td>{{ pro.property_types }}</td></tr>
+          <tr><td>Size</td><td>{{ pro.property_size }}</td></tr>
+          <tr><td>Status</td><td>{{ pro.property_status }}</td></tr>
+          <tr><td>Land Area</td><td>{{ pro.property_area }}</td></tr>
+          <tr><td>Floor</td><td>{{ pro.property_floor }}</td></tr>
+          <tr><td>Bedrooms</td><td>{{ pro.bedrooms }}</td></tr>
+          <tr><td>Bathrooms</td><td>{{ pro.bathrooms }}</td></tr>
+          <tr><td>Furnished</td><td>{{ pro.furnished }}</td></tr>
+        </table>
+
+        <!-- Video -->
+        {% if pro.video_link %}
+        <h4 class="mt-4 mb-3" style="color:var(--gold)">Video Tour</h4>
+        <div class="ratio ratio-16x9 mb-4" style="border-radius:12px;overflow:hidden">
+          <iframe src="{{ pro.video_link }}" allowfullscreen></iframe>
+        </div>
+        {% endif %}
+
+        <!-- Facilities -->
+        <h4 class="mt-4 mb-3" style="color:var(--gold)">Facilities</h4>
+        <div class="lux-facilities">
+          {% for f in pro.facilitie.all %}
+          <span>{{ f.facilities_name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <div class="lux-sidebar">
+          {% if pro.agent %}
+          <div class="text-center mb-3">
+            <h5>{{ pro.agent.name }}</h5>
+            <p style="color:var(--gray);font-size:0.85rem">Agent</p>
+          </div>
+          {% endif %}
+          <input type="text" class="form-control" placeholder="Property ID" value="{{ pro.property_id }}">
+          <input type="text" class="form-control" placeholder="Full Name">
+          <input type="tel" class="form-control" placeholder="Phone Number">
+          <input type="email" class="form-control" placeholder="Email">
+          <textarea class="form-control" placeholder="Message"></textarea>
+          <button class="btn-gold w-100 mt-2">Send Inquiry</button>
+          <div class="lux-contact-btn">
+            <a href="tel:+251-960-226-666" class="btn-call"><i class="fas fa-phone me-1"></i>Call</a>
+            <a href="https://api.whatsapp.com/send?phone=0960226666" class="btn-whatsapp"><i class="fab fa-whatsapp me-1"></i>WhatsApp</a>
+            <a href="https://web.telegram.org/k/" class="btn-telegram"><i class="fab fa-telegram me-1"></i>Telegram</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Related -->
+<section class="lux-section lux-section-darker">
+  <div class="container">
+    <div class="lux-section-title">
+      <h2>Related Properties</h2>
+      <div class="gold-line"></div>
+    </div>
+    <div class="row g-4">
+      {% for propertys in propertyss %}
+      <div class="col-md-6 col-lg-4">
+        <div class="lux-prop-card">
+          <div class="card-img">
+            <a href="{% url 'properteasdet' propertys.slug %}">
+              <img src="{{ propertys.main_image.url }}" alt="{{ propertys.property_title }}">
+            </a>
+          </div>
+          <div class="card-body">
+            <h5><a href="{% url 'properteasdet' propertys.slug %}">{{ propertys.property_title }}</a></h5>
+            <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ propertys.property_location }}</div>
+            <div class="prop-meta">
+              <span><i class="fas fa-bed"></i>{{ propertys.bedrooms }} Beds</span>
+              <span><i class="fas fa-bath"></i>{{ propertys.bathrooms }} Baths</span>
+            </div>
+          </div>
+          <div class="prop-footer">
+            <span class="prop-price">{{ propertys.price }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

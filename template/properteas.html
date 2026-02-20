@@ -1,0 +1,84 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{% load static %}
+
+<div class="lux-page-header">
+  <div class="container">
+    <h1>Properties</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+        <li class="breadcrumb-item active">Properties</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<section class="lux-section lux-section-dark">
+  <div class="container">
+    <div class="lux-filter-bar">
+      <a href="?filter=Sale" class="{% if selected_filter == 'Sale' %}active{% endif %}">Sale</a>
+      <a href="?filter=Rent" class="{% if selected_filter == 'Rent' %}active{% endif %}">Rent</a>
+      <a href="?filter=LowToHigh" class="{% if selected_filter == 'LowToHigh' %}active{% endif %}">Low to High</a>
+      <a href="?filter=HighToLow" class="{% if selected_filter == 'HighToLow' %}active{% endif %}">High to Low</a>
+      <div class="dropdown">
+        <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">Category <i class="fas fa-chevron-down" style="font-size:0.7rem"></i></a>
+        <ul class="dropdown-menu">
+          {% for category in categories %}
+          <li><a href="?category={{ category.catagorys }}">{{ category.catagorys }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      {% for property in properties %}
+      <div class="col-md-6 col-lg-4">
+        <div class="lux-prop-card">
+          <div class="card-img">
+            <a href="{% url 'properteasdet' property.slug %}">
+              <img src="{{ property.main_image.url }}" alt="{{ property.property_title }}">
+            </a>
+            <span class="badge-status">{{ property.property_status }}</span>
+          </div>
+          <div class="card-body">
+            <h5><a href="{% url 'properteasdet' property.slug %}">{{ property.property_title }}</a></h5>
+            <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ property.property_location }}</div>
+            <div class="prop-meta">
+              <span><i class="fas fa-bed"></i>{{ property.bedrooms }} Beds</span>
+              <span><i class="fas fa-bath"></i>{{ property.bathrooms }} Baths</span>
+            </div>
+          </div>
+          <div class="prop-footer">
+            <span class="prop-price">{{ property.price }}</span>
+            <div class="prop-actions">
+              <a href="tel:+{{ property.agent.phone_number }}"><i class="fas fa-phone"></i></a>
+              <a href="https://api.whatsapp.com/send?phone={{ property.agent.phone_number }}"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if properties.paginator.num_pages > 1 %}
+    <nav class="mt-5 d-flex justify-content-center">
+      <ul class="pagination lux-pagination">
+        {% if properties.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li>
+        {% endif %}
+        {% for num in properties.paginator.page_range %}
+        <li class="page-item {% if properties.number == num %}active{% endif %}">
+          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if properties.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ properties.paginator.num_pages }}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

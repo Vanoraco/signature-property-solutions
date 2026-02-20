@@ -1,0 +1,33 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{% load static %}
+
+<div class="lux-page-header">
+  <div class="container">
+    <h1>{{ serevice.service_name }}</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services' %}">Services</a></li>
+        <li class="breadcrumb-item active">{{ serevice.service_name }}</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<section class="lux-section lux-section-dark">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <h2 class="mb-4">{{ serevice.service_name }}</h2>
+        <div class="lux-rich-text mb-4">{{ serevice.short_discriptions|safe }}</div>
+        <div class="lux-rich-text mb-4">{{ serevice.Discription|safe }}</div>
+        {% if serevice.image %}
+        <img src="{{ serevice.image.url }}" alt="{{ serevice.service_name }}" style="border-radius:12px;width:100%;margin-top:2rem">
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

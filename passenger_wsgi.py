@@ -1,0 +1,1 @@
+from signature.wsgi import application

@@ -1,0 +1,34 @@
+{% load static %}
+<footer class="lux-footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <img src="{% static 'assets/images/footer-logo.png' %}" alt="Signature" class="footer-logo">
+        <p>Notice: Our company, represented solely by Mr. Mhretab Abebe and operating exclusively through the ethiosps.com website, hereby declares that we bear no responsibility for services conducted via alternative websites or intermediaries.</p>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="{% url 'index' %}">Home</a></li>
+          <li><a href="{% url 'properteas' %}">Properties</a></li>
+          <li><a href="{% url 'services' %}">Services</a></li>
+          <li><a href="{% url 'aboutus' %}">About Us</a></li>
+          <li><a href="{% url 'contac' %}">Contact</a></li>
+        </ul>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Connect With Us</h5>
+        <div class="social-links mb-3">
+          <a href="{{ contactss.facebook }}"><i class="fab fa-facebook-f"></i></a>
+          <a href="{{ contactss.instagram }}"><i class="fab fa-instagram"></i></a>
+          <a href="{{ contactss.linkden }}"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <p><i class="fas fa-phone me-2" style="color:var(--gold)"></i>{{ contactss.phone_number }}</p>
+        <p><i class="fas fa-envelope me-2" style="color:var(--gold)"></i>{{ contactss.email }}</p>
+      </div>
+    </div>
+    <div class="lux-footer-bottom">
+      <p class="mb-0">&copy; 2024 Signature Property Solutions. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

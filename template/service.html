@@ -1,0 +1,38 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{% load static %}
+
+<div class="lux-page-header">
+  <div class="container">
+    <h1>Our Services</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+        <li class="breadcrumb-item active">Services</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<section class="lux-section lux-section-dark">
+  <div class="container">
+    <div class="lux-section-title">
+      <h2>Services We Provide</h2>
+      <div class="gold-line"></div>
+    </div>
+    <div class="row g-4">
+      {% for service in serevice %}
+      <div class="col-md-6 col-lg-4">
+        <div class="lux-service-card">
+          <img src="{{ service.icon.url }}" alt="{{ service.service_name }}">
+          <h5>{{ service.service_name }}</h5>
+          <div class="lux-rich-text">{{ service.short_discriptions|safe|truncatewords_html:25 }}</div>
+          <a href="{% url 'servicesdt' service.slug %}" class="btn-gold-outline mt-3" style="display:inline-block;padding:0.5rem 1.5rem;font-size:0.8rem">Read More</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

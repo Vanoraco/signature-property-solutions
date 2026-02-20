@@ -1,0 +1,135 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{% load static %}
+
+<!-- Hero -->
+<section class="lux-hero">
+  <video autoplay loop muted playsinline>
+    <source src="{{ hom.video.url }}" type="video/mp4">
+  </video>
+  <div class="lux-hero-content">
+    <h3>{{ hom.title }}</h3>
+    <h1>{{ hom.slogon }}</h1>
+    <a href="{% url 'properteas' %}" class="btn-gold">Explore Properties</a>
+  </div>
+</section>
+
+<!-- Categories -->
+<section class="lux-section lux-section-darker">
+  <div class="container">
+    <div class="lux-section-title">
+      <h2>Property Categories</h2>
+      <div class="gold-line"></div>
+    </div>
+    <div class="row g-4">
+      {% for catagory in catagorys %}
+      {% if catagory.slug %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="{% url 'filter_properties' catagory.slug %}" style="text-decoration:none;color:inherit">
+          <div class="lux-cat-card">
+            <img src="{{ catagory.icon.url }}" alt="{{ catagory.catagorys }}">
+            <h5>{{ catagory.catagorys }}</h5>
+          </div>
+        </a>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Featured Properties -->
+<section class="lux-section lux-section-dark">
+  <div class="container">
+    <div class="lux-section-title">
+      <h2>Featured Properties</h2>
+      <div class="gold-line"></div>
+      <p>Discover our handpicked selection of premium properties</p>
+    </div>
+    <div class="row g-4">
+      {% for propertys in propertyss %}
+      <div class="col-md-6 col-lg-4">
+        <div class="lux-prop-card">
+          <div class="card-img">
+            <a href="{% url 'properteasdet' propertys.slug %}">
+              <img src="{{ propertys.main_image.url }}" alt="{{ propertys.property_title }}">
+            </a>
+            <span class="badge-status">{{ propertys.property_status }}</span>
+          </div>
+          <div class="card-body">
+            <h5><a href="{% url 'properteasdet' propertys.slug %}">{{ propertys.property_title }}</a></h5>
+            <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ propertys.property_location }}</div>
+            <div class="prop-meta">
+              <span><i class="fas fa-bed"></i>{{ propertys.bedrooms }} Beds</span>
+              <span><i class="fas fa-bath"></i>{{ propertys.bathrooms }} Baths</span>
+            </div>
+          </div>
+          <div class="prop-footer">
+            <span class="prop-price">{{ propertys.price }}</span>
+            <div class="prop-actions">
+              <a href="tel:+251-960-226-666"><i class="fas fa-phone"></i></a>
+              <a href="https://api.whatsapp.com/send?phone=0960226666"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'properteas' %}" class="btn-gold-outline">View All Properties</a>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Strip -->
+<section class="lux-section lux-section-darker">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="lux-map">
+          <iframe src="{{ contactss.google_map }}" allowfullscreen></iframe>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <h2 style="margin-bottom:0.5rem">Available 24/7</h2>
+        <p style="color:var(--gray);margin-bottom:2rem">Our support service is always ready to help</p>
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="lux-contact-card">
+              <i class="fas fa-map-marker-alt"></i>
+              <h5>Address</h5>
+              <p>{{ contactss.address }}</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="lux-contact-card">
+              <i class="fas fa-envelope"></i>
+              <h5>Email</h5>
+              <p>{{ contactss.email }}</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="lux-contact-card">
+              <i class="fas fa-phone"></i>
+              <h5>Call</h5>
+              <p>{{ contactss.phone_number }}</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="lux-contact-card">
+              <i class="fas fa-share-alt"></i>
+              <h5>Social</h5>
+              <div class="social-links" style="margin-top:0.5rem">
+                <a href="{{ contactss.facebook }}"><i class="fab fa-facebook-f"></i></a>
+                <a href="{{ contactss.linkden }}"><i class="fab fa-linkedin-in"></i></a>
+                <a href="{{ contactss.instagram }}"><i class="fab fa-instagram"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
