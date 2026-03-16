@@ -31,33 +31,43 @@
 <section class="lux-section lux-section-darker">
   <div class="container">
     <div class="row g-4">
-      <div class="col-md-4">
-        <div class="lux-contact-card mb-3">
-          <i class="fas fa-map-marker-alt"></i>
-          <h5>Address</h5>
-          <p>{{ contac.address }}</p>
-        </div>
-        <div class="lux-contact-card mb-3">
-          <i class="fas fa-envelope"></i>
-          <h5>Email</h5>
-          <p>{{ contac.email }}</p>
-        </div>
-        <div class="lux-contact-card mb-3">
-          <i class="fas fa-phone"></i>
-          <h5>Phone</h5>
-          <p>{{ contac.phone_number }}</p>
-        </div>
-        <div class="lux-contact-card">
-          <i class="fas fa-share-alt"></i>
-          <h5>Social</h5>
-          <div class="social-links" style="margin-top:0.5rem">
-            <a href="{{ contac.facebook }}"><i class="fab fa-facebook-f"></i></a>
-            <a href="{{ contac.instagram }}"><i class="fab fa-instagram"></i></a>
-            <a href="{{ contac.linkden }}"><i class="fab fa-linkedin-in"></i></a>
+      <div class="col-md-5">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="lux-contact-card h-100">
+              <i class="fas fa-map-marker-alt"></i>
+              <h5>Address</h5>
+              <p>{{ contac.address }}</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="lux-contact-card h-100">
+              <i class="fas fa-envelope"></i>
+              <h5>Email</h5>
+              <p>{{ contac.email }}</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="lux-contact-card h-100">
+              <i class="fas fa-phone"></i>
+              <h5>Call</h5>
+              <p>{{ contac.phone_number }}</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="lux-contact-card h-100">
+              <i class="fas fa-share-alt"></i>
+              <h5>Social</h5>
+              <div class="social-links">
+                <a href="{{ contac.facebook }}"><i class="fab fa-facebook-f"></i></a>
+                <a href="{{ contac.instagram }}"><i class="fab fa-instagram"></i></a>
+                <a href="{{ contac.linkden }}"><i class="fab fa-linkedin-in"></i></a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-md-8">
+      <div class="col-md-7">
         <div class="lux-sidebar">
           <h5>Send Us a Message</h5>
           <form class="lux-form">

@@ -3,48 +3,108 @@
 {% load static %}
 
 <!-- Hero -->
-<section class="lux-hero">
+<section class="market-hero">
+  {% if hom.video %}
   <video autoplay loop muted playsinline>
     <source src="{{ hom.video.url }}" type="video/mp4">
   </video>
-  <div class="lux-hero-content">
-    <h3>{{ hom.title }}</h3>
-    <h1>{{ hom.slogon }}</h1>
-    <a href="{% url 'properteas' %}" class="btn-gold">Explore Properties</a>
+  {% else %}
+  <div class="market-hero-fallback" aria-hidden="true"></div>
+  {% endif %}
+  <div class="market-hero-overlay"></div>
+  <div class="container">
+    <div class="market-hero-content">
+      <span class="market-strap">Trusted Property Marketplace</span>
+      <h1>{{ hom.slogon }}</h1>
+      <p>{{ hom.title }}</p>
+      <div class="market-hero-actions">
+        <a href="{% url 'properteas' %}" class="btn-market">Explore Properties</a>
+        <a href="{% url 'properteas' %}" class="btn-market-ghost">Browse Listings</a>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- Categories -->
-<section class="lux-section lux-section-darker">
-  <div class="container">
-    <div class="lux-section-title">
-      <h2>Property Categories</h2>
-      <div class="gold-line"></div>
-    </div>
-    <div class="row g-4">
-      {% for catagory in catagorys %}
-      {% if catagory.slug %}
-      <div class="col-6 col-md-4 col-lg-3">
-        <a href="{% url 'filter_properties' catagory.slug %}" style="text-decoration:none;color:inherit">
-          <div class="lux-cat-card">
-            <img src="{{ catagory.icon.url }}" alt="{{ catagory.catagorys }}">
-            <h5>{{ catagory.catagorys }}</h5>
-          </div>
-        </a>
+<form action="{% url 'properteas' %}" method="get" class="market-search">
+  <input type="hidden" name="filter" id="search-filter" value="">
+  <div class="market-search-tabs">
+    <button type="button" data-filter="" class="market-tab is-active">All Status</button>
+    <button type="button" data-filter="Rent" class="market-tab">For Rent</button>
+    <button type="button" data-filter="Sale" class="market-tab">For Sale</button>
+  </div>
+  <div class="market-search-card">
+    <div class="market-search-grid">
+      <div class="market-field">
+        <label for="search-category">Property Type</label>
+        <select id="search-category" name="category">
+          <option value="">Select</option>
+          {% for catagory in catagorys %}
+          {% if catagory.slug %}
+          <option value="{{ catagory.slug }}">{{ catagory.catagorys }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
       </div>
-      {% endif %}
-      {% endfor %}
+      <div class="market-field">
+        <label for="search-bedrooms">Bedrooms</label>
+        <select id="search-bedrooms" name="bedrooms">
+          <option value="">Select</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+      <div class="market-field">
+        <label for="search-price">Max. Price</label>
+        <select id="search-price" name="max_price">
+          <option value="">Select</option>
+          <option value="10000">Br. 10,000</option>
+          <option value="20000">Br. 20,000</option>
+          <option value="30000">Br. 30,000</option>
+          <option value="40000">Br. 40,000</option>
+          <option value="50000">Br. 50,000</option>
+          <option value="100000">Br. 100,000</option>
+          <option value="200000">Br. 200,000</option>
+          <option value="300000">Br. 300,000</option>
+          <option value="500000">Br. 500,000</option>
+          <option value="1000000">Br. 1,000,000</option>
+        </select>
+      </div>
+      <div class="market-field market-field-submit">
+        <button type="submit" class="btn-market">Search</button>
+      </div>
     </div>
   </div>
-</section>
+</form>
+
+<script>
+  (function () {
+    const tabs = document.querySelectorAll('.market-tab');
+    const input = document.getElementById('search-filter');
+    if (!tabs.length || !input) return;
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('is-active'));
+        tab.classList.add('is-active');
+        input.value = tab.getAttribute('data-filter') || '';
+      });
+    });
+  })();
+</script>
 
 <!-- Featured Properties -->
-<section class="lux-section lux-section-dark">
+<section class="market-section market-section-muted">
   <div class="container">
-    <div class="lux-section-title">
-      <h2>Featured Properties</h2>
-      <div class="gold-line"></div>
-      <p>Discover our handpicked selection of premium properties</p>
+    <div class="market-section-title">
+      <h2>Featured Listings: Verified & Vetted</h2>
+      <p>Discover our handpicked selection of premium properties.</p>
     </div>
     <div class="row g-4">
       {% for propertys in propertyss %}
@@ -81,42 +141,72 @@
   </div>
 </section>
 
-<!-- Contact Strip -->
-<section class="lux-section lux-section-darker">
+<!-- Categories -->
+<section class="market-section market-section-light">
   <div class="container">
-    <div class="row align-items-center">
-      <div class="col-lg-7 mb-4 mb-lg-0">
-        <div class="lux-map">
+    <div class="market-section-title">
+      <h2>What Are You Looking For?</h2>
+      <p>Browse curated categories of properties across Addis Ababa.</p>
+    </div>
+    <div class="row g-4">
+      {% for catagory in catagorys %}
+      {% if catagory.slug %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="{% url 'filter_properties' catagory.slug %}" style="text-decoration:none;color:inherit">
+          <div class="market-cat-card">
+            <img src="{{ catagory.icon.url }}" alt="{{ catagory.catagorys }}">
+            <span class="market-cat-meta">Discover</span>
+            <h5>{{ catagory.catagorys }}</h5>
+          </div>
+        </a>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Contact Strip -->
+<section class="market-section market-section-light">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div class="market-map">
+          {% if contactss.google_map %}
           <iframe src="{{ contactss.google_map }}" allowfullscreen></iframe>
+          {% else %}
+          <div class="market-map-placeholder">Map coming soon</div>
+          {% endif %}
         </div>
       </div>
       <div class="col-lg-5">
-        <h2 style="margin-bottom:0.5rem">Available 24/7</h2>
-        <p style="color:var(--gray);margin-bottom:2rem">Our support service is always ready to help</p>
+        <span class="market-strap">Available 24/7</span>
+        <h2>We help you move fast.</h2>
+        <p class="market-muted">Our support team is always ready to assist.</p>
         <div class="row g-3">
           <div class="col-6">
-            <div class="lux-contact-card">
+            <div class="market-contact-card">
               <i class="fas fa-map-marker-alt"></i>
               <h5>Address</h5>
               <p>{{ contactss.address }}</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="lux-contact-card">
+            <div class="market-contact-card">
               <i class="fas fa-envelope"></i>
               <h5>Email</h5>
               <p>{{ contactss.email }}</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="lux-contact-card">
+            <div class="market-contact-card">
               <i class="fas fa-phone"></i>
               <h5>Call</h5>
               <p>{{ contactss.phone_number }}</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="lux-contact-card">
+            <div class="market-contact-card">
               <i class="fas fa-share-alt"></i>
               <h5>Social</h5>
               <div class="social-links" style="margin-top:0.5rem">
