@@ -28,9 +28,9 @@
 <form action="{% url 'properteas' %}" method="get" class="market-search">
   <input type="hidden" name="filter" id="search-filter" value="">
   <div class="market-search-tabs">
-    <button type="button" data-filter="" class="market-tab is-active">All Status</button>
-    <button type="button" data-filter="Rent" class="market-tab">For Rent</button>
-    <button type="button" data-filter="Sale" class="market-tab">For Sale</button>
+    <button type="button" data-filter="" class="market-tab {% if request.GET.filter == '' or not request.GET.filter %}is-active{% endif %}">All Status</button>
+    <button type="button" data-filter="Rent" class="market-tab {% if request.GET.filter == 'Rent' %}is-active{% endif %}">For Rent</button>
+    <button type="button" data-filter="Sale" class="market-tab {% if request.GET.filter == 'Sale' %}is-active{% endif %}">For Sale</button>
   </div>
   <div class="market-search-card">
     <div class="market-search-grid">
@@ -40,7 +40,7 @@
           <option value="">Select</option>
           {% for catagory in catagorys %}
           {% if catagory.slug %}
-          <option value="{{ catagory.slug }}">{{ catagory.catagorys }}</option>
+          <option value="{{ catagory.slug }}" {% if request.GET.category == catagory.slug %}selected{% endif %}>{{ catagory.catagorys }}</option>
           {% endif %}
           {% endfor %}
         </select>
@@ -49,38 +49,37 @@
         <label for="search-bedrooms">Bedrooms</label>
         <select id="search-bedrooms" name="bedrooms">
           <option value="">Select</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
+          <option value="1" {% if request.GET.bedrooms == '1' %}selected{% endif %}>1</option>
+          <option value="2" {% if request.GET.bedrooms == '2' %}selected{% endif %}>2</option>
+          <option value="3" {% if request.GET.bedrooms == '3' %}selected{% endif %}>3</option>
+          <option value="4" {% if request.GET.bedrooms == '4' %}selected{% endif %}>4</option>
+          <option value="5" {% if request.GET.bedrooms == '5' %}selected{% endif %}>5</option>
+          <option value="6" {% if request.GET.bedrooms == '6' %}selected{% endif %}>6</option>
+          <option value="7" {% if request.GET.bedrooms == '7' %}selected{% endif %}>7</option>
+          <option value="8" {% if request.GET.bedrooms == '8' %}selected{% endif %}>8</option>
+          <option value="9" {% if request.GET.bedrooms == '9' %}selected{% endif %}>9</option>
+          <option value="10" {% if request.GET.bedrooms == '10' %}selected{% endif %}>10</option>
         </select>
       </div>
       <div class="market-field">
         <label for="search-price">Max. Price</label>
-        <select id="search-price" name="max_price">
+        <select id="search-price" name="max_price" data-max-etb="{{ max_price_etb }}" data-max-usd="{{ max_price_usd }}" data-selected="{{ request.GET.max_price|default:'' }}">
           <option value="">Select</option>
-          <option value="10000">Br. 10,000</option>
-          <option value="20000">Br. 20,000</option>
-          <option value="30000">Br. 30,000</option>
-          <option value="40000">Br. 40,000</option>
-          <option value="50000">Br. 50,000</option>
-          <option value="100000">Br. 100,000</option>
-          <option value="200000">Br. 200,000</option>
-          <option value="300000">Br. 300,000</option>
-          <option value="500000">Br. 500,000</option>
-          <option value="1000000">Br. 1,000,000</option>
+        </select>
+      </div>
+      <div class="market-field">
+        <label for="search-currency">Currency</label>
+        <select id="search-currency" name="currency">
+          <option value="">Select</option>
+          <option value="ETB" {% if selected_currency == 'ETB' %}selected{% endif %}>ETB</option>
+          <option value="USD" {% if selected_currency == 'USD' %}selected{% endif %}>USD</option>
         </select>
       </div>
       <div class="market-field market-field-submit">
         <button type="submit" class="btn-market">Search</button>
       </div>
     </div>
+    <p class="market-search-note">Prices filtered by selected currency.</p>
   </div>
 </form>
 
@@ -89,6 +88,7 @@
     const tabs = document.querySelectorAll('.market-tab');
     const input = document.getElementById('search-filter');
     if (!tabs.length || !input) return;
+    input.value = "{{ request.GET.filter|default:'' }}";
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
         tabs.forEach((t) => t.classList.remove('is-active'));
@@ -96,6 +96,63 @@
         input.value = tab.getAttribute('data-filter') || '';
       });
     });
+    const currencySelect = document.getElementById('search-currency');
+    const priceSelect = document.getElementById('search-price');
+    if (currencySelect && priceSelect) {
+      const getMax = (currency) => {
+        const maxAttr = currency === 'USD' ? 'maxUsd' : 'maxEtb';
+        const value = priceSelect.dataset[maxAttr];
+        const parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : 1000000;
+      };
+      const buildTieredValues = (max) => {
+        const values = [];
+        for (let value = 10000; value <= Math.min(max, 99999); value += 10000) {
+          values.push(value);
+        }
+        for (let value = 100000; value <= Math.min(max, 999999); value += 50000) {
+          values.push(value);
+        }
+        for (let value = 1000000; value <= max; value += 1000000) {
+          values.push(value);
+        }
+        return values;
+      };
+      const buildOptions = (currency) => {
+        const max = getMax(currency);
+        const selected = priceSelect.dataset.selected || '';
+        priceSelect.innerHTML = '<option value="">Select</option>';
+        const values = buildTieredValues(max);
+        for (const value of values) {
+          const option = document.createElement('option');
+          option.value = String(value);
+          const formatted = value.toLocaleString();
+          option.textContent = currency === 'USD' ? `$ ${formatted}` : `Br. ${formatted}`;
+          if (selected && selected === option.value) option.selected = true;
+          priceSelect.appendChild(option);
+        }
+        if (values.length === 0 || values[values.length - 1] !== max) {
+          const option = document.createElement('option');
+          option.value = String(max);
+          const formatted = max.toLocaleString();
+          option.textContent = currency === 'USD' ? `$ ${formatted}` : `Br. ${formatted}`;
+          if (selected && selected === option.value) option.selected = true;
+          priceSelect.appendChild(option);
+        }
+      };
+      const currentCurrency = currencySelect.value || 'ETB';
+      buildOptions(currentCurrency);
+      currencySelect.addEventListener('change', () => {
+        const currentValue = priceSelect.value;
+        priceSelect.dataset.selected = currentValue;
+        buildOptions(currencySelect.value || 'ETB');
+        const max = getMax(currencySelect.value || 'ETB');
+        if (currentValue && parseInt(currentValue, 10) > max) {
+          priceSelect.value = String(max);
+          priceSelect.dataset.selected = String(max);
+        }
+      });
+    }
   })();
 </script>
 

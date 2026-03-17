@@ -216,7 +216,7 @@ img { max-width: 100%; height: auto; }
 .market-search-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
 }
 .market-field label {
@@ -237,6 +237,12 @@ img { max-width: 100%; height: auto; }
 .market-field-submit .btn-market {
   width: 100%;
   justify-content: center;
+}
+.market-search-note {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--gray);
+  text-align: center;
 }
 
 /* Section styles */

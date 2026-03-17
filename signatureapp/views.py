@@ -21,11 +21,46 @@ def index(request):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
+    def parse_price(value):
+        if not value:
+            return None, None
+        lower = value.lower()
+        if "br" in lower or "birr" in lower or "etb" in lower:
+            currency = "ETB"
+        elif "$" in value or "usd" in lower:
+            currency = "USD"
+        else:
+            return None, None
+        digits = "".join(ch for ch in value if ch.isdigit())
+        if not digits:
+            return None, None
+        return currency, int(digits)
+
+    max_price_etb = None
+    max_price_usd = None
+    for price in propertys.objects.values_list("price", flat=True):
+        currency, amount = parse_price(price)
+        if currency == "ETB" and amount:
+            max_price_etb = (
+                amount if max_price_etb is None else max(max_price_etb, amount)
+            )
+        elif currency == "USD" and amount:
+            max_price_usd = (
+                amount if max_price_usd is None else max(max_price_usd, amount)
+            )
+    if max_price_etb is None:
+        max_price_etb = 1000000
+    if max_price_usd is None:
+        max_price_usd = 1000000
+
     context = {
         "hom": hom,
         "catagorys": catagorys,
         "propertyss": propertyss,
         "contactss": contactss,
+        "max_price_etb": max_price_etb,
+        "max_price_usd": max_price_usd,
+        "selected_currency": request.GET.get("currency"),
     }
 
     return render(
@@ -90,6 +125,36 @@ def properteas(request):
     max_price = request.GET.get("max_price")
     if max_price and max_price.isdigit():
         property_list = property_list.filter(price__lte=max_price)
+    selected_currency = request.GET.get("currency")
+    if selected_currency in {"ETB", "USD"}:
+
+        def parse_price(value):
+            if not value:
+                return None, None
+            lower = value.lower()
+            if "br" in lower or "birr" in lower or "etb" in lower:
+                currency = "ETB"
+            elif "$" in value or "usd" in lower:
+                currency = "USD"
+            else:
+                return None, None
+            digits = "".join(ch for ch in value if ch.isdigit())
+            if not digits:
+                return None, None
+            return currency, int(digits)
+
+        max_price_value = int(max_price) if max_price and max_price.isdigit() else None
+        filtered = []
+        for item in property_list:
+            currency, amount = parse_price(item.price)
+            if currency != selected_currency:
+                continue
+            if amount is None:
+                continue
+            if max_price_value is not None and amount > max_price_value:
+                continue
+            filtered.append(item)
+        property_list = filtered
     paginator = Paginator(property_list, 6)  # Show 6 properties per page
     page_number = request.GET.get("page")
     properties = paginator.get_page(page_number)
@@ -104,6 +169,7 @@ def properteas(request):
             "selected_filter": selected_filter,
             "selected_bedrooms": selected_bedrooms,
             "selected_max_price": max_price,
+            "selected_currency": selected_currency,
             "contactss": contactss,
         },
     )
