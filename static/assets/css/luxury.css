@@ -42,7 +42,7 @@ img { max-width: 100%; height: auto; }
   top: 0;
   z-index: 1000;
 }
-.lux-navbar .navbar-brand img { height: 45px; }
+.lux-navbar .navbar-brand img { height: 65px; }
 .lux-navbar .nav-link {
   color: var(--white) !important;
   font-size: 0.9rem;
@@ -692,7 +692,7 @@ img { max-width: 100%; height: auto; }
   transition: color 0.3s;
 }
 .social-links a:hover { color: var(--gold); }
-.lux-footer .footer-logo { height: 40px; margin-bottom: 1rem; }
+.lux-footer .footer-logo { height: 60px; margin-bottom: 1rem; }
 
 /* About tabs */
 .lux-tabs .nav-pills .nav-link {
@@ -872,11 +872,13 @@ img { max-width: 100%; height: auto; }
   .lux-page-header h1 { font-size: 2rem; }
   .lux-gallery img { height: 280px; }
   .market-hero-content { padding: 4rem 0; }
-  .market-hero-actions { flex-direction: column; align-items: flex-start; }
+  .market-hero-actions { flex-direction: column; align-items: center; }
   .market-section { padding: 3rem 0; }
   .market-section-title h2 { font-size: 1.9rem; }
   .market-search { margin-top: -1.5rem; }
   .market-search-grid { grid-template-columns: 1fr; }
+  .market-field-submit { display: block; text-align: center; }
+  .market-field-submit .btn-market { width: auto; min-width: 200px; display: inline-block; }
 }
 
 @media (max-width: 992px) {
