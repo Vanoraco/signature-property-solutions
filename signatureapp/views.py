@@ -1,3 +1,7 @@
+import json
+
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
@@ -15,6 +19,10 @@ from signatureapp.models import (
 
 # Create your views here.
 RESIDENTIAL_CATEGORY_KEYWORDS = ("apartment", "house", "villa", "penthouse", "condo")
+DEFAULT_SEO_DESCRIPTION = (
+    "Signature Property Solutions helps clients find verified apartments, houses, "
+    "offices, warehouses, buildings, and land for sale or rent in Ethiopia."
+)
 
 
 def is_residential_category(category):
@@ -22,6 +30,80 @@ def is_residential_category(category):
         return False
     category_name = (category.catagorys or "").lower()
     return any(keyword in category_name for keyword in RESIDENTIAL_CATEGORY_KEYWORDS)
+
+
+def absolute_url(path):
+    return f"{settings.SITE_URL}{path}"
+
+
+def build_seo(request, title, description=DEFAULT_SEO_DESCRIPTION, image_url=""):
+    canonical_url = absolute_url(request.path)
+    return {
+        "site_name": settings.SITE_NAME,
+        "title": f"{title} | {settings.SITE_NAME}",
+        "description": description,
+        "canonical_url": canonical_url,
+        "image_url": image_url,
+    }
+
+
+def organization_schema(contactss):
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "RealEstateAgent",
+        "name": settings.SITE_NAME,
+        "url": settings.SITE_URL,
+        "areaServed": {
+            "@type": "Country",
+            "name": "Ethiopia",
+        },
+    }
+    if contactss:
+        if contactss.phone_number:
+            schema["telephone"] = contactss.phone_number
+        if contactss.email:
+            schema["email"] = contactss.email
+        if contactss.address:
+            schema["address"] = contactss.address
+        same_as = [
+            url
+            for url in (contactss.facebook, contactss.instagram, contactss.linkden)
+            if url
+        ]
+        if same_as:
+            schema["sameAs"] = same_as
+    return json.dumps(schema)
+
+
+def property_schema(pro):
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "Offer",
+        "name": pro.property_title,
+        "url": absolute_url(f"/properteasdet/{pro.slug}"),
+        "category": str(pro.property_types),
+        "availability": "https://schema.org/InStock",
+        "itemOffered": {
+            "@type": "Residence" if pro.is_residential_listing() else "Place",
+            "name": pro.property_title,
+            "description": pro.property_short_discription,
+            "address": pro.property_location,
+        },
+        "seller": {
+            "@type": "RealEstateAgent",
+            "name": settings.SITE_NAME,
+            "url": settings.SITE_URL,
+        },
+    }
+    if pro.price:
+        schema["price"] = "".join(ch for ch in pro.price if ch.isdigit())
+        if "usd" in pro.price.lower() or "$" in pro.price:
+            schema["priceCurrency"] = "USD"
+        elif "br" in pro.price.lower() or "birr" in pro.price.lower() or "etb" in pro.price.lower():
+            schema["priceCurrency"] = "ETB"
+    if pro.main_image:
+        schema["image"] = absolute_url(pro.main_image.url)
+    return json.dumps(schema)
 
 
 def index(request):
@@ -72,6 +154,12 @@ def index(request):
         "max_price_etb": max_price_etb,
         "max_price_usd": max_price_usd,
         "selected_currency": request.GET.get("currency"),
+        "seo": build_seo(
+            request,
+            "Real Estate in Ethiopia",
+            "Find verified apartments, houses, offices, warehouses, buildings, and land for sale or rent in Ethiopia with Signature Property Solutions.",
+        ),
+        "schema_json": organization_schema(contactss),
     }
 
     return render(
@@ -87,7 +175,16 @@ def aboutus(request):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    context = {"about": aboute, "contactss": contactss}
+    context = {
+        "about": aboute,
+        "contactss": contactss,
+        "seo": build_seo(
+            request,
+            "About Us",
+            "Learn about Signature Property Solutions, a real estate company helping clients buy, rent, and invest in properties across Ethiopia.",
+        ),
+        "schema_json": organization_schema(contactss),
+    }
     return render(request, "about.html", context)
 
 
@@ -96,7 +193,16 @@ def services(request):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    context = {"serevice": serevice, "contactss": contactss}
+    context = {
+        "serevice": serevice,
+        "contactss": contactss,
+        "seo": build_seo(
+            request,
+            "Real Estate Services in Ethiopia",
+            "Explore real estate services for property rental, sales, consulting, and client support in Ethiopia.",
+        ),
+        "schema_json": organization_schema(contactss),
+    }
 
     return render(request, "service.html", context)
 
@@ -106,7 +212,16 @@ def servicesdt(request, slug):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    context = {"serevice": serevice, "contactss": contactss}
+    context = {
+        "serevice": serevice,
+        "contactss": contactss,
+        "seo": build_seo(
+            request,
+            serevice.service_name,
+            f"{serevice.service_name} from Signature Property Solutions in Ethiopia.",
+        ),
+        "schema_json": organization_schema(contactss),
+    }
 
     return render(request, "servicedt.html", context)
 
@@ -188,6 +303,12 @@ def properteas(request):
             "selected_max_price": max_price,
             "selected_currency": selected_currency,
             "contactss": contactss,
+            "seo": build_seo(
+                request,
+                "Properties for Sale and Rent in Ethiopia",
+                "Browse verified apartments, houses, offices, warehouses, buildings, and land for sale or rent in Ethiopia.",
+            ),
+            "schema_json": organization_schema(contactss),
         },
     )
 
@@ -227,6 +348,12 @@ def filter_properties(request, category_slug):
             "categories": categories,
             "selected_category": selected_category,
             "selected_filter": selected_filter,
+            "seo": build_seo(
+                request,
+                f"{category.catagorys} in Ethiopia",
+                f"Browse verified {category.catagorys.lower()} listings in Ethiopia from Signature Property Solutions.",
+            ),
+            "schema_json": organization_schema(contactss),
         },
     )
 
@@ -237,7 +364,15 @@ def properteasdet(request, slug):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    context = {"pro": pro, "propertyss": propertyss, "contactss": contactss}
+    description = pro.property_short_discription or f"{pro.property_title} in {pro.property_location}. View price, location, and property details from Signature Property Solutions."
+    image_url = absolute_url(pro.main_image.url) if pro.main_image else ""
+    context = {
+        "pro": pro,
+        "propertyss": propertyss,
+        "contactss": contactss,
+        "seo": build_seo(request, pro.property_title, description, image_url),
+        "schema_json": property_schema(pro),
+    }
 
     return render(request, "apartment-single.html", context)
 
@@ -248,7 +383,16 @@ def contac(request):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    context = {"contac": contactus, "contactss": contactss}
+    context = {
+        "contac": contactus,
+        "contactss": contactss,
+        "seo": build_seo(
+            request,
+            "Contact",
+            "Contact Signature Property Solutions for property sales, rentals, and real estate support in Ethiopia.",
+        ),
+        "schema_json": organization_schema(contactss),
+    }
 
     return render(request, "contact.html", context)
 
@@ -258,6 +402,78 @@ def testimonials(request):
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    context = {"testimonials": testimonials_list, "contactss": contactss}
+    context = {
+        "testimonials": testimonials_list,
+        "contactss": contactss,
+        "seo": build_seo(
+            request,
+            "Client Testimonials",
+            "Read client testimonials and property service experiences from Signature Property Solutions in Ethiopia.",
+        ),
+        "schema_json": organization_schema(contactss),
+    }
 
     return render(request, "testimonials.html", context)
+
+
+def robots_txt(request):
+    return render(request, "robots.txt", content_type="text/plain")
+
+
+def llms_txt(request):
+    return render(request, "llms.txt", content_type="text/plain")
+
+
+def sitemap_xml(request):
+    static_paths = [
+        "",
+        "properteas",
+        "services",
+        "aboutus",
+        "testimonials",
+        "contac",
+    ]
+    urls = [
+        {
+            "loc": absolute_url(f"/{path}" if path else "/"),
+            "changefreq": "weekly",
+            "priority": "1.0" if path == "" else "0.8",
+        }
+        for path in static_paths
+    ]
+    for category in catagory.objects.exclude(slug=""):
+        urls.append(
+            {
+                "loc": absolute_url(f"/filter_properties/{category.slug}/"),
+                "changefreq": "weekly",
+                "priority": "0.7",
+            }
+        )
+    for service in serevices.objects.exclude(slug=""):
+        urls.append(
+            {
+                "loc": absolute_url(f"/servicesdt/{service.slug}"),
+                "changefreq": "monthly",
+                "priority": "0.7",
+            }
+        )
+    for pro in propertys.objects.exclude(slug=""):
+        urls.append(
+            {
+                "loc": absolute_url(f"/properteasdet/{pro.slug}"),
+                "lastmod": pro.last_update.date().isoformat(),
+                "changefreq": "weekly",
+                "priority": "0.9",
+            }
+        )
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for url in urls:
+        lines.append("  <url>")
+        lines.append(f"    <loc>{url['loc']}</loc>")
+        if url.get("lastmod"):
+            lines.append(f"    <lastmod>{url['lastmod']}</lastmod>")
+        lines.append(f"    <changefreq>{url['changefreq']}</changefreq>")
+        lines.append(f"    <priority>{url['priority']}</priority>")
+        lines.append("  </url>")
+    lines.append("</urlset>")
+    return HttpResponse("\n".join(lines), content_type="application/xml")

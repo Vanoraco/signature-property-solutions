@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['ethiosps.com','www.ethiosps.com','localhost','127.0.0.1']
 
+SITE_NAME = 'Signature Property Solutions'
+SITE_URL = 'https://ethiosps.com'
+
 
 # Application definition
 
