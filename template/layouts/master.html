@@ -28,6 +28,11 @@
     <i class="fab fa-linkedin-in"></i>
   </a>
   {% endif %}
+  {% if contactss.phone_number %}
+  <a href="https://wa.me/{{ contactss.phone_number|cut:'+'|cut:' '|cut:'-' }}" target="_blank" rel="noopener" aria-label="WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  {% endif %}
 </aside>
 {% endif %}
 
