@@ -97,6 +97,87 @@ class propertys(models.Model):
 
     def __str__(self):
         return self.property_title
+
+    def _property_type_name(self):
+        if not self.property_types_id:
+            return ""
+        return (self.property_types.catagorys or "").lower()
+
+    @staticmethod
+    def _has_display_value(value):
+        if value is None:
+            return False
+        text = str(value).strip()
+        return bool(text) and text.lower() not in {"0", "no", "none", "n/a", "na"}
+
+    def is_land_listing(self):
+        return "land" in self._property_type_name()
+
+    def is_residential_listing(self):
+        property_type = self._property_type_name()
+        return any(
+            keyword in property_type
+            for keyword in ("apartment", "house", "villa", "penthouse", "condo")
+        )
+
+    def card_specs(self):
+        if self.is_land_listing():
+            specs = [
+                ("fas fa-ruler-combined", "Land Area", self.property_area),
+                ("fas fa-expand-arrows-alt", "Size", self.property_size),
+            ]
+        elif self.is_residential_listing():
+            specs = [
+                ("fas fa-bed", "Beds", self.bedrooms),
+                ("fas fa-bath", "Baths", self.bathrooms),
+            ]
+        else:
+            specs = [
+                ("fas fa-expand-arrows-alt", "Size", self.property_size),
+                ("fas fa-building", "Floor", self.property_floor),
+            ]
+
+        return [
+            {"icon": icon, "label": label, "value": value}
+            for icon, label, value in specs
+            if self._has_display_value(value)
+        ]
+
+    def overview_specs(self):
+        specs = [
+            ("Property ID", self.property_id),
+            ("Price", self.price),
+            ("Type", self.property_types),
+            ("Status", self.property_status),
+        ]
+
+        if self.is_land_listing():
+            specs.extend([
+                ("Land Area", self.property_area),
+                ("Size", self.property_size),
+            ])
+        elif self.is_residential_listing():
+            specs.extend([
+                ("Size", self.property_size),
+                ("Land Area", self.property_area),
+                ("Floor", self.property_floor),
+                ("Bedrooms", self.bedrooms),
+                ("Bathrooms", self.bathrooms),
+                ("Furnished", self.furnished),
+            ])
+        else:
+            specs.extend([
+                ("Size", self.property_size),
+                ("Floor", self.property_floor),
+                ("Restrooms", self.bathrooms),
+                ("Furnished", self.furnished),
+            ])
+
+        return [
+            {"label": label, "value": value}
+            for label, value in specs
+            if self._has_display_value(value)
+        ]
     
 
 class about(models.Model):

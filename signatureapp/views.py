@@ -14,11 +14,21 @@ from signatureapp.models import (
 
 
 # Create your views here.
+RESIDENTIAL_CATEGORY_KEYWORDS = ("apartment", "house", "villa", "penthouse", "condo")
+
+
+def is_residential_category(category):
+    if not category:
+        return False
+    category_name = (category.catagorys or "").lower()
+    return any(keyword in category_name for keyword in RESIDENTIAL_CATEGORY_KEYWORDS)
+
+
 def index(request):
     homes = home.objects.all()
     hom = homes.last()
     catagorys = catagory.objects.all()
-    propertyss = propertys.objects.all().order_by("-id")[:6]
+    propertyss = propertys.objects.select_related("property_types").all().order_by("-id")[:6]
     contacts = contact.objects.all()
     contactss = contacts.last()
 
@@ -102,13 +112,18 @@ def servicesdt(request, slug):
 
 
 def properteas(request):
-    property_list = propertys.objects.all()
+    property_list = propertys.objects.select_related("property_types").all().order_by("-id")
     contacts = contact.objects.all()
     contactss = contacts.last()
     # Get selected category from query parameters
     selected_category = request.GET.get("category")
-    if selected_category and catagory.objects.filter(slug=selected_category).exists():
-        property_list = property_list.filter(property_types__slug=selected_category)
+    selected_category_obj = None
+    if selected_category:
+        selected_category_obj = catagory.objects.filter(slug=selected_category).first()
+        if not selected_category_obj:
+            selected_category_obj = catagory.objects.filter(catagorys=selected_category).first()
+    if selected_category_obj:
+        property_list = property_list.filter(property_types=selected_category_obj)
     selected_filter = request.GET.get("filter")
 
     if selected_filter == "Sale":
@@ -120,7 +135,8 @@ def properteas(request):
     elif selected_filter == "HighToLow":
         property_list = property_list.order_by("-price")
     selected_bedrooms = request.GET.get("bedrooms")
-    if selected_bedrooms and selected_bedrooms.isdigit():
+    allow_bedroom_filter = not selected_category_obj or is_residential_category(selected_category_obj)
+    if allow_bedroom_filter and selected_bedrooms and selected_bedrooms.isdigit():
         if 1 <= int(selected_bedrooms) <= 10:
             property_list = property_list.filter(bedrooms=selected_bedrooms)
     max_price = request.GET.get("max_price")
@@ -180,7 +196,7 @@ def filter_properties(request, category_slug):
     category = get_object_or_404(catagory, slug=category_slug)
     contacts = contact.objects.all()
     contactss = contacts.last()
-    property_list = propertys.objects.filter(property_types=category)
+    property_list = propertys.objects.select_related("property_types").filter(property_types=category)
     # Get selected category from query parameters
     selected_category = request.GET.get("category")
     if selected_category:
@@ -216,8 +232,8 @@ def filter_properties(request, category_slug):
 
 
 def properteasdet(request, slug):
-    pro = propertys.objects.get(slug=slug)
-    propertyss = propertys.objects.all().order_by("-id")[:3]
+    pro = propertys.objects.select_related("property_types").get(slug=slug)
+    propertyss = propertys.objects.select_related("property_types").all().order_by("-id")[:3]
     contacts = contact.objects.all()
     contactss = contacts.last()
 

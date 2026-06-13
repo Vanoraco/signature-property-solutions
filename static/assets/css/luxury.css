@@ -233,6 +233,7 @@ img { max-width: 100%; height: auto; }
   background: var(--surface-muted);
   color: #1f1f1f;
 }
+.market-field.is-hidden { display: none; }
 .market-field-submit { display: flex; }
 .market-field-submit .btn-market {
   width: 100%;

@@ -45,7 +45,7 @@
           {% endfor %}
         </select>
       </div>
-      <div class="market-field">
+      <div class="market-field" id="bedroom-search-field">
         <label for="search-bedrooms">Bedrooms</label>
         <select id="search-bedrooms" name="bedrooms">
           <option value="">Select</option>
@@ -96,6 +96,24 @@
         input.value = tab.getAttribute('data-filter') || '';
       });
     });
+    const categorySelect = document.getElementById('search-category');
+    const bedroomField = document.getElementById('bedroom-search-field');
+    const bedroomSelect = document.getElementById('search-bedrooms');
+    const updateBedroomField = () => {
+      if (!categorySelect || !bedroomField || !bedroomSelect) return;
+      const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+      const selectedText = selectedOption ? selectedOption.textContent.toLowerCase() : '';
+      const hasCategory = Boolean(categorySelect.value);
+      const isResidential = ['apartment', 'house', 'villa', 'penthouse', 'condo'].some((keyword) => selectedText.includes(keyword));
+      const shouldShow = !hasCategory || isResidential;
+      bedroomField.classList.toggle('is-hidden', !shouldShow);
+      bedroomSelect.disabled = !shouldShow;
+      if (!shouldShow) bedroomSelect.value = '';
+    };
+    if (categorySelect) {
+      categorySelect.addEventListener('change', updateBedroomField);
+      updateBedroomField();
+    }
     const currencySelect = document.getElementById('search-currency');
     const priceSelect = document.getElementById('search-price');
     if (currencySelect && priceSelect) {
@@ -176,10 +194,15 @@
           <div class="card-body">
             <h5><a href="{% url 'properteasdet' propertys.slug %}">{{ propertys.property_title }}</a></h5>
             <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ propertys.property_location }}</div>
+            {% with specs=propertys.card_specs %}
+            {% if specs %}
             <div class="prop-meta">
-              <span><i class="fas fa-bed"></i>{{ propertys.bedrooms }} Beds</span>
-              <span><i class="fas fa-bath"></i>{{ propertys.bathrooms }} Baths</span>
+              {% for spec in specs %}
+              <span><i class="{{ spec.icon }}"></i>{{ spec.value }} {{ spec.label }}</span>
+              {% endfor %}
             </div>
+            {% endif %}
+            {% endwith %}
           </div>
           <div class="prop-footer">
             <span class="prop-price">{{ propertys.price }}</span>

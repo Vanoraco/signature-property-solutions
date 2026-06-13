@@ -42,16 +42,9 @@
         <!-- Overview -->
         <h4 class="mt-4 mb-3" style="color:var(--gold)">Overview</h4>
         <table class="lux-overview-table">
-          <tr><td>Property ID</td><td>{{ pro.property_id }}</td></tr>
-          <tr><td>Price</td><td>{{ pro.price }}</td></tr>
-          <tr><td>Type</td><td>{{ pro.property_types }}</td></tr>
-          <tr><td>Size</td><td>{{ pro.property_size }}</td></tr>
-          <tr><td>Status</td><td>{{ pro.property_status }}</td></tr>
-          <tr><td>Land Area</td><td>{{ pro.property_area }}</td></tr>
-          <tr><td>Floor</td><td>{{ pro.property_floor }}</td></tr>
-          <tr><td>Bedrooms</td><td>{{ pro.bedrooms }}</td></tr>
-          <tr><td>Bathrooms</td><td>{{ pro.bathrooms }}</td></tr>
-          <tr><td>Furnished</td><td>{{ pro.furnished }}</td></tr>
+          {% for spec in pro.overview_specs %}
+          <tr><td>{{ spec.label }}</td><td>{{ spec.value }}</td></tr>
+          {% endfor %}
         </table>
 
         <!-- Video -->
@@ -116,10 +109,15 @@
           <div class="card-body">
             <h5><a href="{% url 'properteasdet' propertys.slug %}">{{ propertys.property_title }}</a></h5>
             <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ propertys.property_location }}</div>
+            {% with specs=propertys.card_specs %}
+            {% if specs %}
             <div class="prop-meta">
-              <span><i class="fas fa-bed"></i>{{ propertys.bedrooms }} Beds</span>
-              <span><i class="fas fa-bath"></i>{{ propertys.bathrooms }} Baths</span>
+              {% for spec in specs %}
+              <span><i class="{{ spec.icon }}"></i>{{ spec.value }} {{ spec.label }}</span>
+              {% endfor %}
             </div>
+            {% endif %}
+            {% endwith %}
           </div>
           <div class="prop-footer">
             <span class="prop-price">{{ propertys.price }}</span>
