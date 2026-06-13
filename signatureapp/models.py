@@ -269,3 +269,32 @@ class testimonial(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class property_request(models.Model):
+    PROPERTY_GOALS = [
+        ("Rent", "Rent"),
+        ("Buy", "Buy"),
+        ("Invest", "Invest"),
+        ("Other", "Other"),
+    ]
+
+    name = models.CharField(max_length=200, blank=True)
+    phone_number = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
+    property_type = models.CharField(max_length=200, blank=True)
+    goal = models.CharField(max_length=50, choices=PROPERTY_GOALS, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    budget = models.CharField(max_length=200, blank=True)
+    message = models.TextField()
+    source_page = models.CharField(max_length=600, blank=True)
+    is_reviewed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = ("property_request")
+        verbose_name_plural = ("Property Requests")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.property_type or self.location or f"Request #{self.pk}"

@@ -2,6 +2,24 @@
 <button class="scroll-to-top" type="button" aria-label="Scroll to top">
   <i class="fas fa-chevron-up"></i>
 </button>
+{% if request.GET.request_submitted or request.GET.request_error %}
+<div class="request-toast {% if request.GET.request_error %}error{% else %}success{% endif %}" role="status" aria-live="polite" aria-atomic="true">
+  <div class="request-toast-icon">
+    {% if request.GET.request_error %}
+    <i class="fas fa-exclamation"></i>
+    {% else %}
+    <i class="fas fa-check"></i>
+    {% endif %}
+  </div>
+  <div>
+    <strong>{% if request.GET.request_error %}Request not sent{% else %}Request received{% endif %}</strong>
+    <p>{% if request.GET.request_error %}Please tell us what you are looking for before submitting.{% else %}Thank you. Your request has been received.{% endif %}</p>
+  </div>
+  <button type="button" class="request-toast-close" aria-label="Dismiss notification">
+    <i class="fas fa-times"></i>
+  </button>
+</div>
+{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   (() => {
@@ -17,5 +35,26 @@
     });
     window.addEventListener("scroll", toggleButton, { passive: true });
     toggleButton();
+  })();
+
+  (() => {
+    const toast = document.querySelector(".request-toast");
+    if (!toast) return;
+
+    const closeToast = () => {
+      toast.classList.remove("is-visible");
+      window.setTimeout(() => toast.remove(), 260);
+    };
+
+    window.setTimeout(() => toast.classList.add("is-visible"), 80);
+    window.setTimeout(closeToast, 5200);
+    toast.querySelector(".request-toast-close")?.addEventListener("click", closeToast);
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("request_submitted") || url.searchParams.has("request_error")) {
+      url.searchParams.delete("request_submitted");
+      url.searchParams.delete("request_error");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
   })();
 </script>

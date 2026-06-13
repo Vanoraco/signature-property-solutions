@@ -30,6 +30,7 @@ urlpatterns = [
     path('services', views.services, name='services' ),
     path('servicesdt/<slug:slug>', views.servicesdt, name='servicesdt'),
     path('properteas', views.properteas, name='properteas' ),
+    path('property-request', views.submit_property_request, name='submit_property_request' ),
     path('properteasdet/<slug:slug>', views.properteasdet, name='properteasdet'),
     path('contac', views.contac, name='contac' ),
     path('testimonials', views.testimonials, name='testimonials' ),

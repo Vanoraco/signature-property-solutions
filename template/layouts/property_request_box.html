@@ -1,0 +1,30 @@
+<section class="property-request-section" id="property-request">
+  <div class="property-request-card">
+    <div class="property-request-copy">
+      <span>Did not find the right property?</span>
+      <h2>Tell us what you are looking for</h2>
+      <p>Share the property type, preferred location, budget, and any must-have details. We will use it to prepare better matches and follow up when something suitable is available.</p>
+    </div>
+    <form class="property-request-form" action="{% url 'submit_property_request' %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="source_page" value="{{ request.get_full_path }}">
+      <div class="request-grid">
+        <input type="text" name="name" placeholder="Name">
+        <input type="tel" name="phone_number" placeholder="Phone or WhatsApp">
+        <input type="email" name="email" placeholder="Email">
+        <input type="text" name="property_type" placeholder="Property type">
+        <select name="goal">
+          <option value="">Purpose</option>
+          <option value="Rent">Rent</option>
+          <option value="Buy">Buy</option>
+          <option value="Invest">Invest</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" name="location" placeholder="Preferred location">
+        <input type="text" name="budget" placeholder="Budget range">
+      </div>
+      <textarea name="message" required placeholder="Describe what you wanted but could not find"></textarea>
+      <button type="submit" class="btn-gold">Submit Request</button>
+    </form>
+  </div>
+</section>

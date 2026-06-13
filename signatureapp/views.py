@@ -2,6 +2,7 @@ import json
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
@@ -14,6 +15,7 @@ from signatureapp.models import (
     serevices,
     about,
     testimonial,
+    property_request,
 )
 
 
@@ -477,3 +479,30 @@ def sitemap_xml(request):
         lines.append("  </url>")
     lines.append("</urlset>")
     return HttpResponse("\n".join(lines), content_type="application/xml")
+
+
+def submit_property_request(request):
+    if request.method != "POST":
+        return redirect("properteas")
+
+    message = request.POST.get("message", "").strip()
+    source_page = request.POST.get("source_page", "").strip() or request.META.get("HTTP_REFERER", "")
+    redirect_to = source_page if source_page.startswith("/") else request.META.get("HTTP_REFERER", "/properteas")
+
+    if message:
+        property_request.objects.create(
+            name=request.POST.get("name", "").strip(),
+            phone_number=request.POST.get("phone_number", "").strip(),
+            email=request.POST.get("email", "").strip(),
+            property_type=request.POST.get("property_type", "").strip(),
+            goal=request.POST.get("goal", "").strip(),
+            location=request.POST.get("location", "").strip(),
+            budget=request.POST.get("budget", "").strip(),
+            message=message,
+            source_page=source_page,
+        )
+        separator = "&" if "?" in redirect_to else "?"
+        return redirect(f"{redirect_to}{separator}request_submitted=1#property-request")
+
+    separator = "&" if "?" in redirect_to else "?"
+    return redirect(f"{redirect_to}{separator}request_error=1#property-request")
