@@ -161,3 +161,30 @@ class contact(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class testimonial(models.Model):
+    RATING = [
+        (1, "1 Star"),
+        (2, "2 Stars"),
+        (3, "3 Stars"),
+        (4, "4 Stars"),
+        (5, "5 Stars"),
+    ]
+
+    name = models.CharField(max_length=200)
+    role = models.CharField(max_length=200, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    quote = models.TextField()
+    image = models.ImageField(upload_to='testimonials', blank=True)
+    rating = models.PositiveSmallIntegerField(choices=RATING, default=5)
+    is_published = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = ("testimonial")
+        verbose_name_plural = ("Testimonials")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name

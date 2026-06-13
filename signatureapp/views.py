@@ -9,6 +9,7 @@ from signatureapp.models import (
     catagory,
     serevices,
     about,
+    testimonial,
 )
 
 
@@ -234,3 +235,13 @@ def contac(request):
     context = {"contac": contactus, "contactss": contactss}
 
     return render(request, "contact.html", context)
+
+
+def testimonials(request):
+    testimonials_list = testimonial.objects.filter(is_published=True)
+    contacts = contact.objects.all()
+    contactss = contacts.last()
+
+    context = {"testimonials": testimonials_list, "contactss": contactss}
+
+    return render(request, "testimonials.html", context)

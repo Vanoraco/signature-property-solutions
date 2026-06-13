@@ -789,6 +789,113 @@ img { max-width: 100%; height: auto; }
   }
 }
 
+.lux-testimonial-card {
+  position: relative;
+  min-height: 100%;
+  padding: 2rem;
+  background: linear-gradient(145deg, rgba(30,30,30,0.98), rgba(20,20,20,0.98));
+  border: 1px solid rgba(201,168,76,0.14);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.lux-testimonial-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(201,168,76,0.12), transparent 42%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.lux-testimonial-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(201,168,76,0.42);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.28);
+}
+.lux-testimonial-card:hover::before { opacity: 1; }
+.testimonial-mark,
+.testimonial-stars,
+.testimonial-quote,
+.testimonial-author {
+  position: relative;
+  z-index: 1;
+}
+.testimonial-mark {
+  color: rgba(201,168,76,0.28);
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+.testimonial-stars {
+  color: var(--gold);
+  font-size: 0.85rem;
+  letter-spacing: 0.12rem;
+  margin-bottom: 1rem;
+}
+.testimonial-quote {
+  color: rgba(255,255,255,0.82);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.testimonial-author img,
+.testimonial-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,0.35);
+  flex: 0 0 54px;
+}
+.testimonial-author img {
+  object-fit: cover;
+}
+.testimonial-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark);
+  background: var(--gold);
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.testimonial-author h5 {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.05rem;
+}
+.testimonial-author span {
+  display: block;
+  color: var(--gray);
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
+}
+.lux-empty-state {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--dark-3);
+  border: 1px solid rgba(201,168,76,0.14);
+  border-radius: 8px;
+}
+.lux-empty-state i {
+  color: var(--gold);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+.lux-empty-state p {
+  color: var(--gray);
+  margin-bottom: 0;
+}
+
 /* About tabs */
 .lux-tabs .nav-pills .nav-link {
   color: var(--gray);

@@ -29,6 +29,7 @@ urlpatterns = [
     path('properteas', views.properteas, name='properteas' ),
     path('properteasdet/<slug:slug>', views.properteasdet, name='properteasdet'),
     path('contac', views.contac, name='contac' ),
+    path('testimonials', views.testimonials, name='testimonials' ),
     path('filter_properties/<slug:category_slug>/', views.filter_properties, name='filter_properties'),
 
     

@@ -1,0 +1,72 @@
+{% extends 'layouts/master.html' %}
+{% block content %}
+{% load static %}
+
+<div class="lux-page-header">
+  <div class="container">
+    <h1>Testimonials</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+        <li class="breadcrumb-item active">Testimonials</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<section class="lux-section lux-section-dark">
+  <div class="container">
+    <div class="lux-section-title">
+      <h2>What Clients Say</h2>
+      <div class="gold-line"></div>
+      <p>Stories from clients who trusted Signature Property Solutions with their property journey.</p>
+    </div>
+
+    {% if testimonials %}
+    <div class="row g-4">
+      {% for testimonial in testimonials %}
+      <div class="col-md-6 col-xl-4">
+        <article class="lux-testimonial-card">
+          <div class="testimonial-mark"><i class="fas fa-quote-left"></i></div>
+          <div class="testimonial-stars" aria-label="{{ testimonial.rating }} out of 5 stars">
+            {% for star in "12345" %}
+              {% if forloop.counter <= testimonial.rating %}
+              <i class="fas fa-star"></i>
+              {% else %}
+              <i class="far fa-star"></i>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <p class="testimonial-quote">{{ testimonial.quote }}</p>
+          <div class="testimonial-author">
+            {% if testimonial.image %}
+            <img src="{{ testimonial.image.url }}" alt="{{ testimonial.name }}">
+            {% else %}
+            <div class="testimonial-avatar">{{ testimonial.name|first }}</div>
+            {% endif %}
+            <div>
+              <h5>{{ testimonial.name }}</h5>
+              {% if testimonial.role or testimonial.location %}
+              <span>
+                {% if testimonial.role %}{{ testimonial.role }}{% endif %}
+                {% if testimonial.role and testimonial.location %} · {% endif %}
+                {% if testimonial.location %}{{ testimonial.location }}{% endif %}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="lux-empty-state">
+      <i class="fas fa-comment-dots"></i>
+      <h3>Testimonials Coming Soon</h3>
+      <p>Client stories will appear here once they are added from the admin panel.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
