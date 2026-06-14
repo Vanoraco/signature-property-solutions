@@ -195,6 +195,8 @@ def extract_assistant_filters(message):
         "status": "",
         "property_type": "",
         "bedrooms": None,
+        "bathrooms": None,
+        "floor": None,
         "budget": None,
         "currency": "",
         "locations": [],
@@ -219,6 +221,33 @@ def extract_assistant_filters(message):
         )
         if any(term in lower for term in bedroom_terms):
             filters["bedrooms"] = str(bedroom_count)
+            break
+
+    for bathroom_count in range(1, 11):
+        bathroom_terms = (
+            f"{bathroom_count} bathroom",
+            f"{bathroom_count} bathrooms",
+            f"{bathroom_count} bath",
+            f"{bathroom_count} baths",
+            f"{bathroom_count} restroom",
+            f"{bathroom_count} restrooms",
+        )
+        if any(term in lower for term in bathroom_terms):
+            filters["bathrooms"] = str(bathroom_count)
+            break
+
+    for floor_number in range(1, 101):
+        floor_terms = (
+            f"{floor_number} floor",
+            f"{floor_number} floors",
+            f"floor {floor_number}",
+            f"{floor_number}th floor",
+            f"{floor_number}st floor",
+            f"{floor_number}nd floor",
+            f"{floor_number}rd floor",
+        )
+        if any(term in lower for term in floor_terms):
+            filters["floor"] = floor_number
             break
 
     for token in lower.replace(",", "").split():
@@ -250,6 +279,8 @@ def assistant_filters_have_search_intent(filters):
             filters["status"],
             filters["property_type"],
             filters["bedrooms"],
+            filters["bathrooms"],
+            filters["floor"],
             filters["budget"],
             filters["locations"],
         )
@@ -261,10 +292,28 @@ def assistant_filters_only_goal(filters):
         (
             filters["property_type"],
             filters["bedrooms"],
+            filters["bathrooms"],
+            filters["floor"],
             filters["budget"],
             filters["locations"],
         )
     )
+
+
+def assistant_filters_are_followup(filters):
+    has_primary_search = bool(filters["status"] or filters["property_type"])
+    has_refinement = bool(
+        filters["bedrooms"]
+        or filters["bathrooms"]
+        or filters["floor"]
+        or filters["budget"]
+        or filters["locations"]
+    )
+    return has_refinement and not has_primary_search
+
+
+def assistant_filters_are_status_change(filters):
+    return assistant_filters_only_goal(filters)
 
 
 def assistant_context_filters(request):
@@ -274,6 +323,8 @@ def assistant_context_filters(request):
         "status": filters.get("status", ""),
         "property_type": filters.get("property_type", ""),
         "bedrooms": filters.get("bedrooms"),
+        "bathrooms": filters.get("bathrooms"),
+        "floor": filters.get("floor"),
         "budget": filters.get("budget"),
         "currency": filters.get("currency", ""),
         "locations": filters.get("locations", []),
@@ -317,6 +368,15 @@ def find_assistant_matches(filters):
         queryset = queryset.filter(property_types__catagorys__icontains=filters["property_type"])
     if filters["bedrooms"]:
         queryset = queryset.filter(bedrooms=filters["bedrooms"])
+    if filters["bathrooms"]:
+        queryset = queryset.filter(bathrooms=filters["bathrooms"])
+        if not filters["property_type"]:
+            residential_query = Q()
+            for keyword in RESIDENTIAL_CATEGORY_KEYWORDS:
+                residential_query |= Q(property_types__catagorys__icontains=keyword)
+            queryset = queryset.filter(residential_query)
+    if filters["floor"]:
+        queryset = queryset.filter(property_floor=filters["floor"])
     if filters["locations"]:
         location_query = Q()
         for location in filters["locations"]:
@@ -339,6 +399,10 @@ def find_assistant_matches(filters):
         if filters["locations"] and any(location in pro.property_location.lower() for location in filters["locations"]):
             score += 3
         if filters["bedrooms"] and filters["bedrooms"] == pro.bedrooms:
+            score += 2
+        if filters["bathrooms"] and filters["bathrooms"] == pro.bathrooms:
+            score += 2
+        if filters["floor"] and filters["floor"] == pro.property_floor:
             score += 2
         if filters["budget"]:
             if listing_amount and listing_amount <= filters["budget"]:
@@ -884,7 +948,10 @@ def property_assistant(request):
         assistant_store_context(request, filters, "asked_budget")
         return JsonResponse({"reply": PROPERTY_ASSISTANT_PRICE_PROMPT, "matches": []})
 
-    if context.get("stage") in ("asked_goal", "asked_budget"):
+    if context.get("stage") in ("asked_goal", "asked_budget") or (
+        context.get("stage") == "searching"
+        and (assistant_filters_are_followup(filters) or assistant_filters_are_status_change(filters))
+    ):
         filters = assistant_merge_filters(assistant_context_filters(request), filters)
 
     if assistant_filters_have_search_intent(filters):
