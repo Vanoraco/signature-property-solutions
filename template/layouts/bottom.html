@@ -2,6 +2,38 @@
 <button class="scroll-to-top" type="button" aria-label="Scroll to top">
   <i class="fas fa-chevron-up"></i>
 </button>
+<section class="property-chat" aria-label="Property assistant chat">
+  <button class="property-chat-toggle" type="button" aria-label="Open property assistant" aria-expanded="false">
+    <i class="fas fa-comments"></i>
+  </button>
+  <div class="property-chat-panel" aria-hidden="true">
+    <div class="property-chat-header">
+      <div>
+        <span>Signature Assistant</span>
+        <strong>Property helper</strong>
+      </div>
+      <button class="property-chat-close" type="button" aria-label="Close property assistant">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="property-chat-messages" aria-live="polite">
+      <div class="chat-message assistant">
+        Ask about available rentals, sales, prices, and locations in Ethiopia.
+      </div>
+    </div>
+    <div class="property-chat-prompts" aria-label="Suggested property questions">
+      <button type="button" data-prompt="Offices for rent in Bole">Offices</button>
+      <button type="button" data-prompt="Apartments for sale">Apartments</button>
+      <button type="button" data-prompt="Properties under 100000 ETB">Budget</button>
+      <button type="button" data-prompt="Land available">Land</button>
+    </div>
+    <form class="property-chat-form" action="{% url 'property_assistant' %}" method="post">
+      {% csrf_token %}
+      <input type="text" name="message" maxlength="500" autocomplete="off" placeholder="Ask about available properties">
+      <button type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+    </form>
+  </div>
+</section>
 {% if request.GET.request_submitted or request.GET.request_error %}
 <div class="request-toast {% if request.GET.request_error %}error{% else %}success{% endif %}" role="status" aria-live="polite" aria-atomic="true">
   <div class="request-toast-icon">
@@ -56,5 +88,96 @@
       url.searchParams.delete("request_error");
       window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
     }
+  })();
+
+  (() => {
+    const chat = document.querySelector(".property-chat");
+    if (!chat) return;
+
+    const toggle = chat.querySelector(".property-chat-toggle");
+    const panel = chat.querySelector(".property-chat-panel");
+    const close = chat.querySelector(".property-chat-close");
+    const form = chat.querySelector(".property-chat-form");
+    const input = form?.querySelector("input[name='message']");
+    const messages = chat.querySelector(".property-chat-messages");
+    const promptButtons = chat.querySelectorAll("[data-prompt]");
+
+    const setOpen = (isOpen) => {
+      chat.classList.toggle("is-open", isOpen);
+      toggle?.setAttribute("aria-expanded", String(isOpen));
+      panel?.setAttribute("aria-hidden", String(!isOpen));
+      if (isOpen) window.setTimeout(() => input?.focus(), 120);
+    };
+
+    const addMessage = (text, type = "assistant") => {
+      const node = document.createElement("div");
+      node.className = `chat-message ${type}`;
+      node.textContent = text;
+      messages.appendChild(node);
+      messages.scrollTop = messages.scrollHeight;
+      return node;
+    };
+
+    const addMatches = (matches) => {
+      if (!matches.length) return;
+      const list = document.createElement("div");
+      list.className = "chat-match-list";
+      matches.forEach((match) => {
+        const card = document.createElement("a");
+        card.href = match.url;
+        card.className = "chat-match-card";
+        card.innerHTML = `
+          <strong></strong>
+          <small></small>
+          <em></em>
+          <span></span>
+        `;
+        card.querySelector("strong").textContent = match.title || "Property";
+        card.querySelector("small").textContent = [match.location, match.type].filter(Boolean).join(" · ");
+        card.querySelector("em").textContent = match.price || "Price on request";
+        card.querySelector("span").textContent = Array.isArray(match.specs) ? match.specs.join(" · ") : "";
+        list.appendChild(card);
+      });
+      messages.appendChild(list);
+      messages.scrollTop = messages.scrollHeight;
+    };
+
+    const sendMessage = async (message) => {
+      const trimmed = message.trim();
+      if (!trimmed) return;
+      addMessage(trimmed, "user");
+      input.value = "";
+      const loading = addMessage("Checking available listings...", "assistant loading");
+      const formData = new FormData(form);
+      formData.set("message", trimmed);
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        loading.remove();
+        addMessage(data.reply || "I could not process that request right now.");
+        addMatches(data.matches || []);
+      } catch (error) {
+        loading.remove();
+        addMessage("I could not connect right now. Please try again or use the property request box.");
+      }
+    };
+
+    toggle?.addEventListener("click", () => setOpen(!chat.classList.contains("is-open")));
+    close?.addEventListener("click", () => setOpen(false));
+    promptButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setOpen(true);
+        sendMessage(button.dataset.prompt || "");
+      });
+    });
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      sendMessage(input?.value || "");
+    });
   })();
 </script>
