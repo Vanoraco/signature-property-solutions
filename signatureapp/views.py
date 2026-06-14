@@ -86,6 +86,18 @@ PROPERTY_ASSISTANT_REFUSAL = (
     "I can only help with Signature Property Solutions listings, prices, "
     "locations, and real estate services in Ethiopia."
 )
+PROPERTY_ASSISTANT_CONTEXT_KEY = "property_assistant_context"
+PROPERTY_ASSISTANT_GREETING_REPLY = (
+    "Hi, how can I help you today? Are you looking to rent or buy a property?"
+)
+PROPERTY_ASSISTANT_PRICE_PROMPT = (
+    "Great. What price range or budget should I search within? You can also add a "
+    "location or property type, such as apartment in Bole under 10,000,000 ETB."
+)
+PROPERTY_ASSISTANT_BROWSE_REPLY = (
+    "Okay, feel free to browse the site. If you need help later, tell me what kind "
+    "of property, location, or budget you prefer."
+)
 DEFAULT_SEO_DESCRIPTION = (
     "Signature Property Solutions helps clients find verified apartments, houses, "
     "offices, warehouses, buildings, and land for sale or rent in Ethiopia."
@@ -113,11 +125,68 @@ def parse_price_amount(value):
     return currency, int(digits) if digits else None
 
 
+def normalize_assistant_token(value):
+    return "".join(ch for ch in value.lower() if ch.isalpha())
+
+
+def compress_repeated_letters(value):
+    compressed = []
+    previous = ""
+    for char in value:
+        if char != previous:
+            compressed.append(char)
+        previous = char
+    return "".join(compressed)
+
+
+def assistant_word_matches(word, targets):
+    normalized = normalize_assistant_token(word)
+    if not normalized:
+        return False
+    compressed = compress_repeated_letters(normalized)
+    return normalized in targets or compressed in targets
+
+
+def assistant_message_is_greeting(message):
+    greeting_targets = {"hey", "hi", "hello", "helo", "selam"}
+    words = [word for word in message.split() if normalize_assistant_token(word)]
+    if not words or len(words) > 4:
+        return False
+    return any(assistant_word_matches(word, greeting_targets) for word in words)
+
+
+def assistant_message_is_yes(message):
+    yes_targets = {"yes", "yep", "yeah", "sure", "ok", "okay", "yea"}
+    words = [word for word in message.split() if normalize_assistant_token(word)]
+    if not words or len(words) > 4:
+        return False
+    return any(assistant_word_matches(word, yes_targets) for word in words)
+
+
+def assistant_message_is_no(message):
+    no_targets = {"no", "nope", "nah", "not"}
+    words = [word for word in message.split() if normalize_assistant_token(word)]
+    if not words or len(words) > 5:
+        return False
+    return any(assistant_word_matches(word, no_targets) for word in words)
+
+
 def assistant_message_is_allowed(message):
     lower = message.lower()
     if any(term in lower for term in PROPERTY_ASSISTANT_REJECT_TERMS):
         return False
+    if assistant_message_is_greeting(message) or assistant_message_is_yes(message) or assistant_message_is_no(message):
+        return True
+    if assistant_message_has_budget(message):
+        return True
     return any(term in lower for term in PROPERTY_ASSISTANT_ALLOWED_TERMS)
+
+
+def assistant_message_has_budget(message):
+    for token in message.lower().replace(",", "").split():
+        if token.isdigit() and int(token) >= 1000:
+            return True
+    return False
 
 
 def extract_assistant_filters(message):
@@ -162,6 +231,8 @@ def extract_assistant_filters(message):
         filters["currency"] = "USD"
     elif any(term in lower for term in ("etb", "birr", "br")):
         filters["currency"] = "ETB"
+    elif filters["budget"] and filters["budget"] >= 100000:
+        filters["currency"] = "ETB"
 
     known_locations = set()
     for location in propertys.objects.exclude(property_location="").values_list("property_location", flat=True):
@@ -171,6 +242,58 @@ def extract_assistant_filters(message):
                 known_locations.add(cleaned)
     filters["locations"] = [location for location in known_locations if location in lower]
     return filters
+
+
+def assistant_filters_have_search_intent(filters):
+    return any(
+        (
+            filters["status"],
+            filters["property_type"],
+            filters["bedrooms"],
+            filters["budget"],
+            filters["locations"],
+        )
+    )
+
+
+def assistant_filters_only_goal(filters):
+    return bool(filters["status"]) and not any(
+        (
+            filters["property_type"],
+            filters["bedrooms"],
+            filters["budget"],
+            filters["locations"],
+        )
+    )
+
+
+def assistant_context_filters(request):
+    context = request.session.get(PROPERTY_ASSISTANT_CONTEXT_KEY, {})
+    filters = context.get("filters", {})
+    return {
+        "status": filters.get("status", ""),
+        "property_type": filters.get("property_type", ""),
+        "bedrooms": filters.get("bedrooms"),
+        "budget": filters.get("budget"),
+        "currency": filters.get("currency", ""),
+        "locations": filters.get("locations", []),
+    }
+
+
+def assistant_store_context(request, filters=None, stage=""):
+    request.session[PROPERTY_ASSISTANT_CONTEXT_KEY] = {
+        "stage": stage,
+        "filters": filters or {},
+    }
+    request.session.modified = True
+
+
+def assistant_merge_filters(base_filters, new_filters):
+    merged = dict(base_filters)
+    for key, value in new_filters.items():
+        if value:
+            merged[key] = value
+    return merged
 
 
 def assistant_property_payload(pro):
@@ -203,8 +326,9 @@ def find_assistant_matches(filters):
     scored_matches = []
     for pro in queryset:
         score = 0
+        price_fit_score = 0
         listing_currency, listing_amount = parse_price_amount(pro.price)
-        if filters["budget"] and filters["currency"] and listing_currency and listing_currency != filters["currency"]:
+        if filters["budget"] and filters["currency"] and listing_currency != filters["currency"]:
             continue
         if filters["budget"] and listing_amount and listing_amount > filters["budget"]:
             continue
@@ -220,18 +344,19 @@ def find_assistant_matches(filters):
             if listing_amount and listing_amount <= filters["budget"]:
                 if not filters["currency"] or not listing_currency or listing_currency == filters["currency"]:
                     score += 3
-        scored_matches.append((score, pro.id, pro))
+                    price_fit_score = int((listing_amount / filters["budget"]) * 1000)
+        scored_matches.append((score, price_fit_score, pro.id, pro))
 
-    scored_matches.sort(key=lambda item: (item[0], item[1]), reverse=True)
-    return [pro for score, _, pro in scored_matches if score >= 0][:5]
+    scored_matches.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+    return [pro for score, _, _, pro in scored_matches if score >= 0][:5]
 
 
 def build_assistant_reply(filters, matches):
     if not matches:
         return (
-            "I could not find an exact match right now. Please use the property "
-            "request box and tell us your preferred property type, location, and "
-            "budget so we can prepare better options."
+            "I could not find an exact match right now. Send us your preferred "
+            "property type, location, and budget through the request box so we can "
+            "prepare better options."
         )
 
     lead = "I found"
@@ -741,11 +866,35 @@ def property_assistant(request):
     if not assistant_message_is_allowed(message):
         return JsonResponse({"reply": PROPERTY_ASSISTANT_REFUSAL, "matches": []})
 
+    if assistant_message_is_greeting(message):
+        assistant_store_context(request, stage="asked_goal")
+        return JsonResponse({"reply": PROPERTY_ASSISTANT_GREETING_REPLY, "matches": []})
+
+    context = request.session.get(PROPERTY_ASSISTANT_CONTEXT_KEY, {})
+    if assistant_message_is_no(message):
+        assistant_store_context(request)
+        return JsonResponse({"reply": PROPERTY_ASSISTANT_BROWSE_REPLY, "matches": []})
+
     filters = extract_assistant_filters(message)
+    if assistant_message_is_yes(message) and not assistant_filters_have_search_intent(filters):
+        assistant_store_context(request, assistant_context_filters(request), "asked_budget")
+        return JsonResponse({"reply": PROPERTY_ASSISTANT_PRICE_PROMPT, "matches": []})
+
+    if context.get("stage") == "asked_goal" and assistant_filters_only_goal(filters):
+        assistant_store_context(request, filters, "asked_budget")
+        return JsonResponse({"reply": PROPERTY_ASSISTANT_PRICE_PROMPT, "matches": []})
+
+    if context.get("stage") in ("asked_goal", "asked_budget"):
+        filters = assistant_merge_filters(assistant_context_filters(request), filters)
+
+    if assistant_filters_have_search_intent(filters):
+        assistant_store_context(request, filters, "searching")
+
     matches = find_assistant_matches(filters)
     return JsonResponse(
         {
             "reply": build_assistant_reply(filters, matches),
             "matches": [assistant_property_payload(pro) for pro in matches],
+            "request_link": not matches and assistant_filters_have_search_intent(filters),
         }
     )

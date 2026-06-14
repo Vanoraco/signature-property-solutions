@@ -118,20 +118,36 @@
       return node;
     };
 
+    const addRequestLink = () => {
+      const link = document.createElement("a");
+      link.href = "/properteas#property-request";
+      link.className = "chat-request-link";
+      link.textContent = "Send property request";
+      messages.appendChild(link);
+      messages.scrollTop = messages.scrollHeight;
+    };
+
     const addMatches = (matches) => {
       if (!matches.length) return;
       const list = document.createElement("div");
       list.className = "chat-match-list";
-      matches.forEach((match) => {
+      matches.forEach((match, index) => {
         const card = document.createElement("a");
         card.href = match.url;
         card.className = "chat-match-card";
         card.innerHTML = `
+          <b></b>
           <strong></strong>
           <small></small>
           <em></em>
           <span></span>
         `;
+        const badge = card.querySelector("b");
+        if (index === 0) {
+          badge.textContent = "Best match";
+        } else {
+          badge.remove();
+        }
         card.querySelector("strong").textContent = match.title || "Property";
         card.querySelector("small").textContent = [match.location, match.type].filter(Boolean).join(" · ");
         card.querySelector("em").textContent = match.price || "Price on request";
@@ -160,7 +176,9 @@
         const data = await response.json();
         loading.remove();
         addMessage(data.reply || "I could not process that request right now.");
-        addMatches(data.matches || []);
+        const matches = data.matches || [];
+        addMatches(matches);
+        if (data.request_link) addRequestLink();
       } catch (error) {
         loading.remove();
         addMessage("I could not connect right now. Please try again or use the property request box.");
