@@ -42,7 +42,7 @@ img { max-width: 100%; height: auto; }
   top: 0;
   z-index: 1000;
 }
-.lux-navbar .navbar-brand img { height: 85px; }
+.lux-navbar .navbar-brand img { height: 115px; }
 .lux-navbar .nav-link {
   color: var(--white) !important;
   font-size: 0.9rem;
