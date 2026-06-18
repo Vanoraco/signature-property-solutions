@@ -37,12 +37,12 @@ img { max-width: 100%; height: auto; }
   background: rgba(10,10,10,0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(201,168,76,0.15);
-  padding: 1rem 0;
+  padding: 0.3rem 0;
   position: sticky;
   top: 0;
   z-index: 1000;
 }
-.lux-navbar .navbar-brand img { height: 115px; }
+.lux-navbar .navbar-brand img { height: 80px; }
 .lux-navbar .nav-link {
   color: var(--white) !important;
   font-size: 0.9rem;
