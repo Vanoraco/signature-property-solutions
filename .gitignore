@@ -43,3 +43,6 @@ statics/
 *.stackdump
 tmp/
 stderr.log
+
+# Superpowers brainstorming
+.superpowers/
