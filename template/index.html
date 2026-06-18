@@ -40,10 +40,13 @@
           <option value="">Select</option>
           {% for catagory in catagorys %}
           {% if catagory.slug %}
-          <option value="{{ catagory.slug }}" {% if request.GET.category == catagory.slug %}selected{% endif %}>{{ catagory.catagorys }}</option>
+          <option value="{{ catagory.slug }}" data-status="all" {% if request.GET.category == catagory.slug %}selected{% endif %}>{{ catagory.catagorys }}</option>
           {% endif %}
           {% endfor %}
         </select>
+        <script type="application/json" id="category-data-all">[{% for cat in catagorys %}{% if cat.slug %}{"slug":"{{ cat.slug }}","name":"{{ cat.catagorys }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}]</script>
+        <script type="application/json" id="category-data-rent">[{% for cat in catagorys_rent %}{% if cat.slug %}{"slug":"{{ cat.slug }}","name":"{{ cat.catagorys }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}]</script>
+        <script type="application/json" id="category-data-sale">[{% for cat in catagorys_sale %}{% if cat.slug %}{"slug":"{{ cat.slug }}","name":"{{ cat.catagorys }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}]</script>
       </div>
       <div class="market-field" id="bedroom-search-field">
         <label for="search-bedrooms">Bedrooms</label>
@@ -61,10 +64,64 @@
           <option value="10" {% if request.GET.bedrooms == '10' %}selected{% endif %}>10</option>
         </select>
       </div>
-      <div class="market-field">
-        <label for="search-price">Max. Price</label>
-        <select id="search-price" name="max_price" data-max-etb="{{ max_price_etb }}" data-max-usd="{{ max_price_usd }}" data-selected="{{ request.GET.max_price|default:'' }}">
+      <div class="market-field is-hidden" id="bathroom-search-field">
+        <label for="search-bathrooms">Bathrooms</label>
+        <select id="search-bathrooms" name="bathrooms">
           <option value="">Select</option>
+          <option value="1" {% if request.GET.bathrooms == '1' %}selected{% endif %}>1</option>
+          <option value="2" {% if request.GET.bathrooms == '2' %}selected{% endif %}>2</option>
+          <option value="3" {% if request.GET.bathrooms == '3' %}selected{% endif %}>3</option>
+          <option value="4" {% if request.GET.bathrooms == '4' %}selected{% endif %}>4</option>
+          <option value="5" {% if request.GET.bathrooms == '5' %}selected{% endif %}>5</option>
+          <option value="6" {% if request.GET.bathrooms == '6' %}selected{% endif %}>6</option>
+        </select>
+      </div>
+      <div class="market-field is-hidden" id="floor-search-field">
+        <label for="search-floor">Floor</label>
+        <select id="search-floor" name="floor">
+          <option value="">Select</option>
+          <option value="1" {% if request.GET.floor == '1' %}selected{% endif %}>1</option>
+          <option value="2" {% if request.GET.floor == '2' %}selected{% endif %}>2</option>
+          <option value="3" {% if request.GET.floor == '3' %}selected{% endif %}>3</option>
+          <option value="4" {% if request.GET.floor == '4' %}selected{% endif %}>4</option>
+          <option value="5" {% if request.GET.floor == '5' %}selected{% endif %}>5</option>
+          <option value="6" {% if request.GET.floor == '6' %}selected{% endif %}>6</option>
+          <option value="7" {% if request.GET.floor == '7' %}selected{% endif %}>7</option>
+          <option value="8" {% if request.GET.floor == '8' %}selected{% endif %}>8</option>
+          <option value="9" {% if request.GET.floor == '9' %}selected{% endif %}>9</option>
+          <option value="10" {% if request.GET.floor == '10' %}selected{% endif %}>10</option>
+          <option value="11" {% if request.GET.floor == '11' %}selected{% endif %}>11</option>
+          <option value="12" {% if request.GET.floor == '12' %}selected{% endif %}>12</option>
+          <option value="13" {% if request.GET.floor == '13' %}selected{% endif %}>13</option>
+          <option value="14" {% if request.GET.floor == '14' %}selected{% endif %}>14</option>
+          <option value="15" {% if request.GET.floor == '15' %}selected{% endif %}>15</option>
+          <option value="16" {% if request.GET.floor == '16' %}selected{% endif %}>16</option>
+        </select>
+      </div>
+      <div class="market-field is-hidden" id="furnished-search-field">
+        <label for="search-furnished">Furnished</label>
+        <select id="search-furnished" name="furnished">
+          <option value="">Select</option>
+          <option value="Yes" {% if request.GET.furnished == 'Yes' %}selected{% endif %}>Yes</option>
+          <option value="No" {% if request.GET.furnished == 'No' %}selected{% endif %}>No</option>
+        </select>
+      </div>
+      <div class="market-field is-hidden" id="size-search-field">
+        <label for="search-size">Size (m²)</label>
+        <select id="search-size" name="size">
+          <option value="">Select</option>
+          <option value="50" {% if request.GET.size == '50' %}selected{% endif %}>50</option>
+          <option value="100" {% if request.GET.size == '100' %}selected{% endif %}>100</option>
+          <option value="150" {% if request.GET.size == '150' %}selected{% endif %}>150</option>
+          <option value="200" {% if request.GET.size == '200' %}selected{% endif %}>200</option>
+          <option value="300" {% if request.GET.size == '300' %}selected{% endif %}>300</option>
+          <option value="400" {% if request.GET.size == '400' %}selected{% endif %}>400</option>
+          <option value="500" {% if request.GET.size == '500' %}selected{% endif %}>500</option>
+          <option value="600" {% if request.GET.size == '600' %}selected{% endif %}>600</option>
+          <option value="700" {% if request.GET.size == '700' %}selected{% endif %}>700</option>
+          <option value="800" {% if request.GET.size == '800' %}selected{% endif %}>800</option>
+          <option value="900" {% if request.GET.size == '900' %}selected{% endif %}>900</option>
+          <option value="1000" {% if request.GET.size == '1000' %}selected{% endif %}>1000</option>
         </select>
       </div>
       <div class="market-field">
@@ -73,6 +130,12 @@
           <option value="">Select</option>
           <option value="ETB" {% if selected_currency == 'ETB' %}selected{% endif %}>ETB</option>
           <option value="USD" {% if selected_currency == 'USD' %}selected{% endif %}>USD</option>
+        </select>
+      </div>
+      <div class="market-field">
+        <label for="search-price">Max. Price</label>
+        <select id="search-price" name="max_price" data-max-etb="{{ max_price_etb }}" data-max-usd="{{ max_price_usd }}" data-selected="{{ request.GET.max_price|default:'' }}">
+          <option value="">Select</option>
         </select>
       </div>
       <div class="market-field market-field-submit">
@@ -89,30 +152,72 @@
     const input = document.getElementById('search-filter');
     if (!tabs.length || !input) return;
     input.value = "{{ request.GET.filter|default:'' }}";
+    const categorySelect = document.getElementById('search-category');
+    const currentCategory = "{{ request.GET.category|default:'' }}";
+    const loadCategories = (statusKey) => {
+      if (!categorySelect) return;
+      const scriptEl = document.getElementById('category-data-' + statusKey);
+      if (!scriptEl) return;
+      let categories;
+      try { categories = JSON.parse(scriptEl.textContent); } catch (e) { return; }
+      categorySelect.innerHTML = '<option value="">Select</option>';
+      categories.forEach((cat) => {
+        const option = document.createElement('option');
+        option.value = cat.slug;
+        option.textContent = cat.name;
+        if (currentCategory && currentCategory === cat.slug) option.selected = true;
+        categorySelect.appendChild(option);
+      });
+      categorySelect.dispatchEvent(new Event('change'));
+    };
+    loadCategories('all');
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
         tabs.forEach((t) => t.classList.remove('is-active'));
         tab.classList.add('is-active');
-        input.value = tab.getAttribute('data-filter') || '';
+        const filter = tab.getAttribute('data-filter') || '';
+        input.value = filter;
+        if (filter === 'Rent') loadCategories('rent');
+        else if (filter === 'Sale') loadCategories('sale');
+        else loadCategories('all');
       });
     });
-    const categorySelect = document.getElementById('search-category');
     const bedroomField = document.getElementById('bedroom-search-field');
     const bedroomSelect = document.getElementById('search-bedrooms');
-    const updateBedroomField = () => {
-      if (!categorySelect || !bedroomField || !bedroomSelect) return;
+    const bathroomField = document.getElementById('bathroom-search-field');
+    const bathroomSelect = document.getElementById('search-bathrooms');
+    const floorField = document.getElementById('floor-search-field');
+    const floorSelect = document.getElementById('search-floor');
+    const furnishedField = document.getElementById('furnished-search-field');
+    const furnishedSelect = document.getElementById('search-furnished');
+    const sizeField = document.getElementById('size-search-field');
+    const sizeSelect = document.getElementById('search-size');
+    const updateFields = () => {
+      if (!categorySelect) return;
       const selectedOption = categorySelect.options[categorySelect.selectedIndex];
       const selectedText = selectedOption ? selectedOption.textContent.toLowerCase() : '';
       const hasCategory = Boolean(categorySelect.value);
-      const isResidential = ['apartment', 'house', 'villa', 'penthouse', 'condo'].some((keyword) => selectedText.includes(keyword));
-      const shouldShow = !hasCategory || isResidential;
-      bedroomField.classList.toggle('is-hidden', !shouldShow);
-      bedroomSelect.disabled = !shouldShow;
-      if (!shouldShow) bedroomSelect.value = '';
+      const isApartment = selectedText.includes('apartment');
+      const isHouse = selectedText.includes('house');
+      const isOffice = selectedText.includes('office');
+      const isWarehouse = selectedText.includes('warehouse');
+      const isBuilding = selectedText.includes('building');
+      const isLand = selectedText.includes('land');
+      const isResidential = isApartment || isHouse;
+      const showBedrooms = !hasCategory || isResidential;
+      const showBathrooms = !hasCategory || isApartment || isHouse || isOffice;
+      const showFloor = !hasCategory || isOffice || isWarehouse || isBuilding;
+      const showFurnished = !hasCategory || isApartment || isHouse || isOffice;
+      const showSize = !hasCategory || isOffice || isWarehouse || isBuilding || isLand;
+      if (bedroomField) { bedroomField.classList.toggle('is-hidden', !showBedrooms); bedroomSelect.disabled = !showBedrooms; if (!showBedrooms) bedroomSelect.value = ''; }
+      if (bathroomField) { bathroomField.classList.toggle('is-hidden', !showBathrooms); bathroomSelect.disabled = !showBathrooms; if (!showBathrooms) bathroomSelect.value = ''; }
+      if (floorField) { floorField.classList.toggle('is-hidden', !showFloor); floorSelect.disabled = !showFloor; if (!showFloor) floorSelect.value = ''; }
+      if (furnishedField) { furnishedField.classList.toggle('is-hidden', !showFurnished); furnishedSelect.disabled = !showFurnished; if (!showFurnished) furnishedSelect.value = ''; }
+      if (sizeField) { sizeField.classList.toggle('is-hidden', !showSize); sizeSelect.disabled = !showSize; if (!showSize) sizeSelect.value = ''; }
     };
     if (categorySelect) {
-      categorySelect.addEventListener('change', updateBedroomField);
-      updateBedroomField();
+      categorySelect.addEventListener('change', updateFields);
+      updateFields();
     }
     const currencySelect = document.getElementById('search-currency');
     const priceSelect = document.getElementById('search-price');

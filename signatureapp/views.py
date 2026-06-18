@@ -553,9 +553,28 @@ def index(request):
     if max_price_usd is None:
         max_price_usd = 1000000
 
+    rent_category_ids = (
+        propertys.objects.filter(property_status="For Rent")
+        .values_list("property_types_id", flat=True)
+        .distinct()
+    )
+    sale_category_ids = (
+        propertys.objects.filter(property_status="For Sale")
+        .values_list("property_types_id", flat=True)
+        .distinct()
+    )
+    catagorys_rent = catagory.objects.filter(
+        Q(id__in=rent_category_ids) | Q(catagorys__icontains="rent")
+    )
+    catagorys_sale = catagory.objects.filter(
+        Q(id__in=sale_category_ids) | Q(catagorys__icontains="sale")
+    )
+
     context = {
         "hom": hom,
         "catagorys": catagorys,
+        "catagorys_rent": catagorys_rent,
+        "catagorys_sale": catagorys_sale,
         "propertyss": propertyss,
         "contactss": contactss,
         "max_price_etb": max_price_etb,
@@ -661,6 +680,20 @@ def properteas(request):
     if allow_bedroom_filter and selected_bedrooms and selected_bedrooms.isdigit():
         if 1 <= int(selected_bedrooms) <= 10:
             property_list = property_list.filter(bedrooms=selected_bedrooms)
+    selected_bathrooms = request.GET.get("bathrooms")
+    if selected_bathrooms and selected_bathrooms.isdigit():
+        if 1 <= int(selected_bathrooms) <= 6:
+            property_list = property_list.filter(bathrooms=selected_bathrooms)
+    selected_floor = request.GET.get("floor")
+    if selected_floor and selected_floor.isdigit():
+        if 1 <= int(selected_floor) <= 16:
+            property_list = property_list.filter(property_floor=selected_floor)
+    selected_furnished = request.GET.get("furnished")
+    if selected_furnished in ("Yes", "No"):
+        property_list = property_list.filter(furnished__iexact=selected_furnished)
+    selected_size = request.GET.get("size")
+    if selected_size and selected_size.isdigit():
+        property_list = property_list.filter(property_size__gte=int(selected_size))
     max_price = request.GET.get("max_price")
     if max_price and max_price.isdigit():
         property_list = property_list.filter(price__lte=max_price)
