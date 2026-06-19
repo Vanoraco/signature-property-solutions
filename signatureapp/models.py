@@ -110,7 +110,13 @@ class propertys(models.Model):
         super().save(*args, **kwargs)
 
     def _parse_price(self):
-        """Parse the free-text price into price_amount and price_currency."""
+        """Parse the free-text price into price_amount and price_currency.
+
+        Requires a recognized currency ($ / usd -> USD, br / birr / etb -> ETB).
+        Prices without a recognized currency (e.g. '1000 Per Sqm', 'Negotiable')
+        yield (None, '') so the property stays visible but is excluded from
+        price-range filters.
+        """
         raw = (self.price or '').strip()
         if not raw:
             self.price_amount = None
@@ -122,6 +128,10 @@ class propertys(models.Model):
             currency = 'USD'
         elif any(kw in lower for kw in ('br', 'birr', 'etb')):
             currency = 'ETB'
+        if not currency:
+            self.price_amount = None
+            self.price_currency = ''
+            return
         digits = ''.join(ch for ch in raw if ch.isdigit())
         if digits:
             self.price_amount = int(digits)
