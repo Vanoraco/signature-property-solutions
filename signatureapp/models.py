@@ -69,6 +69,8 @@ class propertys(models.Model):
     property_title= models.CharField(max_length=600, blank=True)
     slug= models.SlugField(unique=True, null=False)
     price = models.CharField(max_length=100,blank=True)
+    price_amount   = models.IntegerField(null=True, blank=True, help_text="Numeric price value, parsed from price text")
+    price_currency = models.CharField(max_length=8, blank=True, default='', help_text="ETB, USD, or empty")
     property_types = models.ForeignKey(catagory, on_delete=models.CASCADE)
     agent = models.ForeignKey(egent, on_delete=models.CASCADE,blank=True,null=True )
     facilitie = models.ManyToManyField(facilities )
@@ -97,6 +99,36 @@ class propertys(models.Model):
 
     def __str__(self):
         return self.property_title
+
+    def save(self, *args, **kwargs):
+        # Parse price text into numeric fields
+        if self.price:
+            self._parse_price()
+        else:
+            self.price_amount = None
+            self.price_currency = ''
+        super().save(*args, **kwargs)
+
+    def _parse_price(self):
+        """Parse the free-text price into price_amount and price_currency."""
+        raw = (self.price or '').strip()
+        if not raw:
+            self.price_amount = None
+            self.price_currency = ''
+            return
+        lower = raw.lower()
+        currency = ''
+        if '$' in raw or 'usd' in lower:
+            currency = 'USD'
+        elif any(kw in lower for kw in ('br', 'birr', 'etb')):
+            currency = 'ETB'
+        digits = ''.join(ch for ch in raw if ch.isdigit())
+        if digits:
+            self.price_amount = int(digits)
+            self.price_currency = currency
+        else:
+            self.price_amount = None
+            self.price_currency = ''
 
     def _property_type_name(self):
         if not self.property_types_id:
