@@ -255,3 +255,64 @@ class PropertySearchTests(TestCase):
         # category wins — returns only the office
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.first().property_title, "Atlas Office")
+
+
+class SearchSuggestTests(TestCase):
+    """Tests for the /search/suggest/ endpoint."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.cat_apt = catagory.objects.create(
+            catagorys="Apartment for Sale", slug="apt-sale", icon=_icon())
+        cls.cat_house = catagory.objects.create(
+            catagorys="House for Rent", slug="house-rent", icon=_icon())
+        cls.cat_office = catagory.objects.create(
+            catagorys="Office for Rent", slug="off-rent", icon=_icon())
+
+        propertys.objects.create(
+            property_title="Bole Apt", slug="bole-apt",
+            property_location="Bole", price="3500$",
+            property_status="For Sale", property_types=cls.cat_apt,
+            property_size=100, property_area=100, property_floor=1,
+        )
+        propertys.objects.create(
+            property_title="Bole Subcity Apt", slug="bole-subcity-apt",
+            property_location="Bole next to Boston Spa", price="5000$",
+            property_status="For Sale", property_types=cls.cat_apt,
+            property_size=120, property_area=120, property_floor=2,
+        )
+        propertys.objects.create(
+            property_title="CMC House", slug="cmc-house",
+            property_location="CMC", price="11,000,000 ETB",
+            property_status="For Rent", property_types=cls.cat_house,
+            property_size=200, property_area=200, property_floor=1,
+        )
+
+    def test_suggest_location_starts_with(self):
+        resp = self.client.get('/search/suggest/', {'q': 'bo'})
+        data = resp.json()
+        labels = [r['label'] for r in data['results']]
+        self.assertIn('Bole', labels)
+
+    def test_suggest_groups_locations_and_types(self):
+        resp = self.client.get('/search/suggest/', {'q': 'o'})
+        data = resp.json()
+        types = [r['type'] for r in data['results']]
+        self.assertIn('location', types)
+        self.assertIn('type', types)
+
+    def test_suggest_empty_q(self):
+        resp = self.client.get('/search/suggest/', {'q': ''})
+        data = resp.json()
+        self.assertEqual(data['results'], [])
+
+    def test_suggest_respects_cap(self):
+        resp = self.client.get('/search/suggest/', {'q': 'a'})
+        data = resp.json()
+        self.assertLessEqual(len(data['results']), 10)
+
+    def test_suggest_no_match(self):
+        resp = self.client.get('/search/suggest/', {'q': 'zzznonexistent'})
+        data = resp.json()
+        self.assertEqual(data['results'], [])
+

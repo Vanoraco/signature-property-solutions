@@ -33,36 +33,7 @@
 
     <div class="row g-4">
       {% for property in properties %}
-      <div class="col-md-6 col-lg-4">
-        <div class="lux-prop-card">
-          <div class="card-img">
-            <a href="{% url 'properteasdet' property.slug %}">
-              <img src="{{ property.main_image.url }}" alt="{{ property.property_title }}">
-            </a>
-            <span class="badge-status">{{ property.property_status }}</span>
-          </div>
-          <div class="card-body">
-            <h5><a href="{% url 'properteasdet' property.slug %}">{{ property.property_title }}</a></h5>
-            <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ property.property_location }}</div>
-            {% with specs=property.card_specs %}
-            {% if specs %}
-            <div class="prop-meta">
-              {% for spec in specs %}
-              <span><i class="{{ spec.icon }}"></i>{{ spec.value }} {{ spec.label }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
-          </div>
-          <div class="prop-footer">
-            <span class="prop-price">{{ property.price }}</span>
-            <div class="prop-actions">
-              <a href="tel:+{{ property.agent.phone_number }}"><i class="fas fa-phone"></i></a>
-              <a href="https://api.whatsapp.com/send?phone={{ property.agent.phone_number }}"><i class="fab fa-whatsapp"></i></a>
-            </div>
-          </div>
-        </div>
-      </div>
+        {% include "partials/property_card.html" with property=property %}
       {% endfor %}
     </div>
 

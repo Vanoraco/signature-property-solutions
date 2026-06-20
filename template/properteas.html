@@ -1,6 +1,7 @@
 {% extends 'layouts/master.html' %}
-{% block content %}
 {% load static %}
+
+{% block content %}
 
 <div class="lux-page-header">
   <div class="container">
@@ -16,76 +17,221 @@
 
 <section class="lux-section lux-section-dark">
   <div class="container">
-    <div class="lux-filter-bar">
-      <a href="?filter=Sale" class="{% if selected_filter == 'Sale' %}active{% endif %}">Sale</a>
-      <a href="?filter=Rent" class="{% if selected_filter == 'Rent' %}active{% endif %}">Rent</a>
-      <a href="?filter=LowToHigh" class="{% if selected_filter == 'LowToHigh' %}active{% endif %}">Low to High</a>
-      <a href="?filter=HighToLow" class="{% if selected_filter == 'HighToLow' %}active{% endif %}">High to Low</a>
-      <div class="dropdown">
-        <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">Category <i class="fas fa-chevron-down" style="font-size:0.7rem"></i></a>
-        <ul class="dropdown-menu">
-          {% for category in categories %}
-          <li><a href="?category={{ category.slug }}">{{ category.catagorys }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
 
-    <div class="row g-4">
-      {% for property in properties %}
-      <div class="col-md-6 col-lg-4">
-        <div class="lux-prop-card">
-          <div class="card-img">
-            <a href="{% url 'properteasdet' property.slug %}">
-              <img src="{{ property.main_image.url }}" alt="{{ property.property_title }}">
-            </a>
-            <span class="badge-status">{{ property.property_status }}</span>
-          </div>
-          <div class="card-body">
-            <h5><a href="{% url 'properteasdet' property.slug %}">{{ property.property_title }}</a></h5>
-            <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ property.property_location }}</div>
-            {% with specs=property.card_specs %}
-            {% if specs %}
-            <div class="prop-meta">
-              {% for spec in specs %}
-              <span><i class="{{ spec.icon }}"></i>{{ spec.value }} {{ spec.label }}</span>
+    <form method="get" action="/properteas" id="prop-search-form" class="lux-search-bar" onsubmit="return false;">
+      <div class="lux-search-input-wrap">
+        <input type="text" name="q" value="{{ applied_filters.q|default:'' }}" placeholder="Bole, Kazanchis, Apartment..." autocomplete="off" id="lux-search-input">
+        <div class="lux-suggest-dropdown" id="lux-suggest-dropdown"></div>
+      </div>
+
+      <div class="lux-status-pills">
+        <button type="button" data-filter="" class="lux-pill {% if not applied_filters.filter %}is-active{% endif %}">All</button>
+        <button type="button" data-filter="Rent" class="lux-pill {% if applied_filters.filter == 'Rent' %}is-active{% endif %}">Rent</button>
+        <button type="button" data-filter="Sale" class="lux-pill {% if applied_filters.filter == 'Sale' %}is-active{% endif %}">Sale</button>
+      </div>
+
+      <button type="button" class="lux-filter-toggle" id="lux-filter-toggle">
+        <span>&#9881; Filters</span>
+        {% if active_filter_count > 0 %}
+          <span class="lux-filter-badge">{{ active_filter_count }}</span>
+        {% endif %}
+      </button>
+
+      <button type="button" class="lux-search-btn" id="lux-search-btn">Search</button>
+    </form>
+
+    <div id="lux-results-area">
+    {% if active_filter_count > 0 %}
+    <div class="lux-filter-chips" id="lux-filter-chips">
+      {% if applied_filters.bedrooms %}
+        <span class="lux-chip">
+          Beds: {{ applied_filters.bedrooms }}
+          <a href="#" class="lux-chip-remove" data-remove="bedrooms">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.bathrooms %}
+        <span class="lux-chip">
+          Baths: {{ applied_filters.bathrooms }}
+          <a href="#" class="lux-chip-remove" data-remove="bathrooms">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.furnished %}
+        <span class="lux-chip">
+          Furnished: {{ applied_filters.furnished }}
+          <a href="#" class="lux-chip-remove" data-remove="furnished">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.floor %}
+        <span class="lux-chip">
+          Floor: {{ applied_filters.floor }}
+          <a href="#" class="lux-chip-remove" data-remove="floor">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.size %}
+        <span class="lux-chip">
+          Min Size: {{ applied_filters.size }} sqm
+          <a href="#" class="lux-chip-remove" data-remove="size">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.min_price or applied_filters.max_price %}
+        <span class="lux-chip">
+          {{ applied_filters.currency }}: {{ applied_filters.min_price|default:'0' }}&#8211;{{ applied_filters.max_price|default:'&#8734;' }}
+          <a href="#" class="lux-chip-remove" data-remove="price">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.type %}
+        <span class="lux-chip">
+          Type: {{ applied_filters.type }}
+          <a href="#" class="lux-chip-remove" data-remove="type">&#10005;</a>
+        </span>
+      {% endif %}
+      {% for slug in applied_filters.amenities %}
+        <span class="lux-chip">
+          {{ slug }}
+          <a href="#" class="lux-chip-remove" data-remove="amenities" data-value="{{ slug }}">&#10005;</a>
+        </span>
+      {% endfor %}
+      <a href="/properteas" class="lux-clear-all">Clear all</a>
+    </div>
+    {% else %}
+    <div id="lux-filter-chips"></div>
+    {% endif %}
+
+    <div id="lux-filter-drawer" class="lux-filter-drawer">
+      <div class="lux-filter-drawer-overlay" id="lux-drawer-overlay"></div>
+      <div class="lux-filter-drawer-panel">
+        <div class="lux-drawer-header">
+          <strong>Filters</strong>
+          <button type="button" id="lux-drawer-close">&#10005;</button>
+        </div>
+        <div class="lux-drawer-body">
+          <div class="lux-drawer-group">
+            <label class="lux-drawer-label">BUILDING TYPE</label>
+            <div class="lux-type-chips">
+              <button type="button" data-type="" class="lux-type-chip {% if not applied_filters.type %}is-active{% endif %}">Any</button>
+              {% for slug, label in building_type_choices %}
+              <button type="button" data-type="{{ slug }}" class="lux-type-chip {% if applied_filters.type == slug %}is-active{% endif %}">{{ label }}</button>
               {% endfor %}
             </div>
-            {% endif %}
-            {% endwith %}
           </div>
-          <div class="prop-footer">
-            <span class="prop-price">{{ property.price }}</span>
-            <div class="prop-actions">
-              <a href="tel:+{{ property.agent.phone_number }}"><i class="fas fa-phone"></i></a>
-              <a href="https://api.whatsapp.com/send?phone={{ property.agent.phone_number }}"><i class="fab fa-whatsapp"></i></a>
+
+          <div class="lux-drawer-row">
+            <div class="lux-drawer-field">
+              <label class="lux-drawer-label">BEDROOMS</label>
+              <select name="bedrooms">
+                <option value="">Any</option>
+                {% for n in "123456" %}
+                <option value="{{ n }}" {% if applied_filters.bedrooms == n %}selected{% endif %}>{{ n }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="lux-drawer-field">
+              <label class="lux-drawer-label">BATHROOMS</label>
+              <select name="bathrooms">
+                <option value="">Any</option>
+                {% for n in "12345" %}
+                <option value="{{ n }}" {% if applied_filters.bathrooms == n %}selected{% endif %}>{{ n }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="lux-drawer-group">
+            <label class="lux-drawer-label">PRICE</label>
+            <div class="lux-drawer-row">
+              <div class="lux-drawer-field">
+                <select name="currency">
+                  <option value="">Currency</option>
+                  <option value="ETB" {% if applied_filters.currency == 'ETB' %}selected{% endif %}>ETB</option>
+                  <option value="USD" {% if applied_filters.currency == 'USD' %}selected{% endif %}>USD</option>
+                </select>
+              </div>
+              <div class="lux-drawer-field">
+                <input type="number" name="min_price" placeholder="Min" value="{{ applied_filters.min_price|default:'' }}">
+              </div>
+              <div class="lux-drawer-field">
+                <input type="number" name="max_price" placeholder="Max" value="{{ applied_filters.max_price|default:'' }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="lux-drawer-row">
+            <div class="lux-drawer-field">
+              <label class="lux-drawer-label">FURNISHED</label>
+              <select name="furnished">
+                <option value="">Any</option>
+                <option value="Yes" {% if applied_filters.furnished == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if applied_filters.furnished == 'No' %}selected{% endif %}>No</option>
+              </select>
+            </div>
+            <div class="lux-drawer-field">
+              <label class="lux-drawer-label">FLOOR</label>
+              <input type="number" name="floor" placeholder="Any" value="{{ applied_filters.floor|default:'' }}">
+            </div>
+          </div>
+
+          <div class="lux-drawer-group">
+            <label class="lux-drawer-label">AMENITIES</label>
+            <div class="lux-amenity-grid">
+              {% for fac in all_facilities %}
+              <label class="lux-amenity-check">
+                <input type="checkbox" name="amenities" value="{{ fac.slug }}"
+                  {% if fac.slug in applied_filters.amenities %}checked{% endif %}>
+                {{ fac.facilities_name }}
+              </label>
+              {% endfor %}
             </div>
           </div>
         </div>
+
+        <div class="lux-drawer-footer">
+          <button type="button" class="lux-btn-clear" id="lux-drawer-clear">Clear</button>
+          <button type="button" class="lux-btn-apply">Show {{ all_properties.paginator.count }} results</button>
+        </div>
       </div>
+    </div>
+
+    <div class="lux-results-header">
+      <span class="lux-results-count">{{ all_properties.paginator.count }} properties found</span>
+      <div class="lux-sort" id="lux-sort-links">
+        <span>Sort:</span>
+        <a href="#" class="lux-sort-link{% if not request.GET.sort %} is-active{% endif %}" data-sort="">Newest</a>
+        <a href="#" class="lux-sort-link{% if request.GET.sort == 'LowToHigh' %} is-active{% endif %}" data-sort="LowToHigh">Price &#8593;</a>
+        <a href="#" class="lux-sort-link{% if request.GET.sort == 'HighToLow' %} is-active{% endif %}" data-sort="HighToLow">Price &#8595;</a>
+      </div>
+    </div>
+
+    <div class="row g-4" id="lux-prop-grid">
+      {% for property in all_properties %}
+        {% include "partials/property_card.html" with property=property %}
+      {% empty %}
+        <p class="lux-no-results">No properties match your filters. <a href="/properteas">Clear all filters</a>.</p>
       {% endfor %}
     </div>
 
-    {% if properties.paginator.num_pages > 1 %}
-    <nav class="mt-5 d-flex justify-content-center">
+    {% if all_properties.has_other_pages %}
+    <nav class="mt-5 d-flex justify-content-center" id="lux-pagination">
       <ul class="pagination lux-pagination">
-        {% if properties.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li>
+        {% if all_properties.has_previous %}
+        <li class="page-item"><a class="page-link lux-page-link" href="#" data-page="{{ all_properties.previous_page_number }}">&laquo;</a></li>
         {% endif %}
-        {% for num in properties.paginator.page_range %}
-        <li class="page-item {% if properties.number == num %}active{% endif %}">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        {% for num in all_properties.paginator.page_range %}
+        <li class="page-item {% if all_properties.number == num %}active{% endif %}">
+          <a class="page-link lux-page-link" href="#" data-page="{{ num }}">{{ num }}</a>
         </li>
         {% endfor %}
-        {% if properties.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ properties.paginator.num_pages }}">&raquo;</a></li>
+        {% if all_properties.has_next %}
+        <li class="page-item"><a class="page-link lux-page-link" href="#" data-page="{{ all_properties.paginator.num_pages }}">&raquo;</a></li>
         {% endif %}
       </ul>
     </nav>
     {% endif %}
+    </div>
   </div>
 </section>
 
 {% include 'layouts/property_request_box.html' %}
+
+<script src="{% static 'assets/js/search.js' %}"></script>
 
 {% endblock %}

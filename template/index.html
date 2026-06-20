@@ -25,259 +25,22 @@
   </div>
 </section>
 
-<form action="{% url 'properteas' %}" method="get" class="market-search">
-  <input type="hidden" name="filter" id="search-filter" value="">
-  <div class="market-search-tabs">
-    <button type="button" data-filter="" class="market-tab {% if request.GET.filter == '' or not request.GET.filter %}is-active{% endif %}">All Status</button>
-    <button type="button" data-filter="Rent" class="market-tab {% if request.GET.filter == 'Rent' %}is-active{% endif %}">For Rent</button>
-    <button type="button" data-filter="Sale" class="market-tab {% if request.GET.filter == 'Sale' %}is-active{% endif %}">For Sale</button>
-  </div>
-  <div class="market-search-card">
-    <div class="market-search-grid">
-      <div class="market-field">
-        <label for="search-category">Property Type</label>
-        <select id="search-category" name="category">
-          <option value="">Select</option>
-          {% for catagory in catagorys %}
-          {% if catagory.slug %}
-          <option value="{{ catagory.slug }}" data-status="all" {% if request.GET.category == catagory.slug %}selected{% endif %}>{{ catagory.catagorys }}</option>
-          {% endif %}
-          {% endfor %}
-        </select>
-        <script type="application/json" id="category-data-all">[{% for cat in catagorys %}{% if cat.slug %}{"slug":"{{ cat.slug }}","name":"{{ cat.catagorys }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}]</script>
-        <script type="application/json" id="category-data-rent">[{% for cat in catagorys_rent %}{% if cat.slug %}{"slug":"{{ cat.slug }}","name":"{{ cat.catagorys }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}]</script>
-        <script type="application/json" id="category-data-sale">[{% for cat in catagorys_sale %}{% if cat.slug %}{"slug":"{{ cat.slug }}","name":"{{ cat.catagorys }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %}]</script>
+<div class="market-search">
+  <form method="get" action="/properteas" class="market-search-form">
+    <div class="market-search-bar">
+      <div class="market-search-input-wrap">
+        <input type="text" name="q" placeholder="Bole, Kazanchis, Apartment..." autocomplete="off" id="home-search-input">
+        <div class="lux-suggest-dropdown" id="home-suggest-dropdown"></div>
       </div>
-      <div class="market-field" id="bedroom-search-field">
-        <label for="search-bedrooms">Bedrooms</label>
-        <select id="search-bedrooms" name="bedrooms">
-          <option value="">Select</option>
-          <option value="1" {% if request.GET.bedrooms == '1' %}selected{% endif %}>1</option>
-          <option value="2" {% if request.GET.bedrooms == '2' %}selected{% endif %}>2</option>
-          <option value="3" {% if request.GET.bedrooms == '3' %}selected{% endif %}>3</option>
-          <option value="4" {% if request.GET.bedrooms == '4' %}selected{% endif %}>4</option>
-          <option value="5" {% if request.GET.bedrooms == '5' %}selected{% endif %}>5</option>
-          <option value="6" {% if request.GET.bedrooms == '6' %}selected{% endif %}>6</option>
-          <option value="7" {% if request.GET.bedrooms == '7' %}selected{% endif %}>7</option>
-          <option value="8" {% if request.GET.bedrooms == '8' %}selected{% endif %}>8</option>
-          <option value="9" {% if request.GET.bedrooms == '9' %}selected{% endif %}>9</option>
-          <option value="10" {% if request.GET.bedrooms == '10' %}selected{% endif %}>10</option>
-        </select>
+      <div class="market-search-pills">
+        <button type="submit" name="filter" value="" class="market-pill">All</button>
+        <button type="submit" name="filter" value="Rent" class="market-pill">Rent</button>
+        <button type="submit" name="filter" value="Sale" class="market-pill">Sale</button>
       </div>
-      <div class="market-field is-hidden" id="bathroom-search-field">
-        <label for="search-bathrooms">Bathrooms</label>
-        <select id="search-bathrooms" name="bathrooms">
-          <option value="">Select</option>
-          <option value="1" {% if request.GET.bathrooms == '1' %}selected{% endif %}>1</option>
-          <option value="2" {% if request.GET.bathrooms == '2' %}selected{% endif %}>2</option>
-          <option value="3" {% if request.GET.bathrooms == '3' %}selected{% endif %}>3</option>
-          <option value="4" {% if request.GET.bathrooms == '4' %}selected{% endif %}>4</option>
-          <option value="5" {% if request.GET.bathrooms == '5' %}selected{% endif %}>5</option>
-          <option value="6" {% if request.GET.bathrooms == '6' %}selected{% endif %}>6</option>
-        </select>
-      </div>
-      <div class="market-field is-hidden" id="floor-search-field">
-        <label for="search-floor">Floor</label>
-        <select id="search-floor" name="floor">
-          <option value="">Select</option>
-          <option value="1" {% if request.GET.floor == '1' %}selected{% endif %}>1</option>
-          <option value="2" {% if request.GET.floor == '2' %}selected{% endif %}>2</option>
-          <option value="3" {% if request.GET.floor == '3' %}selected{% endif %}>3</option>
-          <option value="4" {% if request.GET.floor == '4' %}selected{% endif %}>4</option>
-          <option value="5" {% if request.GET.floor == '5' %}selected{% endif %}>5</option>
-          <option value="6" {% if request.GET.floor == '6' %}selected{% endif %}>6</option>
-          <option value="7" {% if request.GET.floor == '7' %}selected{% endif %}>7</option>
-          <option value="8" {% if request.GET.floor == '8' %}selected{% endif %}>8</option>
-          <option value="9" {% if request.GET.floor == '9' %}selected{% endif %}>9</option>
-          <option value="10" {% if request.GET.floor == '10' %}selected{% endif %}>10</option>
-          <option value="11" {% if request.GET.floor == '11' %}selected{% endif %}>11</option>
-          <option value="12" {% if request.GET.floor == '12' %}selected{% endif %}>12</option>
-          <option value="13" {% if request.GET.floor == '13' %}selected{% endif %}>13</option>
-          <option value="14" {% if request.GET.floor == '14' %}selected{% endif %}>14</option>
-          <option value="15" {% if request.GET.floor == '15' %}selected{% endif %}>15</option>
-          <option value="16" {% if request.GET.floor == '16' %}selected{% endif %}>16</option>
-        </select>
-      </div>
-      <div class="market-field is-hidden" id="furnished-search-field">
-        <label for="search-furnished">Furnished</label>
-        <select id="search-furnished" name="furnished">
-          <option value="">Select</option>
-          <option value="Yes" {% if request.GET.furnished == 'Yes' %}selected{% endif %}>Yes</option>
-          <option value="No" {% if request.GET.furnished == 'No' %}selected{% endif %}>No</option>
-        </select>
-      </div>
-      <div class="market-field is-hidden" id="size-search-field">
-        <label for="search-size">Size (m²)</label>
-        <select id="search-size" name="size">
-          <option value="">Select</option>
-          <option value="50" {% if request.GET.size == '50' %}selected{% endif %}>50</option>
-          <option value="100" {% if request.GET.size == '100' %}selected{% endif %}>100</option>
-          <option value="150" {% if request.GET.size == '150' %}selected{% endif %}>150</option>
-          <option value="200" {% if request.GET.size == '200' %}selected{% endif %}>200</option>
-          <option value="300" {% if request.GET.size == '300' %}selected{% endif %}>300</option>
-          <option value="400" {% if request.GET.size == '400' %}selected{% endif %}>400</option>
-          <option value="500" {% if request.GET.size == '500' %}selected{% endif %}>500</option>
-          <option value="600" {% if request.GET.size == '600' %}selected{% endif %}>600</option>
-          <option value="700" {% if request.GET.size == '700' %}selected{% endif %}>700</option>
-          <option value="800" {% if request.GET.size == '800' %}selected{% endif %}>800</option>
-          <option value="900" {% if request.GET.size == '900' %}selected{% endif %}>900</option>
-          <option value="1000" {% if request.GET.size == '1000' %}selected{% endif %}>1000</option>
-        </select>
-      </div>
-      <div class="market-field">
-        <label for="search-currency">Currency</label>
-        <select id="search-currency" name="currency">
-          <option value="">Select</option>
-          <option value="ETB" {% if selected_currency == 'ETB' %}selected{% endif %}>ETB</option>
-          <option value="USD" {% if selected_currency == 'USD' %}selected{% endif %}>USD</option>
-        </select>
-      </div>
-      <div class="market-field">
-        <label for="search-price">Max. Price</label>
-        <select id="search-price" name="max_price" data-max-etb="{{ max_price_etb }}" data-max-usd="{{ max_price_usd }}" data-selected="{{ request.GET.max_price|default:'' }}">
-          <option value="">Select</option>
-        </select>
-      </div>
-      <div class="market-field market-field-submit">
-        <button type="submit" class="btn-market">Search</button>
-      </div>
+      <button type="submit" class="market-search-btn">Search</button>
     </div>
-    <p class="market-search-note">Prices filtered by selected currency.</p>
-  </div>
-</form>
-
-<script>
-  (function () {
-    const tabs = document.querySelectorAll('.market-tab');
-    const input = document.getElementById('search-filter');
-    if (!tabs.length || !input) return;
-    input.value = "{{ request.GET.filter|default:'' }}";
-    const categorySelect = document.getElementById('search-category');
-    const currentCategory = "{{ request.GET.category|default:'' }}";
-    const loadCategories = (statusKey) => {
-      if (!categorySelect) return;
-      const scriptEl = document.getElementById('category-data-' + statusKey);
-      if (!scriptEl) return;
-      let categories;
-      try { categories = JSON.parse(scriptEl.textContent); } catch (e) { return; }
-      categorySelect.innerHTML = '<option value="">Select</option>';
-      categories.forEach((cat) => {
-        const option = document.createElement('option');
-        option.value = cat.slug;
-        option.textContent = cat.name;
-        if (currentCategory && currentCategory === cat.slug) option.selected = true;
-        categorySelect.appendChild(option);
-      });
-      categorySelect.dispatchEvent(new Event('change'));
-    };
-    loadCategories('all');
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        tabs.forEach((t) => t.classList.remove('is-active'));
-        tab.classList.add('is-active');
-        const filter = tab.getAttribute('data-filter') || '';
-        input.value = filter;
-        if (filter === 'Rent') loadCategories('rent');
-        else if (filter === 'Sale') loadCategories('sale');
-        else loadCategories('all');
-      });
-    });
-    const bedroomField = document.getElementById('bedroom-search-field');
-    const bedroomSelect = document.getElementById('search-bedrooms');
-    const bathroomField = document.getElementById('bathroom-search-field');
-    const bathroomSelect = document.getElementById('search-bathrooms');
-    const floorField = document.getElementById('floor-search-field');
-    const floorSelect = document.getElementById('search-floor');
-    const furnishedField = document.getElementById('furnished-search-field');
-    const furnishedSelect = document.getElementById('search-furnished');
-    const sizeField = document.getElementById('size-search-field');
-    const sizeSelect = document.getElementById('search-size');
-    const updateFields = () => {
-      if (!categorySelect) return;
-      const selectedOption = categorySelect.options[categorySelect.selectedIndex];
-      const selectedText = selectedOption ? selectedOption.textContent.toLowerCase() : '';
-      const hasCategory = Boolean(categorySelect.value);
-      const isApartment = selectedText.includes('apartment');
-      const isHouse = selectedText.includes('house');
-      const isOffice = selectedText.includes('office');
-      const isWarehouse = selectedText.includes('warehouse');
-      const isBuilding = selectedText.includes('building');
-      const isLand = selectedText.includes('land');
-      const isResidential = isApartment || isHouse;
-      const showBedrooms = !hasCategory || isResidential;
-      const showBathrooms = !hasCategory || isApartment || isHouse || isOffice;
-      const showFloor = !hasCategory || isOffice || isWarehouse || isBuilding;
-      const showFurnished = !hasCategory || isApartment || isHouse || isOffice;
-      const showSize = !hasCategory || isOffice || isWarehouse || isBuilding || isLand;
-      if (bedroomField) { bedroomField.classList.toggle('is-hidden', !showBedrooms); bedroomSelect.disabled = !showBedrooms; if (!showBedrooms) bedroomSelect.value = ''; }
-      if (bathroomField) { bathroomField.classList.toggle('is-hidden', !showBathrooms); bathroomSelect.disabled = !showBathrooms; if (!showBathrooms) bathroomSelect.value = ''; }
-      if (floorField) { floorField.classList.toggle('is-hidden', !showFloor); floorSelect.disabled = !showFloor; if (!showFloor) floorSelect.value = ''; }
-      if (furnishedField) { furnishedField.classList.toggle('is-hidden', !showFurnished); furnishedSelect.disabled = !showFurnished; if (!showFurnished) furnishedSelect.value = ''; }
-      if (sizeField) { sizeField.classList.toggle('is-hidden', !showSize); sizeSelect.disabled = !showSize; if (!showSize) sizeSelect.value = ''; }
-    };
-    if (categorySelect) {
-      categorySelect.addEventListener('change', updateFields);
-      updateFields();
-    }
-    const currencySelect = document.getElementById('search-currency');
-    const priceSelect = document.getElementById('search-price');
-    if (currencySelect && priceSelect) {
-      const getMax = (currency) => {
-        const maxAttr = currency === 'USD' ? 'maxUsd' : 'maxEtb';
-        const value = priceSelect.dataset[maxAttr];
-        const parsed = parseInt(value, 10);
-        return Number.isFinite(parsed) ? parsed : 1000000;
-      };
-      const buildTieredValues = (max) => {
-        const values = [];
-        for (let value = 10000; value <= Math.min(max, 99999); value += 10000) {
-          values.push(value);
-        }
-        for (let value = 100000; value <= Math.min(max, 999999); value += 50000) {
-          values.push(value);
-        }
-        for (let value = 1000000; value <= max; value += 1000000) {
-          values.push(value);
-        }
-        return values;
-      };
-      const buildOptions = (currency) => {
-        const max = getMax(currency);
-        const selected = priceSelect.dataset.selected || '';
-        priceSelect.innerHTML = '<option value="">Select</option>';
-        const values = buildTieredValues(max);
-        for (const value of values) {
-          const option = document.createElement('option');
-          option.value = String(value);
-          const formatted = value.toLocaleString();
-          option.textContent = currency === 'USD' ? `$ ${formatted}` : `Br. ${formatted}`;
-          if (selected && selected === option.value) option.selected = true;
-          priceSelect.appendChild(option);
-        }
-        if (values.length === 0 || values[values.length - 1] !== max) {
-          const option = document.createElement('option');
-          option.value = String(max);
-          const formatted = max.toLocaleString();
-          option.textContent = currency === 'USD' ? `$ ${formatted}` : `Br. ${formatted}`;
-          if (selected && selected === option.value) option.selected = true;
-          priceSelect.appendChild(option);
-        }
-      };
-      const currentCurrency = currencySelect.value || 'ETB';
-      buildOptions(currentCurrency);
-      currencySelect.addEventListener('change', () => {
-        const currentValue = priceSelect.value;
-        priceSelect.dataset.selected = currentValue;
-        buildOptions(currencySelect.value || 'ETB');
-        const max = getMax(currencySelect.value || 'ETB');
-        if (currentValue && parseInt(currentValue, 10) > max) {
-          priceSelect.value = String(max);
-          priceSelect.dataset.selected = String(max);
-        }
-      });
-    }
-  })();
-</script>
+  </form>
+</div>
 
 <!-- Featured Properties -->
 <section class="market-section market-section-muted">
@@ -407,4 +170,86 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var input = document.getElementById('home-search-input');
+  var dropdown = document.getElementById('home-suggest-dropdown');
+  if (!input || !dropdown) return;
+
+  var timer = null;
+  var highlightIdx = -1;
+  var allItems = [];
+
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = input.value.trim();
+    if (q.length < 1) { dropdown.classList.remove('is-open'); return; }
+    timer = setTimeout(function () {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/search/suggest/?q=' + encodeURIComponent(q), true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          allItems = data.results;
+          highlightIdx = -1;
+          if (!allItems.length) { dropdown.classList.remove('is-open'); return; }
+          var html = '', lastType = '';
+          allItems.forEach(function (r, i) {
+            if (r.type !== lastType) {
+              html += '<div class="lux-suggest-group-label">' + r.type + 's</div>';
+              lastType = r.type;
+            }
+            html += '<div class="lux-suggest-item" data-index="' + i + '" data-type="' + r.type + '" data-value="' + r.value + '">';
+            html += '<span>' + r.label + '</span>';
+            if (r.count !== undefined) html += '<span class="count">(' + r.count + ')</span>';
+            html += '</div>';
+          });
+          dropdown.innerHTML = html;
+          dropdown.classList.add('is-open');
+        }
+      };
+      xhr.send();
+    }, 150);
+  });
+
+  input.addEventListener('keydown', function (e) {
+    var els = dropdown.querySelectorAll('.lux-suggest-item');
+    if (!els.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); highlightIdx = Math.min(highlightIdx + 1, els.length - 1); els.forEach(function(el,i){ el.classList.toggle('is-highlighted', i===highlightIdx); }); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); highlightIdx = Math.max(highlightIdx - 1, 0); els.forEach(function(el,i){ el.classList.toggle('is-highlighted', i===highlightIdx); }); }
+    else if (e.key === 'Enter' && highlightIdx >= 0) {
+      e.preventDefault();
+      var item = allItems[highlightIdx];
+      if (!item) return;
+      var form = input.closest('form');
+      if (item.type === 'location') { input.value = item.value; }
+      else if (item.type === 'type') { input.value = ''; var h = document.createElement('input'); h.type='hidden'; h.name='type'; h.value=item.value; form.appendChild(h); }
+      dropdown.classList.remove('is-open');
+      form.submit();
+    }
+    else if (e.key === 'Escape') { dropdown.classList.remove('is-open'); }
+  });
+
+  dropdown.addEventListener('click', function (e) {
+    var item = e.target.closest('.lux-suggest-item');
+    if (item) {
+      var idx = parseInt(item.dataset.index, 10);
+      var r = allItems[idx];
+      if (!r) return;
+      var form = input.closest('form');
+      if (r.type === 'location') { input.value = r.value; }
+      else if (r.type === 'type') { input.value = ''; var h = document.createElement('input'); h.type='hidden'; h.name='type'; h.value=r.value; form.appendChild(h); }
+      dropdown.classList.remove('is-open');
+      form.submit();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('is-open');
+  });
+})();
+</script>
 {% endblock %}

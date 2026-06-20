@@ -1,7 +1,7 @@
 import json
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -13,12 +13,13 @@ from signatureapp.models import (
     catagory,
     propertys,
     contact,
-    catagory,
     serevices,
     about,
     testimonial,
     property_request,
+    facilities,
 )
+from signatureapp.search import PropertySearch, building_types
 
 
 # Create your views here.
@@ -102,13 +103,6 @@ DEFAULT_SEO_DESCRIPTION = (
     "Signature Property Solutions helps clients find verified apartments, houses, "
     "offices, warehouses, buildings, and land for sale or rent in Ethiopia."
 )
-
-
-def is_residential_category(category):
-    if not category:
-        return False
-    category_name = (category.catagorys or "").lower()
-    return any(keyword in category_name for keyword in RESIDENTIAL_CATEGORY_KEYWORDS)
 
 
 def parse_price_amount(value):
@@ -516,70 +510,16 @@ def property_schema(pro):
 def index(request):
     homes = home.objects.all()
     hom = homes.last()
-    catagorys = catagory.objects.all()
-    propertyss = propertys.objects.select_related("property_types").all().order_by("-id")[:6]
+    categories = catagory.objects.all()
+    featured = propertys.objects.select_related("property_types").order_by('-id')[:6]
     contacts = contact.objects.all()
     contactss = contacts.last()
 
-    def parse_price(value):
-        if not value:
-            return None, None
-        lower = value.lower()
-        if "br" in lower or "birr" in lower or "etb" in lower:
-            currency = "ETB"
-        elif "$" in value or "usd" in lower:
-            currency = "USD"
-        else:
-            return None, None
-        digits = "".join(ch for ch in value if ch.isdigit())
-        if not digits:
-            return None, None
-        return currency, int(digits)
-
-    max_price_etb = None
-    max_price_usd = None
-    for price in propertys.objects.values_list("price", flat=True):
-        currency, amount = parse_price(price)
-        if currency == "ETB" and amount:
-            max_price_etb = (
-                amount if max_price_etb is None else max(max_price_etb, amount)
-            )
-        elif currency == "USD" and amount:
-            max_price_usd = (
-                amount if max_price_usd is None else max(max_price_usd, amount)
-            )
-    if max_price_etb is None:
-        max_price_etb = 1000000
-    if max_price_usd is None:
-        max_price_usd = 1000000
-
-    rent_category_ids = (
-        propertys.objects.filter(property_status="For Rent")
-        .values_list("property_types_id", flat=True)
-        .distinct()
-    )
-    sale_category_ids = (
-        propertys.objects.filter(property_status="For Sale")
-        .values_list("property_types_id", flat=True)
-        .distinct()
-    )
-    catagorys_rent = catagory.objects.filter(
-        Q(id__in=rent_category_ids) | Q(catagorys__icontains="rent")
-    )
-    catagorys_sale = catagory.objects.filter(
-        Q(id__in=sale_category_ids) | Q(catagorys__icontains="sale")
-    )
-
     context = {
         "hom": hom,
-        "catagorys": catagorys,
-        "catagorys_rent": catagorys_rent,
-        "catagorys_sale": catagorys_sale,
-        "propertyss": propertyss,
+        "catagorys": categories,
+        "propertyss": featured,
         "contactss": contactss,
-        "max_price_etb": max_price_etb,
-        "max_price_usd": max_price_usd,
-        "selected_currency": request.GET.get("currency"),
         "seo": build_seo(
             request,
             "Real Estate in Ethiopia",
@@ -588,11 +528,7 @@ def index(request):
         "schema_json": organization_schema(contactss),
     }
 
-    return render(
-        request,
-        "index.html",
-        context,
-    )
+    return render(request, "index.html", context)
 
 
 def aboutus(request):
@@ -653,104 +589,38 @@ def servicesdt(request, slug):
 
 
 def properteas(request):
-    property_list = propertys.objects.select_related("property_types").all().order_by("-id")
+    search = PropertySearch(request.GET)
+    all_properties = search.results()
+    paginator = Paginator(all_properties, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     contacts = contact.objects.all()
     contactss = contacts.last()
-    # Get selected category from query parameters
-    selected_category = request.GET.get("category")
-    selected_category_obj = None
-    if selected_category:
-        selected_category_obj = catagory.objects.filter(slug=selected_category).first()
-        if not selected_category_obj:
-            selected_category_obj = catagory.objects.filter(catagorys=selected_category).first()
-    if selected_category_obj:
-        property_list = property_list.filter(property_types=selected_category_obj)
-    selected_filter = request.GET.get("filter")
 
-    if selected_filter == "Sale":
-        property_list = property_list.filter(property_status="For Sale")
-    elif selected_filter == "Rent":
-        property_list = property_list.filter(property_status="For Rent")
-    elif selected_filter == "LowToHigh":
-        property_list = property_list.order_by("price")
-    elif selected_filter == "HighToLow":
-        property_list = property_list.order_by("-price")
-    selected_bedrooms = request.GET.get("bedrooms")
-    allow_bedroom_filter = not selected_category_obj or is_residential_category(selected_category_obj)
-    if allow_bedroom_filter and selected_bedrooms and selected_bedrooms.isdigit():
-        if 1 <= int(selected_bedrooms) <= 10:
-            property_list = property_list.filter(bedrooms=selected_bedrooms)
-    selected_bathrooms = request.GET.get("bathrooms")
-    if selected_bathrooms and selected_bathrooms.isdigit():
-        if 1 <= int(selected_bathrooms) <= 6:
-            property_list = property_list.filter(bathrooms=selected_bathrooms)
-    selected_floor = request.GET.get("floor")
-    if selected_floor and selected_floor.isdigit():
-        if 1 <= int(selected_floor) <= 16:
-            property_list = property_list.filter(property_floor=selected_floor)
-    selected_furnished = request.GET.get("furnished")
-    if selected_furnished in ("Yes", "No"):
-        property_list = property_list.filter(furnished__iexact=selected_furnished)
-    selected_size = request.GET.get("size")
-    if selected_size and selected_size.isdigit():
-        property_list = property_list.filter(property_size__gte=int(selected_size))
-    max_price = request.GET.get("max_price")
-    if max_price and max_price.isdigit():
-        property_list = property_list.filter(price__lte=max_price)
-    selected_currency = request.GET.get("currency")
-    if selected_currency in {"ETB", "USD"}:
-
-        def parse_price(value):
-            if not value:
-                return None, None
-            lower = value.lower()
-            if "br" in lower or "birr" in lower or "etb" in lower:
-                currency = "ETB"
-            elif "$" in value or "usd" in lower:
-                currency = "USD"
-            else:
-                return None, None
-            digits = "".join(ch for ch in value if ch.isdigit())
-            if not digits:
-                return None, None
-            return currency, int(digits)
-
-        max_price_value = int(max_price) if max_price and max_price.isdigit() else None
-        filtered = []
-        for item in property_list:
-            currency, amount = parse_price(item.price)
-            if currency != selected_currency:
-                continue
-            if amount is None:
-                continue
-            if max_price_value is not None and amount > max_price_value:
-                continue
-            filtered.append(item)
-        property_list = filtered
-    paginator = Paginator(property_list, 6)  # Show 6 properties per page
-    page_number = request.GET.get("page")
-    properties = paginator.get_page(page_number)
-    categories = catagory.objects.all()
-    return render(
-        request,
-        "properteas.html",
-        {
-            "properties": properties,
-            "categories": categories,
-            "selected_category": selected_category,
-            "selected_filter": selected_filter,
-            "selected_bedrooms": selected_bedrooms,
-            "selected_max_price": max_price,
-            "selected_currency": selected_currency,
-            "contactss": contactss,
-            "seo": build_seo(
-                request,
-                "Properties for Sale and Rent in Ethiopia",
-                "Browse verified apartments, houses, offices, warehouses, buildings, and land for sale or rent in Ethiopia.",
-            ),
-            "schema_json": organization_schema(contactss),
-        },
+    applied = search.applied_filters()
+    active_count = sum(
+        1 for k in ('bedrooms', 'bathrooms', 'floor', 'furnished', 'size',
+                     'min_price', 'max_price', 'currency', 'type', 'amenities')
+        if applied.get(k)
     )
+
+    context = {
+        'all_properties': page_obj,
+        'categories': catagory.objects.all(),
+        'all_facilities': facilities.objects.all(),
+        'applied_filters': applied,
+        'active_filter_count': active_count,
+        'building_type_choices': building_types(),
+        'contactss': contactss,
+        'seo': build_seo(
+            request,
+            'Properties for Sale and Rent in Ethiopia',
+            'Browse verified apartments, houses, offices, warehouses, buildings, and land for sale or rent in Ethiopia.',
+        ),
+        'schema_json': organization_schema(contactss),
+    }
+    return render(request, 'properteas.html', context)
 
 
 def filter_properties(request, category_slug):
@@ -998,3 +868,61 @@ def property_assistant(request):
             "request_link": not matches and assistant_filters_have_search_intent(filters),
         }
     )
+
+
+def search_suggest(request):
+    q = request.GET.get('q', '').strip()
+    if len(q) < 1:
+        return JsonResponse({'results': []})
+
+    results = []
+
+    locations_qs = (
+        propertys.objects.filter(property_location__icontains=q)
+        .values('property_location')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    starts_with = [loc for loc in locations_qs if loc['property_location'].lower().startswith(q.lower())]
+    contains = [loc for loc in locations_qs if not loc['property_location'].lower().startswith(q.lower())]
+    for loc in (starts_with + contains)[:8]:
+        results.append({
+            'type': 'location',
+            'label': loc['property_location'],
+            'value': loc['property_location'],
+            'count': loc['count'],
+        })
+
+    for slug, label in building_types():
+        if q.lower() in label.lower():
+            results.append({
+                'type': 'type',
+                'label': label,
+                'value': slug,
+            })
+
+    return JsonResponse({'results': results})
+
+
+def properteas_partial(request):
+    search = PropertySearch(request.GET)
+    all_properties = search.results()
+    paginator = Paginator(all_properties, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    applied = search.applied_filters()
+    active_count = sum(
+        1 for k in ('bedrooms', 'bathrooms', 'floor', 'furnished', 'size',
+                     'min_price', 'max_price', 'currency', 'type', 'amenities')
+        if applied.get(k)
+    )
+
+    context = {
+        'all_properties': page_obj,
+        'applied_filters': applied,
+        'active_filter_count': active_count,
+        'building_type_choices': building_types(),
+        'all_facilities': facilities.objects.all(),
+    }
+    return render(request, 'properteas_cards.html', context)

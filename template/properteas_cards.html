@@ -1,0 +1,93 @@
+{% load static %}
+
+    {% if active_filter_count > 0 %}
+    <div class="lux-filter-chips" id="lux-filter-chips">
+      {% if applied_filters.bedrooms %}
+        <span class="lux-chip">
+          Beds: {{ applied_filters.bedrooms }}
+          <a href="#" class="lux-chip-remove" data-remove="bedrooms">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.bathrooms %}
+        <span class="lux-chip">
+          Baths: {{ applied_filters.bathrooms }}
+          <a href="#" class="lux-chip-remove" data-remove="bathrooms">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.furnished %}
+        <span class="lux-chip">
+          Furnished: {{ applied_filters.furnished }}
+          <a href="#" class="lux-chip-remove" data-remove="furnished">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.floor %}
+        <span class="lux-chip">
+          Floor: {{ applied_filters.floor }}
+          <a href="#" class="lux-chip-remove" data-remove="floor">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.size %}
+        <span class="lux-chip">
+          Min Size: {{ applied_filters.size }} sqm
+          <a href="#" class="lux-chip-remove" data-remove="size">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.min_price or applied_filters.max_price %}
+        <span class="lux-chip">
+          {{ applied_filters.currency }}: {{ applied_filters.min_price|default:'0' }}&#8211;{{ applied_filters.max_price|default:'&#8734;' }}
+          <a href="#" class="lux-chip-remove" data-remove="price">&#10005;</a>
+        </span>
+      {% endif %}
+      {% if applied_filters.type %}
+        <span class="lux-chip">
+          Type: {{ applied_filters.type }}
+          <a href="#" class="lux-chip-remove" data-remove="type">&#10005;</a>
+        </span>
+      {% endif %}
+      {% for slug in applied_filters.amenities %}
+        <span class="lux-chip">
+          {{ slug }}
+          <a href="#" class="lux-chip-remove" data-remove="amenities" data-value="{{ slug }}">&#10005;</a>
+        </span>
+      {% endfor %}
+      <a href="/properteas" class="lux-clear-all">Clear all</a>
+    </div>
+    {% else %}
+    <div id="lux-filter-chips"></div>
+    {% endif %}
+
+    <div class="lux-results-header">
+      <span class="lux-results-count">{{ all_properties.paginator.count }} properties found</span>
+      <div class="lux-sort" id="lux-sort-links">
+        <span>Sort:</span>
+        <a href="#" class="lux-sort-link{% if not request.GET.sort %} is-active{% endif %}" data-sort="">Newest</a>
+        <a href="#" class="lux-sort-link{% if request.GET.sort == 'LowToHigh' %} is-active{% endif %}" data-sort="LowToHigh">Price &#8593;</a>
+        <a href="#" class="lux-sort-link{% if request.GET.sort == 'HighToLow' %} is-active{% endif %}" data-sort="HighToLow">Price &#8595;</a>
+      </div>
+    </div>
+
+    <div class="row g-4" id="lux-prop-grid">
+      {% for property in all_properties %}
+        {% include "partials/property_card.html" with property=property %}
+      {% empty %}
+        <p class="lux-no-results">No properties match your filters. <a href="/properteas">Clear all filters</a>.</p>
+      {% endfor %}
+    </div>
+
+    {% if all_properties.has_other_pages %}
+    <nav class="mt-5 d-flex justify-content-center" id="lux-pagination">
+      <ul class="pagination lux-pagination">
+        {% if all_properties.has_previous %}
+        <li class="page-item"><a class="page-link lux-page-link" href="#" data-page="{{ all_properties.previous_page_number }}">&laquo;</a></li>
+        {% endif %}
+        {% for num in all_properties.paginator.page_range %}
+        <li class="page-item {% if all_properties.number == num %}active{% endif %}">
+          <a class="page-link lux-page-link" href="#" data-page="{{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if all_properties.has_next %}
+        <li class="page-item"><a class="page-link lux-page-link" href="#" data-page="{{ all_properties.paginator.num_pages }}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}

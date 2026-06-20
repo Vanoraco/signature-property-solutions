@@ -66,7 +66,6 @@ class PropertySearch:
             propertys.objects
             .select_related('property_types')
             .prefetch_related('facilitie')
-            .all()
         )
         filters = [
             self._filter_q,
