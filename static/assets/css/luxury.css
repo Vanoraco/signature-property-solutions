@@ -1694,7 +1694,7 @@ img { max-width: 100%; height: auto; }
 .lux-filter-drawer {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 1100;
   pointer-events: none;
   visibility: hidden;
 }
@@ -1712,7 +1712,7 @@ img { max-width: 100%; height: auto; }
 
 .lux-filter-drawer-panel {
   position: absolute;
-  top: 1.5rem;
+  top: 4.5rem;
   right: 1.5rem;
   bottom: 1.5rem;
   width: 320px;
