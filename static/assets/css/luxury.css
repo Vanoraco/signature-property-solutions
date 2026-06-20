@@ -1712,13 +1712,14 @@ img { max-width: 100%; height: auto; }
 
 .lux-filter-drawer-panel {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 1.5rem;
+  right: 1.5rem;
+  bottom: 1.5rem;
   width: 320px;
-  max-width: 90vw;
-  height: 100%;
+  max-width: calc(100vw - 3rem);
   background: var(--dark-2);
-  border-left: 1px solid var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
   box-shadow: -8px 0 24px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
@@ -1752,6 +1753,26 @@ img { max-width: 100%; height: auto; }
   flex: 1;
   overflow-y: auto;
   padding: 1rem 1.2rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold) var(--dark-4);
+}
+
+.lux-drawer-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lux-drawer-body::-webkit-scrollbar-track {
+  background: var(--dark-4);
+  border-radius: 3px;
+}
+
+.lux-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 3px;
+}
+
+.lux-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-light);
 }
 
 .lux-drawer-group {
