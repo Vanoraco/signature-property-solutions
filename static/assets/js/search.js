@@ -29,32 +29,43 @@
 
     var newChips = temp.querySelector('#lux-filter-chips');
     var oldChips = document.getElementById('lux-filter-chips');
-    if (oldChips && newChips) {
+    if (newChips && oldChips) {
       oldChips.replaceWith(newChips);
     } else if (newChips && !oldChips) {
       var searchBar = container.querySelector('.lux-search-bar');
       if (searchBar) searchBar.insertAdjacentElement('afterend', newChips);
+    } else if (!newChips && oldChips) {
+      oldChips.remove();
     }
 
     var newGrid = temp.querySelector('#lux-prop-grid');
     var oldGrid = document.getElementById('lux-prop-grid');
-    if (oldGrid && newGrid) {
+    if (newGrid && oldGrid) {
       oldGrid.replaceWith(newGrid);
+    } else if (!newGrid && oldGrid) {
+      oldGrid.innerHTML = '';
     }
 
     var newHeader = temp.querySelector('.lux-results-header');
     var oldHeader = container.querySelector('.lux-results-header');
-    if (oldHeader && newHeader) {
+    if (newHeader && oldHeader) {
       oldHeader.replaceWith(newHeader);
+    } else if (newHeader && !oldHeader) {
+      var grid2 = document.getElementById('lux-prop-grid');
+      if (grid2) grid2.insertAdjacentElement('beforebegin', newHeader);
+    } else if (!newHeader && oldHeader) {
+      oldHeader.remove();
     }
 
     var newPag = temp.querySelector('#lux-pagination');
     var oldPag = document.getElementById('lux-pagination');
-    if (oldPag && newPag) {
+    if (newPag && oldPag) {
       oldPag.replaceWith(newPag);
     } else if (newPag && !oldPag) {
       var grid = document.getElementById('lux-prop-grid');
       if (grid) grid.insertAdjacentElement('afterend', newPag);
+    } else if (!newPag && oldPag) {
+      oldPag.remove();
     }
 
     bindChipRemoval();
