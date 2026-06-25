@@ -613,6 +613,7 @@ def properteas(request):
         'active_filter_count': active_count,
         'building_type_choices': building_types(),
         'contactss': contactss,
+        'request': request,
         'seo': build_seo(
             request,
             'Properties for Sale and Rent in Ethiopia',
