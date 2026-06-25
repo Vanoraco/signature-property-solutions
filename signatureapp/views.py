@@ -924,5 +924,6 @@ def properteas_partial(request):
         'active_filter_count': active_count,
         'building_type_choices': building_types(),
         'all_facilities': facilities.objects.all(),
+        'request': request,
     }
     return render(request, 'properteas_cards.html', context)
