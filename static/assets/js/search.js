@@ -252,11 +252,12 @@
 
   function getDrawerParams() {
     var drawer = document.getElementById('lux-filter-drawer');
-    if (!drawer) return new URLSearchParams();
-    var params = new URLSearchParams();
+    if (!drawer) return new URLSearchParams(currentParams);
+    var params = new URLSearchParams(currentParams);
 
     var typeChip = drawer.querySelector('.lux-type-chip.is-active');
     var typeVal = typeChip ? (typeChip.dataset.type || '') : '';
+    params.delete('type');
     if (typeVal) params.set('type', typeVal);
 
     var bedrooms = drawer.querySelector('select[name="bedrooms"]');
