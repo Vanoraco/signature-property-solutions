@@ -238,6 +238,68 @@
     }
   }
 
+  function getDrawerParams() {
+    var drawer = document.getElementById('lux-filter-drawer');
+    if (!drawer) return new URLSearchParams();
+    var params = new URLSearchParams();
+
+    var typeChip = drawer.querySelector('.lux-type-chip.is-active');
+    var typeVal = typeChip ? (typeChip.dataset.type || '') : '';
+    if (typeVal) params.set('type', typeVal);
+
+    var bedrooms = drawer.querySelector('select[name="bedrooms"]');
+    if (bedrooms && bedrooms.value) params.set('bedrooms', bedrooms.value);
+
+    var bathrooms = drawer.querySelector('select[name="bathrooms"]');
+    if (bathrooms && bathrooms.value) params.set('bathrooms', bathrooms.value);
+
+    var currency = drawer.querySelector('select[name="currency"]');
+    if (currency && currency.value) params.set('currency', currency.value);
+
+    var minPrice = drawer.querySelector('input[name="min_price"]');
+    if (minPrice && minPrice.value) params.set('min_price', minPrice.value);
+
+    var maxPrice = drawer.querySelector('input[name="max_price"]');
+    if (maxPrice && maxPrice.value) params.set('max_price', maxPrice.value);
+
+    var furnished = drawer.querySelector('select[name="furnished"]');
+    if (furnished && furnished.value) params.set('furnished', furnished.value);
+
+    var floor = drawer.querySelector('input[name="floor"]');
+    if (floor && floor.value) params.set('floor', floor.value);
+
+    var size = drawer.querySelector('input[name="size"]');
+    if (size && size.value) params.set('size', size.value);
+
+    drawer.querySelectorAll('input[name="amenities"]:checked').forEach(function (cb) {
+      params.append('amenities', cb.value);
+    });
+
+    return params;
+  }
+
+  function updateDrawerCount() {
+    var applyBtn = document.querySelector('.lux-btn-apply');
+    if (!applyBtn) return;
+    var params = getDrawerParams();
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/search/count/?' + params.toString(), true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        var data = JSON.parse(xhr.responseText);
+        applyBtn.textContent = 'Show ' + data.count + ' result' + (data.count !== 1 ? 's' : '');
+      }
+    };
+    xhr.send();
+  }
+
+  function bindDrawerLiveCount() {
+    var drawer = document.getElementById('lux-filter-drawer');
+    if (!drawer) return;
+    drawer.addEventListener('change', updateDrawerCount);
+    drawer.addEventListener('input', updateDrawerCount);
+  }
+
   function bindTypeChips() {
     document.querySelectorAll('.lux-type-chip').forEach(function (chip) {
       chip.addEventListener('click', function (e) {
@@ -451,6 +513,7 @@
   bindPagination();
   bindDrawerApply();
   bindDrawerClear();
+  bindDrawerLiveCount();
   bindTypeChips();
 
   var activeType = currentParams.get('type') || '';

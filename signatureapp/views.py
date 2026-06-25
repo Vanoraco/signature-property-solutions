@@ -927,3 +927,9 @@ def properteas_partial(request):
         'request': request,
     }
     return render(request, 'properteas_cards.html', context)
+
+
+def properteas_count(request):
+    search = PropertySearch(request.GET)
+    count = search.results().count()
+    return JsonResponse({'count': count})

@@ -31,6 +31,7 @@ urlpatterns = [
     path('servicesdt/<slug:slug>', views.servicesdt, name='servicesdt'),
     path('search/suggest/', views.search_suggest, name='search_suggest'),
     path('search/partial/', views.properteas_partial, name='properteas_partial'),
+    path('search/count/', views.properteas_count, name='properteas_count'),
     path('properteas', views.properteas, name='properteas' ),
     path('property-request', views.submit_property_request, name='submit_property_request' ),
     path('property-assistant', views.property_assistant, name='property_assistant' ),
