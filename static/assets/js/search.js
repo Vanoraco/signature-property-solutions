@@ -325,6 +325,7 @@
         });
         chip.classList.add('is-active');
         updateContextualFilters(chip.dataset.type || '');
+        updateDrawerCount();
       });
     });
   }
@@ -497,6 +498,7 @@
   function openDrawer() {
     if (drawer) drawer.classList.add('is-open');
     document.body.style.overflow = 'hidden';
+    updateDrawerCount();
   }
 
   function closeDrawer() {
