@@ -30,19 +30,19 @@ def parse_price(price_text):
 def building_types():
     """Return distinct building types derived from category names.
 
-    Strips ' for Sale' / ' for Rent' suffixes and deduplicates.
+    Strips ' for Sale' / ' for Rent' suffixes (case-insensitive) and deduplicates.
     Returns list of (slug, label) tuples, e.g. [('apartment', 'Apartment')].
     """
     types = set()
     for cat in catagory.objects.all():
         name = cat.catagorys or ''
-        for suffix in (' for Sale', ' for Rent'):
-            if name.endswith(suffix):
+        lower = name.lower()
+        for suffix in (' for sale', ' for rent'):
+            if lower.endswith(suffix):
                 name = name[: -len(suffix)]
                 break
         if name:
             types.add(name)
-    # Return (slug, label) tuples sorted by label
     return sorted(((t.lower(), t) for t in types), key=lambda x: x[1])
 
 
