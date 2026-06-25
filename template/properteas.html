@@ -191,7 +191,7 @@
 
         <div class="lux-drawer-footer">
           <button type="button" class="lux-btn-clear" id="lux-drawer-clear">Clear</button>
-          <button type="button" class="lux-btn-apply">Show {{ all_properties.paginator.count }} results</button>
+          <button type="button" class="lux-btn-apply" {% if all_properties.paginator.count == 0 %}disabled style="opacity:0.4;cursor:not-allowed"{% endif %}>Show {{ all_properties.paginator.count }} results</button>
         </div>
       </div>
     </div>

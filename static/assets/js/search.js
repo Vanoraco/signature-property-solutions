@@ -176,6 +176,7 @@
     if (applyBtn) {
       applyBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        if (applyBtn.disabled) return;
         var drawer = document.getElementById('lux-filter-drawer');
         var params = new URLSearchParams(currentParams);
 
@@ -288,6 +289,9 @@
       if (xhr.readyState === 4 && xhr.status === 200) {
         var data = JSON.parse(xhr.responseText);
         applyBtn.textContent = 'Show ' + data.count + ' result' + (data.count !== 1 ? 's' : '');
+        applyBtn.disabled = data.count === 0;
+        applyBtn.style.opacity = data.count === 0 ? '0.4' : '';
+        applyBtn.style.cursor = data.count === 0 ? 'not-allowed' : '';
       }
     };
     xhr.send();
