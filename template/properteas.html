@@ -172,7 +172,9 @@
 
           <div class="lux-drawer-group" data-context="commercial,land">
             <label class="lux-drawer-label">SIZE (SQM)</label>
-            <input type="number" name="size" placeholder="Min size" value="{{ applied_filters.size|default:'' }}">
+            <div class="lux-drawer-field">
+              <input type="number" name="size" placeholder="Min size" value="{{ applied_filters.size|default:'' }}">
+            </div>
           </div>
 
           <div class="lux-drawer-group">
