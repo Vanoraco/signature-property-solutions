@@ -115,7 +115,7 @@
             </div>
           </div>
 
-          <div class="lux-drawer-row">
+          <div class="lux-drawer-row" data-context="residential">
             <div class="lux-drawer-field">
               <label class="lux-drawer-label">BEDROOMS</label>
               <select name="bedrooms">
@@ -155,7 +155,7 @@
             </div>
           </div>
 
-          <div class="lux-drawer-row">
+          <div class="lux-drawer-row" data-context="residential">
             <div class="lux-drawer-field">
               <label class="lux-drawer-label">FURNISHED</label>
               <select name="furnished">
@@ -168,6 +168,11 @@
               <label class="lux-drawer-label">FLOOR</label>
               <input type="number" name="floor" placeholder="Any" value="{{ applied_filters.floor|default:'' }}">
             </div>
+          </div>
+
+          <div class="lux-drawer-group" data-context="commercial,land">
+            <label class="lux-drawer-label">SIZE (SQM)</label>
+            <input type="number" name="size" placeholder="Min size" value="{{ applied_filters.size|default:'' }}">
           </div>
 
           <div class="lux-drawer-group">

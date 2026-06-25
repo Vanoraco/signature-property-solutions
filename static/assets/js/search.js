@@ -246,7 +246,30 @@
           c.classList.remove('is-active');
         });
         chip.classList.add('is-active');
+        updateContextualFilters(chip.dataset.type || '');
       });
+    });
+  }
+
+  var CONTEXT_MAP = {
+    apartment: 'residential', house: 'residential', villa: 'residential',
+    penthouse: 'residential', condo: 'residential', condominium: 'residential',
+    office: 'commercial', warehouse: 'commercial', building: 'commercial',
+    land: 'land',
+  };
+
+  function updateContextualFilters(typeSlug) {
+    var context = CONTEXT_MAP[typeSlug] || '';
+    var groups = document.querySelectorAll('#lux-filter-drawer [data-context]');
+    groups.forEach(function (el) {
+      var contexts = el.dataset.context.split(',');
+      if (!typeSlug) {
+        el.style.display = '';
+      } else if (contexts.indexOf(context) !== -1) {
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
     });
   }
 
@@ -429,6 +452,9 @@
   bindDrawerApply();
   bindDrawerClear();
   bindTypeChips();
+
+  var activeType = currentParams.get('type') || '';
+  if (activeType) updateContextualFilters(activeType);
 
   window.addEventListener('popstate', function () {
     currentParams = new URLSearchParams(window.location.search);
