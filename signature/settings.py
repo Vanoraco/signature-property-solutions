@@ -25,10 +25,10 @@ SECRET_KEY = 'django-insecure-nlin&!h93=0(i^*f#*nj(b60ia2465%z0j-4f^!w7(89)i&w*^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['ethiosps.com','www.ethiosps.com','localhost','127.0.0.1']
+ALLOWED_HOSTS = ['signaturepropertysolutions.com','www.signaturepropertysolutions.com','187.124.38.135','localhost','127.0.0.1']
 
 SITE_NAME = 'Signature Property Solutions'
-SITE_URL = 'https://ethiosps.com'
+SITE_URL = 'https://signaturepropertysolutions.com'
 
 
 # Application definition
