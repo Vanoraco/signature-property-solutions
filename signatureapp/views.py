@@ -681,6 +681,7 @@ def properteasdet(request, slug):
         "pro": pro,
         "propertyss": propertyss,
         "contactss": contactss,
+        "categories": catagory.objects.all(),
         "seo": build_seo(request, pro.property_title, description, image_url),
         "schema_json": property_schema(pro),
     }

@@ -12,7 +12,12 @@
         <input type="text" name="name" placeholder="Name">
         <input type="tel" name="phone_number" placeholder="Phone or WhatsApp">
         <input type="email" name="email" placeholder="Email">
-        <input type="text" name="property_type" placeholder="Property type">
+        <select name="property_type">
+          <option value="">Property type</option>
+          {% for cat in categories %}
+          <option value="{{ cat.catagorys }}">{{ cat.catagorys }}</option>
+          {% endfor %}
+        </select>
         <select name="goal">
           <option value="">Purpose</option>
           <option value="Rent">Rent</option>
