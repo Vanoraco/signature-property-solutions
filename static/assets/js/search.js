@@ -338,17 +338,17 @@
   };
 
   var AMENITY_CONTEXT = {
-    'swimming-pool': 'residential',
-    'fitness-center-gym': 'residential',
-    'playground-park': 'residential',
-    'rooftop-terrace': 'residential,commercial',
-    'elevators': 'residential,commercial',
-    'security-system-cctv-access-control': 'residential,commercial',
-    'reception-area': 'commercial',
-    'kitchen-break-room': 'commercial',
-    'wi-fi-internet-access': 'commercial',
-    'hvac-system': 'commercial',
-    'fire-safety-systems-fire-alarms-sprinklers': 'commercial',
+    'Swimming_pool': 'residential',
+    'Fitness_center_gym': 'residential',
+    'Playground_park': 'residential',
+    'Rooftop_terrace': 'residential,commercial',
+    'Elevators': 'residential,commercial',
+    'Security_system': 'residential,commercial',
+    'Reception': 'commercial',
+    'Kitchen': 'commercial',
+    'Wi-Fi': 'commercial',
+    'HVAC': 'commercial',
+    'Fire': 'commercial',
     'parking': 'residential,commercial',
     'generator': 'residential,commercial',
   };
