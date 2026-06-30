@@ -1949,3 +1949,40 @@ img { max-width: 100%; height: auto; }
   font-size: 0.95rem;
   grid-column: 1 / -1;
 }
+
+/* Loading overlay */
+.lux-loading {
+  position: relative;
+}
+
+.lux-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.lux-loading.is-active .lux-loading-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lux-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--dark-4);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: lux-spin 0.7s linear infinite;
+}
+
+@keyframes lux-spin {
+  to { transform: rotate(360deg); }
+}

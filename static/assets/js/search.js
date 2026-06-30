@@ -10,11 +10,16 @@
   }
 
   function fetchPartial(params, callback) {
+    var loadingArea = document.getElementById('lux-loading-area');
+    if (loadingArea) loadingArea.classList.add('is-active');
     var xhr = new XMLHttpRequest();
     xhr.open('GET', buildPartialUrl(params), true);
     xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        callback(xhr.responseText);
+      if (xhr.readyState === 4) {
+        if (loadingArea) loadingArea.classList.remove('is-active');
+        if (xhr.status === 200) {
+          callback(xhr.responseText);
+        }
       }
     };
     xhr.send();

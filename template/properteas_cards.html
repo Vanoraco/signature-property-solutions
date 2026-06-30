@@ -66,16 +66,18 @@
       </div>
     </div>
 
-    <div class="row g-4" id="lux-prop-grid">
-      {% for property in all_properties %}
-        {% include "partials/property_card.html" with property=property %}
-      {% empty %}
-        <p class="lux-no-results">No properties match your filters. <a href="/properteas">Clear all filters</a>.</p>
-      {% endfor %}
-    </div>
+    <div class="lux-loading" id="lux-loading-area">
+      <div class="lux-loading-overlay"><div class="lux-spinner"></div></div>
+      <div class="row g-4" id="lux-prop-grid">
+        {% for property in all_properties %}
+          {% include "partials/property_card.html" with property=property %}
+        {% empty %}
+          <p class="lux-no-results">No properties match your filters. <a href="/properteas">Clear all filters</a>.</p>
+        {% endfor %}
+      </div>
 
-    {% if all_properties.has_other_pages %}
-    <nav class="mt-5 d-flex justify-content-center" id="lux-pagination">
+      {% if all_properties.has_other_pages %}
+      <nav class="mt-5 d-flex justify-content-center" id="lux-pagination">
       <ul class="pagination lux-pagination">
         {% if all_properties.has_previous %}
         <li class="page-item"><a class="page-link lux-page-link" href="#" data-page="{{ all_properties.previous_page_number }}">&laquo;</a></li>
@@ -91,3 +93,4 @@
       </ul>
     </nav>
     {% endif %}
+    </div>
