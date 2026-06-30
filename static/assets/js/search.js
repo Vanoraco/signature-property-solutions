@@ -337,8 +337,26 @@
     land: 'land',
   };
 
+  var AMENITY_CONTEXT = {
+    'swimming-pool': 'residential',
+    'fitness-center-gym': 'residential',
+    'playground-park': 'residential',
+    'rooftop-terrace': 'residential,commercial',
+    'elevators': 'residential,commercial',
+    'security-system-cctv-access-control': 'residential,commercial',
+    'reception-area': 'commercial',
+    'kitchen-break-room': 'commercial',
+    'wi-fi-internet-access': 'commercial',
+    'hvac-system': 'commercial',
+    'fire-safety-systems-fire-alarms-sprinklers': 'commercial',
+    'parking': 'residential,commercial',
+    'generator': 'residential,commercial',
+  };
+
   function updateContextualFilters(typeSlug) {
     var context = CONTEXT_MAP[typeSlug] || '';
+
+    // Hide/show drawer groups by data-context
     var groups = document.querySelectorAll('#lux-filter-drawer [data-context]');
     groups.forEach(function (el) {
       var contexts = el.dataset.context.split(',');
@@ -348,6 +366,24 @@
         el.style.display = '';
       } else {
         el.style.display = 'none';
+      }
+    });
+
+    // Hide/show individual amenities by their slug context
+    var amenityChecks = document.querySelectorAll('#lux-filter-drawer .lux-amenity-check');
+    amenityChecks.forEach(function (label) {
+      var slug = label.querySelector('input[name="amenities"]');
+      if (!slug) return;
+      var slugVal = slug.dataset.amenityContext || '';
+      var amenityCtx = AMENITY_CONTEXT[slugVal] || 'residential,commercial';
+      var contexts = amenityCtx.split(',');
+      if (!typeSlug) {
+        label.style.display = '';
+      } else if (contexts.indexOf(context) !== -1) {
+        label.style.display = '';
+      } else {
+        label.style.display = 'none';
+        label.querySelector('input').checked = false;
       }
     });
   }

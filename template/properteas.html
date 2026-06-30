@@ -183,6 +183,7 @@
               {% for fac in all_facilities %}
               <label class="lux-amenity-check">
                 <input type="checkbox" name="amenities" value="{{ fac.slug }}"
+                  data-amenity-context="{{ fac.slug }}"
                   {% if fac.slug in applied_filters.amenities %}checked{% endif %}>
                 {{ fac.facilities_name }}
               </label>

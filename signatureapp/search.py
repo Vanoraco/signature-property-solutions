@@ -46,6 +46,23 @@ def building_types():
     return sorted(((t.lower(), t) for t in types), key=lambda x: x[1])
 
 
+AMENITY_CONTEXT = {
+    'swimming-pool': 'residential',
+    'fitness-center-gym': 'residential',
+    'playground-park': 'residential',
+    'rooftop-terrace': 'residential,commercial',
+    'elevators': 'residential,commercial',
+    'security-system-cctv-access-control': 'residential,commercial',
+    'reception-area': 'commercial',
+    'kitchen-break-room': 'commercial',
+    'wi-fi-internet-access': 'commercial',
+    'hvac-system': 'commercial',
+    'fire-safety-systems-fire-alarms-sprinklers': 'commercial',
+    'parking': 'residential,commercial',
+    'generator': 'residential,commercial',
+}
+
+
 class PropertySearch:
     """Turns query params into a filtered, sorted queryset of properties.
 
