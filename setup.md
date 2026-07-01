@@ -41,6 +41,7 @@ DEBUG=False
 ALLOWED_HOSTS=your-domain.com,your-vps-ip
 SITE_URL=https://your-domain.com
 SITE_NAME=Signature Property Solutions
+ADMIN_URL=your-secret-admin-path/   # change from default 'admin/' for security
 ```
 
 Generate a secret key:

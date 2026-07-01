@@ -26,7 +26,7 @@ urlpatterns = [
     path('robots.txt', views.robots_txt, name='robots_txt' ),
     path('llms.txt', views.llms_txt, name='llms_txt' ),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml' ),
-    path('admin/', admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
     path('', views.index, name='index' ),
     path('aboutus', views.aboutus, name='aboutus' ),
     path('services', views.services, name='services' ),

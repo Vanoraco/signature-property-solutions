@@ -23,7 +23,7 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-nlin&!h93=0(i^*f#*nj(b60ia2465%z0j-4f^!w7(89)i&w*^')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['signaturepropertysolutions.com','www.signaturepropertysolution
 
 SITE_NAME = 'Signature Property Solutions'
 SITE_URL = 'https://signaturepropertysolutions.com'
+
+ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
 
 
 # Application definition
@@ -75,6 +77,15 @@ TEMPLATES = [
         },
     },
 ]
+
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True
 
 WSGI_APPLICATION = 'signature.wsgi.application'
 
