@@ -935,3 +935,9 @@ def properties_count(request):
     search = PropertySearch(request.GET)
     count = search.results().count()
     return JsonResponse({'count': count})
+
+
+def handler404(request, exception):
+    contacts = contact.objects.all()
+    contactss = contacts.last()
+    return render(request, '404.html', {'contactss': contactss}, status=404)
