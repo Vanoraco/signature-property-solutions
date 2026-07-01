@@ -101,7 +101,7 @@ nano /etc/nginx/sites-available/sps
 ```nginx
 server {
     listen 80;
-    server_name signaturepropertysolutions.cloud www.signaturepropertysolutions.cloud;
+    server_name signaturepropertysolutions.com www.signaturepropertysolutions.com;
 
     client_max_body_size 10M;
 
@@ -133,16 +133,16 @@ systemctl restart nginx
 
 In Hostinger hPanel → DNS / Nameservers, ensure these records exist:
 
-| Type | Name | Value | TTL |
-|------|------|-------|-----|
-| A | @ | 187.124.38.135 | 60 |
-| CNAME | www | signaturepropertysolutions.cloud | 300 |
+| Type  | Name | Value                            | TTL |
+| ----- | ---- | -------------------------------- | --- |
+| A     | @    | 187.124.38.135                   | 60  |
+| CNAME | www  | signaturepropertysolutions.com | 300 |
 
 ## 9. SSL Certificate
 
 ```bash
 apt install certbot python3-certbot-nginx -y
-certbot --nginx -d signaturepropertysolutions.cloud -d www.signaturepropertysolutions.cloud
+certbot --nginx -d signaturepropertysolutions.com -d www.signaturepropertysolutions.com
 ```
 
 ## 10. Deploying Updates

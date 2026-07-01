@@ -81,7 +81,7 @@
 
   function navigateTo(params) {
     currentParams = params;
-    var url = '/properteas' + (params.toString() ? '?' + params.toString() : '');
+    var url = '/properties' + (params.toString() ? '?' + params.toString() : '');
     history.pushState(null, '', url);
     fetchPartial(params, applyPartial);
   }

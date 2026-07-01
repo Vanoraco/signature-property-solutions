@@ -18,15 +18,15 @@
       <h1>{{ hom.slogon }}</h1>
       <p>{{ hom.title }}</p>
       <div class="market-hero-actions">
-        <a href="{% url 'properteas' %}" class="btn-market">Explore Properties</a>
-        <a href="{% url 'properteas' %}" class="btn-market">Browse Listings</a>
+        <a href="{% url 'properties' %}" class="btn-market">Explore Properties</a>
+        <a href="{% url 'properties' %}" class="btn-market">Browse Listings</a>
       </div>
     </div>
   </div>
 </section>
 
 <div class="market-search">
-  <form method="get" action="/properteas" class="market-search-form">
+  <form method="get" action="/properties" class="market-search-form">
     <div class="market-search-bar">
       <div class="market-search-input-wrap">
         <input type="text" name="q" placeholder="Bole, Kazanchis, Apartment..." autocomplete="off" id="home-search-input">
@@ -54,13 +54,13 @@
       <div class="col-md-6 col-lg-4">
         <div class="lux-prop-card">
           <div class="card-img">
-            <a href="{% url 'properteasdet' propertys.slug %}">
+            <a href="{% url 'properties-detail' propertys.slug %}">
               <img src="{{ propertys.main_image.url }}" alt="{{ propertys.property_title }}">
             </a>
             <span class="badge-status">{{ propertys.property_status }}</span>
           </div>
           <div class="card-body">
-            <h5><a href="{% url 'properteasdet' propertys.slug %}">{{ propertys.property_title }}</a></h5>
+            <h5><a href="{% url 'properties-detail' propertys.slug %}">{{ propertys.property_title }}</a></h5>
             <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ propertys.property_location }}</div>
             {% with specs=propertys.card_specs %}
             {% if specs %}
@@ -84,7 +84,7 @@
       {% endfor %}
     </div>
     <div class="text-center mt-5">
-      <a href="{% url 'properteas' %}" class="btn-gold-outline">View All Properties</a>
+      <a href="{% url 'properties' %}" class="btn-gold-outline">View All Properties</a>
     </div>
   </div>
 </section>

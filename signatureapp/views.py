@@ -349,7 +349,7 @@ def assistant_property_payload(pro):
         "location": pro.property_location,
         "status": pro.property_status,
         "type": str(pro.property_types),
-        "url": f"/properteasdet/{pro.slug}",
+        "url": f"/properties/{pro.slug}",
         "specs": [f"{spec['value']} {spec['label']}" for spec in specs],
     }
 
@@ -481,7 +481,7 @@ def property_schema(pro):
         "@context": "https://schema.org",
         "@type": "Offer",
         "name": pro.property_title,
-        "url": absolute_url(f"/properteasdet/{pro.slug}"),
+        "url": absolute_url(f"/properties/{pro.slug}"),
         "category": str(pro.property_types),
         "availability": "https://schema.org/InStock",
         "itemOffered": {
@@ -588,7 +588,7 @@ def servicesdt(request, slug):
     return render(request, "servicedt.html", context)
 
 
-def properteas(request):
+def properties(request):
     search = PropertySearch(request.GET)
     all_properties = search.results()
     paginator = Paginator(all_properties, 6)
@@ -621,7 +621,7 @@ def properteas(request):
         ),
         'schema_json': organization_schema(contactss),
     }
-    return render(request, 'properteas.html', context)
+    return render(request, 'properties.html', context)
 
 
 def filter_properties(request, category_slug):
@@ -669,7 +669,7 @@ def filter_properties(request, category_slug):
     )
 
 
-def properteasdet(request, slug):
+def properties_detail(request, slug):
     pro = propertys.objects.select_related("property_types").get(slug=slug)
     propertyss = propertys.objects.select_related("property_types").all().order_by("-id")[:3]
     contacts = contact.objects.all()
@@ -689,7 +689,7 @@ def properteasdet(request, slug):
     return render(request, "apartment-single.html", context)
 
 
-def contac(request):
+def contact(request):
     contacts = contact.objects.all()
     contactus = contacts.last()
     contacts = contact.objects.all()
@@ -739,11 +739,11 @@ def llms_txt(request):
 def sitemap_xml(request):
     static_paths = [
         "",
-        "properteas",
+        "properties",
         "services",
         "aboutus",
         "testimonials",
-        "contac",
+        "contact",
     ]
     urls = [
         {
@@ -772,7 +772,7 @@ def sitemap_xml(request):
     for pro in propertys.objects.exclude(slug=""):
         urls.append(
             {
-                "loc": absolute_url(f"/properteasdet/{pro.slug}"),
+                "loc": absolute_url(f"/properties/{pro.slug}"),
                 "lastmod": pro.last_update.date().isoformat(),
                 "changefreq": "weekly",
                 "priority": "0.9",
@@ -793,11 +793,11 @@ def sitemap_xml(request):
 
 def submit_property_request(request):
     if request.method != "POST":
-        return redirect("properteas")
+        return redirect("properties")
 
     message = request.POST.get("message", "").strip()
     source_page = request.POST.get("source_page", "").strip() or request.META.get("HTTP_REFERER", "")
-    redirect_to = source_page if source_page.startswith("/") else request.META.get("HTTP_REFERER", "/properteas")
+    redirect_to = source_page if source_page.startswith("/") else request.META.get("HTTP_REFERER", "/properties")
 
     if message:
         property_request.objects.create(
@@ -906,7 +906,7 @@ def search_suggest(request):
     return JsonResponse({'results': results})
 
 
-def properteas_partial(request):
+def properties_partial(request):
     search = PropertySearch(request.GET)
     all_properties = search.results()
     paginator = Paginator(all_properties, 6)
@@ -928,10 +928,10 @@ def properteas_partial(request):
         'all_facilities': facilities.objects.all(),
         'request': request,
     }
-    return render(request, 'properteas_cards.html', context)
+    return render(request, 'properties_cards.html', context)
 
 
-def properteas_count(request):
+def properties_count(request):
     search = PropertySearch(request.GET)
     count = search.results().count()
     return JsonResponse({'count': count})

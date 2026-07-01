@@ -1,0 +1,718 @@
+[
+{
+  "model": "signatureapp.home",
+  "pk": 1,
+  "fields": {
+    "image": "home info/apartment-single-1.jpg",
+    "slogon": "A Service You Deserve, People You Trust!",
+    "title": "Excellent Service is our Passion",
+    "video": "videos_uploaded/Home2.mp4"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 1,
+  "fields": {
+    "catagorys": "Apartment for Sale",
+    "slug": "apartam",
+    "icon": "catagory/category-one.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 2,
+  "fields": {
+    "catagorys": "Apartment for Rent",
+    "slug": "apartment-for-rent",
+    "icon": "catagory/category-one_AHMu5TR.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 3,
+  "fields": {
+    "catagorys": "Building for Rent",
+    "slug": "building-for-rent",
+    "icon": "catagory/category-seven.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 4,
+  "fields": {
+    "catagorys": "Building for Sale",
+    "slug": "building-for-sale",
+    "icon": "catagory/category-two.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 5,
+  "fields": {
+    "catagorys": "Warehouse for Rent",
+    "slug": "warehouse-for-rent",
+    "icon": "catagory/category-ten.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 6,
+  "fields": {
+    "catagorys": "Warehouse for Sale",
+    "slug": "warehouse-for-sale",
+    "icon": "catagory/category-ten_Ql2MS1n.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 7,
+  "fields": {
+    "catagorys": "House for Sale",
+    "slug": "house-for-sale",
+    "icon": "catagory/category-one_I5HKOFy.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 8,
+  "fields": {
+    "catagorys": "House for Rent",
+    "slug": "house-for-rent",
+    "icon": "catagory/category-one_dXiND2H.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 9,
+  "fields": {
+    "catagorys": "Office for Rent",
+    "slug": "office-for-rent",
+    "icon": "catagory/category-one_ydfRiJq.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 10,
+  "fields": {
+    "catagorys": "Office for Sale",
+    "slug": "office-for-sale",
+    "icon": "catagory/category-seven_BZJwGkr.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 11,
+  "fields": {
+    "catagorys": "Land for sale",
+    "slug": "land-for-sale",
+    "icon": "catagory/category-ten_VeSD1nB.png"
+  }
+},
+{
+  "model": "signatureapp.catagory",
+  "pk": 12,
+  "fields": {
+    "catagorys": "Land for Rent",
+    "slug": "land-for-rent",
+    "icon": "catagory/category-ten_Mu76VW7.png"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 4,
+  "fields": {
+    "facilities_name": "Swimming pool",
+    "slug": "Swimming_pool"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 5,
+  "fields": {
+    "facilities_name": "Fitness center/gym",
+    "slug": "Fitness_center_gym"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 6,
+  "fields": {
+    "facilities_name": "Playground/park",
+    "slug": "Playground_park"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 7,
+  "fields": {
+    "facilities_name": "Rooftop terrace",
+    "slug": "Rooftop_terrace"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 8,
+  "fields": {
+    "facilities_name": "Elevators",
+    "slug": "Elevators"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 9,
+  "fields": {
+    "facilities_name": "Security system (CCTV, access control)",
+    "slug": "Security_system"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 10,
+  "fields": {
+    "facilities_name": "Reception area",
+    "slug": "Reception"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 11,
+  "fields": {
+    "facilities_name": "Kitchen/break room",
+    "slug": "Kitchen"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 12,
+  "fields": {
+    "facilities_name": "Wi-Fi/internet access",
+    "slug": "Wi-Fi"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 13,
+  "fields": {
+    "facilities_name": "HVAC system",
+    "slug": "HVAC"
+  }
+},
+{
+  "model": "signatureapp.facilities",
+  "pk": 14,
+  "fields": {
+    "facilities_name": "Fire safety systems (fire alarms, sprinklers)",
+    "slug": "Fire"
+  }
+},
+{
+  "model": "signatureapp.egent",
+  "pk": 1,
+  "fields": {
+    "name": "Mihreteab Dawit",
+    "image": "home info/apartment-single-1_AuBye82.jpg",
+    "phone_number": "+251960226666",
+    "office_phone": "+251960226666",
+    "email": "info@ethiosps.com",
+    "facebook": "www.facebbok.com",
+    "instagram": "www.instegram.com",
+    "linkden": "www.linkden.com"
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 3,
+  "fields": {
+    "property_id": "SPS02",
+    "property_title": "Luxury Apartments",
+    "slug": "luxury-apartments",
+    "price": "3500$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Bole",
+    "property_size": 234,
+    "property_area": 234,
+    "property_status": "For Rent",
+    "property_floor": 5,
+    "bedrooms": "2",
+    "bathrooms": "2",
+    "furnished": "yes",
+    "property_short_discription": "Luxury apartments are premium residential units designed to provide an exceptional living experience characterized by high-end amenities, exquisite finishes, and exclusive services. These apartments typically feature top-of-the-line appliances, luxurious materials like hardwood floors and marble countertops, and spacious floor plans with ample living space. Residents of luxury apartments often enjoy resort-style amenities such as swimming pools, fitness centers, spa facilities, and concierge services. With attention to detail and a focus on comfort and sophistication, luxury apartments offer residents a refined lifestyle in prestigious locations.",
+    "main_image": "products/apartment-single.jpg",
+    "slide_1": "products/apartment-single-1.jpg",
+    "slide_2": "products/apartment-single-2.jpg",
+    "slide_3": "products/apartment-single-3.jpg",
+    "slide_4": "products/apartment-four.png",
+    "slide_5": "products/apartment-single-3_uoVBnHt.jpg",
+    "slide_6": "products/apartment-single-4.jpg",
+    "video_link": "",
+    "last_update": "2024-06-24T15:35:26.819Z",
+    "facilitie": [
+      5,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 4,
+  "fields": {
+    "property_id": "SPS03",
+    "property_title": "Office Space",
+    "slug": "office-space",
+    "price": "1000 Per Sqm",
+    "property_types": 9,
+    "agent": 1,
+    "property_location": "Bole next to Boston Spa",
+    "property_size": 650,
+    "property_area": 650,
+    "property_status": "For Rent",
+    "property_floor": 8,
+    "bedrooms": "No",
+    "bathrooms": "4",
+    "furnished": "No",
+    "property_short_discription": "It's one of the best office spaces in Bole with very nice working environment and sufficient parking area.",
+    "main_image": "products/WhatsApp_Image_2024-05-22_at_19.47.11_04f397b9.jpg",
+    "slide_1": "products/WhatsApp_Image_2024-05-22_at_19.47.12_96f162ef.jpg",
+    "slide_2": "products/WhatsApp_Image_2024-05-22_at_19.47.12_cfab7558.jpg",
+    "slide_3": "products/WhatsApp_Image_2024-05-22_at_19.47.13_d55ae97d.jpg",
+    "slide_4": "products/WhatsApp_Image_2024-05-22_at_19.47.14_a2d4b716.jpg",
+    "slide_5": "products/WhatsApp_Image_2024-05-22_at_19.47.13_d55ae97d_bCJowWP.jpg",
+    "slide_6": "products/WhatsApp_Image_2024-05-22_at_19.47.11_04f397b9_Xg0KAQG.jpg",
+    "video_link": "",
+    "last_update": "2024-06-24T15:22:47.417Z",
+    "facilitie": [
+      6,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 5,
+  "fields": {
+    "property_id": "SPS01",
+    "property_title": "Spacious Apartment with Big Balcony",
+    "slug": "spacious-apartment-with-big-balcony",
+    "price": "4000$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Bole",
+    "property_size": 200,
+    "property_area": 220,
+    "property_status": "For Rent",
+    "property_floor": 9,
+    "bedrooms": "3",
+    "bathrooms": "3",
+    "furnished": "yes",
+    "property_short_discription": "Its well fully furnished with balcony and interesting view at the heart of Bole where you have access to everything and 2m distance from the airport with excellent building management and 24h reception service.",
+    "main_image": "products/2.jpg",
+    "slide_1": "products/1.jpg",
+    "slide_2": "products/3.jpg",
+    "slide_3": "products/4.jpg",
+    "slide_4": "products/5.jpg",
+    "slide_5": "products/6.jpg",
+    "slide_6": "products/1_Nfe5DfQ.jpg",
+    "video_link": "",
+    "last_update": "2024-06-24T15:31:01.232Z",
+    "facilitie": [
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      14
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 6,
+  "fields": {
+    "property_id": "SPS04",
+    "property_title": "Modern Apartment near to the International Airport",
+    "slug": "modern-apartment-near-to-the-international-airport",
+    "price": "3000$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Bole",
+    "property_size": 130,
+    "property_area": 130,
+    "property_status": "For Rent",
+    "property_floor": 2,
+    "bedrooms": "2",
+    "bathrooms": "2",
+    "furnished": "Yes",
+    "property_short_discription": "Includes, House Keeping 3x a week, Gym, High Speed Internet And All Utility Payments",
+    "main_image": "products/1_J7gTDF7.jpg",
+    "slide_1": "products/2_YuXkbJ7.jpg",
+    "slide_2": "products/8.jpg",
+    "slide_3": "products/4_nshG7na.jpg",
+    "slide_4": "products/5_pZcIcVE.jpg",
+    "slide_5": "products/6_aSNTANg.jpg",
+    "slide_6": "products/7.jpg",
+    "video_link": "https://www.youtube.com/embed/bmilP0XTvJw?si=g5OkblA9fgroAWxi",
+    "last_update": "2024-06-24T15:18:02.696Z",
+    "facilitie": [
+      5,
+      8,
+      9,
+      10,
+      11,
+      12,
+      14
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 7,
+  "fields": {
+    "property_id": "SPS05",
+    "property_title": "Modern Apartment near to the International Airport",
+    "slug": "modern-apartment",
+    "price": "3000$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Bole",
+    "property_size": 120,
+    "property_area": 120,
+    "property_status": "For Rent",
+    "property_floor": 11,
+    "bedrooms": "2",
+    "bathrooms": "2",
+    "furnished": "Yes",
+    "property_short_discription": "Includes, House Keeping 3x a week, Gym, High Speed Internet And All Utility Payments",
+    "main_image": "products/20240416_184223.jpg",
+    "slide_1": "products/20240416_184245.jpg",
+    "slide_2": "products/20240416_182046.jpg",
+    "slide_3": "products/20240416_182100.jpg",
+    "slide_4": "products/20240416_184344.jpg",
+    "slide_5": "products/20240416_184305.jpg",
+    "slide_6": "products/20240416_184420.jpg",
+    "video_link": "https://www.youtube.com/embed/2e6XvZEZsDA?si=FBkZ2JrUAr1jvHSE",
+    "last_update": "2024-06-24T15:18:40.950Z",
+    "facilitie": [
+      5,
+      8,
+      9,
+      10,
+      11,
+      12,
+      14
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 8,
+  "fields": {
+    "property_id": "SPS06",
+    "property_title": "Beautiful Apartment",
+    "slug": "beautiful-apartment",
+    "price": "11,000,000 ETB",
+    "property_types": 1,
+    "agent": 1,
+    "property_location": "Ayat",
+    "property_size": 111,
+    "property_area": 111,
+    "property_status": "For Sale",
+    "property_floor": 2,
+    "bedrooms": "2",
+    "bathrooms": "2",
+    "furnished": "No",
+    "property_short_discription": "In a Gated Compound, Well Regular Finishing",
+    "main_image": "products/20240416_132449.jpg",
+    "slide_1": "products/20240416_131207.jpg",
+    "slide_2": "products/20240416_131222.jpg",
+    "slide_3": "products/20240416_131037.jpg",
+    "slide_4": "products/20240416_131155.jpg",
+    "slide_5": "products/20240416_131132.jpg",
+    "slide_6": "products/20240416_131144.jpg",
+    "video_link": "https://www.youtube.com/embed/LY_V5Q9nFoA?si=0-Vr9YJO5PRObhoD",
+    "last_update": "2024-06-24T15:21:47.789Z",
+    "facilitie": [
+      8,
+      11
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 9,
+  "fields": {
+    "property_id": "SPS07",
+    "property_title": "Furnished Apartment",
+    "slug": "furnished-apartment",
+    "price": "2000$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Atlas",
+    "property_size": 111,
+    "property_area": 111,
+    "property_status": "For Rent",
+    "property_floor": 9,
+    "bedrooms": "2",
+    "bathrooms": "2",
+    "furnished": "Yes",
+    "property_short_discription": "",
+    "main_image": "products/101.jpg",
+    "slide_1": "products/102.jpg",
+    "slide_2": "products/103.jpg",
+    "slide_3": "products/104.jpg",
+    "slide_4": "products/105.jpg",
+    "slide_5": "products/106.jpg",
+    "slide_6": "products/107.jpg",
+    "video_link": "",
+    "last_update": "2024-06-06T23:49:26.448Z",
+    "facilitie": [
+      8,
+      9,
+      10,
+      12
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 10,
+  "fields": {
+    "property_id": "SPS08",
+    "property_title": "Luxurious Apartment",
+    "slug": "Luxurious-Apartment",
+    "price": "4000$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Bole",
+    "property_size": 170,
+    "property_area": 170,
+    "property_status": "For Rent",
+    "property_floor": 2,
+    "bedrooms": "3",
+    "bathrooms": "3",
+    "furnished": "Yes",
+    "property_short_discription": "Plus Maids Room, Including House Keeping, Big Balcony",
+    "main_image": "products/301.jpg",
+    "slide_1": "products/302.jpg",
+    "slide_2": "products/303.jpg",
+    "slide_3": "products/304.jpg",
+    "slide_4": "products/305.jpg",
+    "slide_5": "products/306.jpg",
+    "slide_6": "products/301_m3rlCHr.jpg",
+    "video_link": "https://youtube.com/shorts/Kj4AVg9c9zI?si=DwbVhZI6xwquXJtY",
+    "last_update": "2024-06-13T17:02:16.809Z",
+    "facilitie": [
+      5,
+      8,
+      9,
+      12
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 11,
+  "fields": {
+    "property_id": "PSP09",
+    "property_title": "Modern Apartment",
+    "slug": "modern",
+    "price": "2200$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Bole",
+    "property_size": 100,
+    "property_area": 100,
+    "property_status": "For Rent",
+    "property_floor": 9,
+    "bedrooms": "1",
+    "bathrooms": "1",
+    "furnished": "Yes",
+    "property_short_discription": "Includes, House Keeping 3x a week, Gym, High Speed Internet And All Utility Payments",
+    "main_image": "products/901.jpg",
+    "slide_1": "products/901_gQT2ajk.jpg",
+    "slide_2": "products/903.jpg",
+    "slide_3": "products/904.jpg",
+    "slide_4": "products/905.jpg",
+    "slide_5": "products/901_ffZyFVi.jpg",
+    "slide_6": "products/905_NozIvD8.jpg",
+    "video_link": "https://www.youtube.com/embed/O3dYSqSxnpo?si=SxNVL7ZsAyEXYhc-",
+    "last_update": "2024-06-27T13:58:56.802Z",
+    "facilitie": [
+      5,
+      8,
+      9,
+      10,
+      11,
+      12,
+      14
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 12,
+  "fields": {
+    "property_id": "SPS10",
+    "property_title": "Penthouse",
+    "slug": "penthouse",
+    "price": "4500$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Atlas",
+    "property_size": 450,
+    "property_area": 450,
+    "property_status": "For Rent",
+    "property_floor": 16,
+    "bedrooms": "4",
+    "bathrooms": "5",
+    "furnished": "No",
+    "property_short_discription": "",
+    "main_image": "products/P1.jpg",
+    "slide_1": "products/P2.jpg",
+    "slide_2": "products/P3.jpg",
+    "slide_3": "products/P4.jpg",
+    "slide_4": "products/P5.jpg",
+    "slide_5": "products/P6.jpg",
+    "slide_6": "products/P7.jpg",
+    "video_link": "https://www.youtube.com/embed/BD_PVkobBmg?si=hkyFUmZrTTL7SFIa",
+    "last_update": "2024-06-14T12:49:30.254Z",
+    "facilitie": [
+      7,
+      8,
+      9,
+      10
+    ]
+  }
+},
+{
+  "model": "signatureapp.propertys",
+  "pk": 13,
+  "fields": {
+    "property_id": "SPS11",
+    "property_title": "Apartment",
+    "slug": "apartment",
+    "price": "2500$",
+    "property_types": 2,
+    "agent": 1,
+    "property_location": "Atlas",
+    "property_size": 160,
+    "property_area": 160,
+    "property_status": "For Rent",
+    "property_floor": 5,
+    "bedrooms": "3",
+    "bathrooms": "3",
+    "furnished": "Yes",
+    "property_short_discription": "",
+    "main_image": "products/1101.jpg",
+    "slide_1": "products/11022.jpg",
+    "slide_2": "products/1102.jpg",
+    "slide_3": "products/1103.jpg",
+    "slide_4": "products/1104.jpg",
+    "slide_5": "products/1105.jpg",
+    "slide_6": "products/1106.jpg",
+    "video_link": "",
+    "last_update": "2024-06-18T15:59:52.711Z",
+    "facilitie": [
+      8,
+      10,
+      12
+    ]
+  }
+},
+{
+  "model": "signatureapp.about",
+  "pk": 1,
+  "fields": {
+    "image": "about/slider-one.png",
+    "hading": "Best offers from the house chef",
+    "title": "Best Rent Service, Enjoy your life",
+    "aboutus": "Signature Property Solutions is a full-service property management and real estate brokerage. We focus on the needs of rental investors and their renters, community associations boards and their residents along with helping Realtors maintain sales business by referring us their property management business. We池e here to help achieve the best possible results from real estate property assets. Whether you are the owner or the occupant of a property, your needs will be met, and exceed your expectations. We specialize in solutions to the challenging real estate puzzles. We continually evaluate our internal processes and systems to best serve our clients. As a result, we have continually experienced steady growth and are fully poised to expand into every aspect of property management.",
+    "aboutus_image": "about/2024-06-14_01.27.06.jpg",
+    "vision": "Whether you're relocating, planning a long-term stay, or simply prefer the flexibility of renting, our extensive listings offer a diverse range of quality homes available for extended periods. Discover a place where comfort, convenience, and long-lasting memories await you.",
+    "vision_image": "about/About2.jpg",
+    "mission": "Our unwavering commitment to enhancing communities, exceeding expectations and fostering meaningful relationships underpins everything we do. Join us in our mission to transform properties into thriving hubs of prosperity and harmony, where every detail matters and every experience is extraordinary. Let's build the future together, where innovation meets integrity and excellence reigns supreme. Welcome to Signature Property Solutions - where exceptional is just the beginning.",
+    "mission_image": "about/about-image_ShLC8Bt.png",
+    "value": "We help real estate investors manage, lease, buy and sell, single family homes, townhomes, multi-family, industrial, retail, and office properties. We help people find stable rental housing that is fair-priced, clean, and safe.",
+    "value_image": "about/2024-06-14_01.33.05.jpg",
+    "why_choose_us_header": "",
+    "tytle": "Best offers from the house chef",
+    "description": "Choosing Signature Property Solutions is more than just selecting a realtor; it's entering a partnership built on trust, transparency and dedication. We believe in empowering you with knowledge, guiding you through each step and exceeding your expectations at every turn.\r\n\r\n表tHigh quality Designs & Structures\r\n\r\n表tComprehensive Amenities\r\n\r\n表tIntegrated 24/7 Support\r\n\r\n表tProfessional Team",
+    "ceo_image": "about/about-page-johan.png",
+    "ceo_name": "Mr. Mihreteab Dawit",
+    "ceo_position": "CEO",
+    "ceo_description": "Mr. Mihreteab is the Founder and Chief Executive Officer of Signature Property Solutions. As CEO, He oversees all day to day processes and guides the long term vision. He is always seeking new and innovative ways to improve the rental ownership experience for property owners, continuing his commitment to providing professional, accountable, and reliable services. \r\nDue to his extensive experience in rentals throughout Addis Ababa and deep knowledge of real estate investments, Mihreteab is a frequently requested speaker at investor and rental industry seminars and trade groups.",
+    "ceo_facebook": "www.facebook.com",
+    "ceo_twitter": "www.twitter.com",
+    "ceo_linkden": "www.linkden.com"
+  }
+},
+{
+  "model": "signatureapp.serevices",
+  "pk": 1,
+  "fields": {
+    "icon": "partners/2024-06-14_01.27.06.jpg",
+    "service_name": "Building Management",
+    "slug": "building-management",
+    "short_discriptions": "<p>Building management involves overseeing the day-to-day operations and maintenance of a property to ensure it operates smoothly and efficiently.</p>",
+    "Discription": "<p>Key aspects of building management include:</p>\r\n\r\n<ol>\r\n\t<li>\r\n\t<p>Maintenance: Regular upkeep of the building&#39;s systems and facilities, including HVAC systems, plumbing, electrical systems, elevators, and common areas. This involves scheduling routine inspections, repairs, and preventive maintenance to address any issues promptly and minimize downtime.</p>\r\n\t</li>\r\n\t<li>\r\n\t<p>Security: Implementing security measures to protect the property and its occupants from unauthorized access, theft, vandalism, and other security threats. This may involve installing surveillance cameras, access control systems, security guards, and alarm systems.</p>\r\n\t</li>\r\n\t<li>\r\n\t<p>Tenant Relations: Building managers are often the primary point of contact for tenants and are responsible for addressing their concerns, resolving disputes, and ensuring their needs are met. This includes handling lease agreements, rent collection, and facilitating communication between tenants and property owners.</p>\r\n\t</li>\r\n\t<li>\r\n\t<p>Financial Management: Managing the property&#39;s budget, expenses, and financial records, including collecting rent, paying bills, and preparing financial reports for property owners or stakeholders. Building managers may also be involved in budget planning, forecasting, and implementing cost-saving measures.</p>\r\n\t</li>\r\n\t<li>\r\n\t<p>Compliance: Ensuring the property complies with local building codes, zoning regulations, health and safety standards, and other legal requirements. Building managers must stay informed about relevant laws and regulations and ensure the property meets all necessary permits and inspections.</p>\r\n\t</li>\r\n\t<li>\r\n\t<p>Emergency Preparedness: Developing and implementing emergency response plans to address potential hazards such as fires, natural disasters, or security breaches. This may involve conducting drills, training staff, and coordinating with emergency services to ensure a swift and effective response to emergencies.</p>\r\n\t</li>\r\n</ol>",
+    "image": "partners/2024-06-14_01.27.06_cF6KYEl.jpg"
+  }
+},
+{
+  "model": "signatureapp.serevices",
+  "pk": 2,
+  "fields": {
+    "icon": "partners/Office_xEh6RD3.jpg",
+    "service_name": "Office Rental",
+    "slug": "office-rental",
+    "short_discriptions": "<p>Office rental involves leasing commercial space to businesses for their operations, administrative activities, and professional services</p>",
+    "Discription": "<p><strong>Space Options</strong>: Office rentals can vary in size and layout, offering a range of options from small individual offices to large open-plan spaces. Businesses can choose the type of space that best suits their needs, whether it&#39;s a private office, a shared workspace, or a dedicated floor within a commercial building.</p>\r\n\r\n<p><strong>Location</strong>: Location is a crucial factor in office rental, as businesses often seek convenient and accessible locations that meet their operational requirements and cater to their employees&#39; needs. Offices may be situated in central business districts (CBDs), suburban office parks, or mixed-use developments, depending on the business&#39;s preferences and budget.</p>\r\n\r\n<p><strong>Amenities and Facilities</strong>: Office rental spaces typically offer various amenities and facilities to enhance productivity and convenience for tenants. These may include high-speed internet access, conference rooms, meeting facilities, kitchenettes or break rooms, on-site parking, and 24/7 security.</p>\r\n\r\n<p><strong>Lease Terms</strong>: Office rental agreements typically involve lease terms that outline the duration of the lease, rental rates, payment schedules, and any additional fees or charges. Lease terms can vary depending on factors such as the length of the lease, the size of the space, and the location of the property.</p>\r\n\r\n<p><strong>Customization</strong>: Many office rental spaces allow tenants to customize their space according to their specific needs and preferences. This may involve configuring the layout, installing partition walls, selecting furnishings, and branding the space with company logos and signage.</p>\r\n\r\n<p><strong>Support Services</strong>: Some office rental providers offer additional support services to tenants, such as receptionist services, mail handling, IT support, and cleaning services. These services can help streamline operations and alleviate administrative burdens for businesses.</p>\r\n\r\n<p><strong>Flexibility</strong>: Office rental arrangements often provide flexibility for businesses, allowing them to scale up or down as needed to accommodate changes in their workforce or business requirements. Flexible lease terms, coworking options, and short-term rental arrangements can give businesses the agility they need to adapt to evolving circumstances.</p>",
+    "image": "partners/Office.jpg"
+  }
+},
+{
+  "model": "signatureapp.contact",
+  "pk": 1,
+  "fields": {
+    "google_map": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1063.2286446938701!2d38.781439285657065!3d8.999877311854096!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85bda7c6a459%3A0x5bc626f30a6769b4!2sThe%20Editor%20Addis!5e0!3m2!1sen!2set!4v1715766321642!5m2!1sen!2set",
+    "phone_number": "+251960226666",
+    "office_phone": "+251960226666",
+    "email": "info@ethiosps.com",
+    "website": "www.ethiosps.com",
+    "address": "Ethiopia, Addis Ababa, Bole Atlas",
+    "facebook": "https://www.facebook.com/profile.php?id=61559904771756",
+    "instagram": "https://www.instagram.com/signature_property_solution?igsh=MWVseGszbG5tM2xs",
+    "linkden": "www.linkden.com"
+  }
+},
+{
+  "model": "signatureapp.property_request",
+  "pk": 2,
+  "fields": {
+    "name": "Test",
+    "phone_number": "09465656",
+    "email": "",
+    "property_type": "Room",
+    "goal": "Rent",
+    "location": "Bole",
+    "budget": "10000",
+    "message": "Toilet",
+    "source_page": "/properteas",
+    "is_reviewed": false,
+    "created_at": "2026-06-13T21:56:06.115Z"
+  }
+}
+]

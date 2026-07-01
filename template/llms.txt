@@ -4,12 +4,12 @@ Signature Property Solutions is a real estate company in Ethiopia helping client
 
 ## Key Pages
 
-- Home: https://ethiosps.com/
-- Properties: https://ethiosps.com/properteas
-- Services: https://ethiosps.com/services
-- Testimonials: https://ethiosps.com/testimonials
-- About: https://ethiosps.com/aboutus
-- Contact: https://ethiosps.com/contac
+- Home: https://signaturepropertysolutions.com/
+- Properties: https://signaturepropertysolutions.com/properties
+- Services: https://signaturepropertysolutions.com/services
+- Testimonials: https://signaturepropertysolutions.com/testimonials
+- About: https://signaturepropertysolutions.com/aboutus
+- Contact: https://signaturepropertysolutions.com/contact
 
 ## Service Area
 
@@ -19,4 +19,4 @@ Signature Property Solutions is a real estate company in Ethiopia helping client
 ## Contact
 
 Use the contact page for current phone, email, address, and social profiles:
-https://ethiosps.com/contac
+https://signaturepropertysolutions.com/contact

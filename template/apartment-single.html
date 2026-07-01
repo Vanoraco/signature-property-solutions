@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'properteas' %}">Properties</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'properties' %}">Properties</a></li>
         <li class="breadcrumb-item active">Detail</li>
       </ol>
     </nav>
@@ -104,12 +104,12 @@
       <div class="col-md-6 col-lg-4">
         <div class="lux-prop-card">
           <div class="card-img">
-            <a href="{% url 'properteasdet' propertys.slug %}">
+            <a href="{% url 'properties-detail' propertys.slug %}">
               <img src="{{ propertys.main_image.url }}" alt="{{ propertys.property_title }}">
             </a>
           </div>
           <div class="card-body">
-            <h5><a href="{% url 'properteasdet' propertys.slug %}">{{ propertys.property_title }}</a></h5>
+            <h5><a href="{% url 'properties-detail' propertys.slug %}">{{ propertys.property_title }}</a></h5>
             <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ propertys.property_location }}</div>
             {% with specs=propertys.card_specs %}
             {% if specs %}

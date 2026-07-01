@@ -17,15 +17,15 @@
 <section class="lux-section lux-section-dark">
   <div class="container">
     <div class="lux-filter-bar">
-      <a href="{% url 'properteas' %}?filter=Sale">Sale</a>
-      <a href="{% url 'properteas' %}?filter=Rent">Rent</a>
-      <a href="{% url 'properteas' %}?filter=LowToHigh">Low to High</a>
-      <a href="{% url 'properteas' %}?filter=HighToLow">High to Low</a>
+      <a href="{% url 'properties' %}?filter=Sale">Sale</a>
+      <a href="{% url 'properties' %}?filter=Rent">Rent</a>
+      <a href="{% url 'properties' %}?filter=LowToHigh">Low to High</a>
+      <a href="{% url 'properties' %}?filter=HighToLow">High to Low</a>
       <div class="dropdown">
         <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">Category <i class="fas fa-chevron-down" style="font-size:0.7rem"></i></a>
         <ul class="dropdown-menu">
           {% for category in categories %}
-          <li><a href="{% url 'properteas' %}?category={{ category.slug }}">{{ category.catagorys }}</a></li>
+          <li><a href="{% url 'properties' %}?category={{ category.slug }}">{{ category.catagorys }}</a></li>
           {% endfor %}
         </ul>
       </div>

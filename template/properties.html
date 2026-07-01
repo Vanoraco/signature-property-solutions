@@ -18,7 +18,7 @@
 <section class="lux-section lux-section-dark">
   <div class="container">
 
-    <form method="get" action="/properteas" id="prop-search-form" class="lux-search-bar" onsubmit="return false;">
+    <form method="get" action="/properties" id="prop-search-form" class="lux-search-bar" onsubmit="return false;">
       <div class="lux-search-input-wrap">
         <input type="text" name="q" value="{{ applied_filters.q|default:'' }}" placeholder="Bole, Kazanchis, Apartment..." autocomplete="off" id="lux-search-input">
         <div class="lux-suggest-dropdown" id="lux-suggest-dropdown"></div>
@@ -91,7 +91,7 @@
           <a href="#" class="lux-chip-remove" data-remove="amenities" data-value="{{ slug }}">&#10005;</a>
         </span>
       {% endfor %}
-      <a href="/properteas" class="lux-clear-all">Clear all</a>
+      <a href="/properties" class="lux-clear-all">Clear all</a>
     </div>
     {% else %}
     <div id="lux-filter-chips"></div>
@@ -215,7 +215,7 @@
         {% for property in all_properties %}
           {% include "partials/property_card.html" with property=property %}
         {% empty %}
-          <p class="lux-no-results">No properties match your filters. <a href="/properteas">Clear all filters</a>.</p>
+          <p class="lux-no-results">No properties match your filters. <a href="/properties">Clear all filters</a>.</p>
         {% endfor %}
       </div>
 

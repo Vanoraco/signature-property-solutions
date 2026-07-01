@@ -2,13 +2,13 @@
 <div class="col-md-6 col-lg-4">
   <div class="lux-prop-card">
     <div class="card-img">
-      <a href="{% url 'properteasdet' property.slug %}">
+      <a href="{% url 'properties-detail' property.slug %}">
         <img src="{{ property.main_image.url }}" alt="{{ property.property_title }}">
       </a>
       <span class="badge-status">{{ property.property_status }}</span>
     </div>
     <div class="card-body">
-      <h5><a href="{% url 'properteasdet' property.slug %}">{{ property.property_title }}</a></h5>
+      <h5><a href="{% url 'properties-detail' property.slug %}">{{ property.property_title }}</a></h5>
       <div class="prop-location"><i class="fas fa-map-marker-alt"></i>{{ property.property_location }}</div>
       {% with specs=property.card_specs %}
       {% if specs %}
