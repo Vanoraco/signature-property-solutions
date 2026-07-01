@@ -36,7 +36,7 @@ urlpatterns = [
     path('property-request', views.submit_property_request, name='submit_property_request' ),
     path('property-assistant', views.property_assistant, name='property_assistant' ),
     path('properties/<slug:slug>', views.properties_detail, name='properties-detail'),
-    path('contact', views.contact, name='contact' ),
+    path('contact', views.contact_view, name='contact' ),
     path('testimonials', views.testimonials, name='testimonials' ),
     path('filter_properties/<slug:category_slug>/', views.filter_properties, name='filter_properties'),
 

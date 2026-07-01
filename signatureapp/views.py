@@ -689,7 +689,7 @@ def properties_detail(request, slug):
     return render(request, "apartment-single.html", context)
 
 
-def contact(request):
+def contact_view(request):
     contacts = contact.objects.all()
     contactus = contacts.last()
     contacts = contact.objects.all()
