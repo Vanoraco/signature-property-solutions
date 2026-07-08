@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from signatureapp import views
 
 handler404 = 'signatureapp.views.handler404'
@@ -27,6 +27,7 @@ urlpatterns = [
     path('llms.txt', views.llms_txt, name='llms_txt' ),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml' ),
     path(settings.ADMIN_URL, admin.site.urls),
+    path('api/', include('signature.api.urls')),
     path('', views.index, name='index' ),
     path('aboutus', views.aboutus, name='aboutus' ),
     path('services', views.services, name='services' ),

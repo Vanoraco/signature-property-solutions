@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
     'signatureapp',
     'multiselectfield',
     'ckeditor',
@@ -53,6 +56,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -222,3 +226,40 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success",
     },
 }
+
+# ---------- Django REST Framework ----------
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ),
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# ---------- CORS ----------
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://signaturepropertysolutions.com',
+    'https://www.signaturepropertysolutions.com',
+]
+
+CORS_ALLOW_CREDENTIALS = True
