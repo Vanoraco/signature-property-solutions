@@ -71,9 +71,9 @@ export default function DataTable<T extends { id: number | string }>({
   }
 
   return (
-    <div className="bg-card border border-border rounded-[10px] shadow-sm overflow-hidden">
-      <div className="px-4 py-3 border-b border-border-soft flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 bg-canvas border border-border rounded-lg px-3 py-2 min-w-[220px] text-text-faint">
+    <div className="panel">
+      <div className="toolbar">
+        <div className="search-box">
           <Search size={14} />
           <input
             type="text"
@@ -83,7 +83,7 @@ export default function DataTable<T extends { id: number | string }>({
             className="bg-transparent border-none outline-none flex-1 text-[13px] text-text-main placeholder:text-text-faint"
           />
         </div>
-        <span className="text-[12px] text-text-faint font-mono ml-auto">{sorted.length} records</span>
+        <span className="count-chip ml-auto">{sorted.length} records</span>
       </div>
 
       <div className="overflow-x-auto">

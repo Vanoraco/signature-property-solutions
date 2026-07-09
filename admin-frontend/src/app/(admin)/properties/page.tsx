@@ -79,12 +79,13 @@ export default function PropertiesPage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-5 mb-5 flex-wrap">
+      <div className="page-head">
         <div>
-          <p className="text-[11px] tracking-[1.5px] uppercase text-brass-dark font-semibold mb-1">Properties</p>
-          <h1 className="font-display text-[28px] font-semibold text-ink">All Properties</h1>
+          <div className="page-eyebrow">Properties</div>
+          <div className="page-title">All Properties</div>
+          <div className="page-desc">Manage every property record shown across the site.</div>
         </div>
-        <button onClick={() => { setEditing(null); setModalOpen(true) }} className="btn-brass inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13.5px] font-semibold bg-brass text-white hover:bg-brass-dark transition-colors">
+        <button onClick={() => { setEditing(null); setModalOpen(true) }} className="btn btn-brass">
           <Plus size={16} /> Add Property
         </button>
       </div>
