@@ -4,41 +4,49 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import {
-  LayoutDashboard, FileText, Building2, Compass, Users, Megaphone, Inbox,
-  Shield, Trophy, Image as ImageIcon, ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen,
-  Tags, Star, Search
+  LayoutDashboard, FileText, Building2, Users, Megaphone, Inbox,
+  Shield, Trophy, Image as ImageIcon, ChevronLeft, ChevronRight, ChevronDown, LogOut,
+  Tags, Star, Search, Circle
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 
 const NAV = [
+  { type: 'section' as const, label: 'Overview' },
   { type: 'link' as const, href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { type: 'section' as const, label: 'Site content' },
   { type: 'group' as const, label: 'Content', icon: FileText, items: [
-    { href: '/content/home', label: 'Home Page' },
-    { href: '/content/about', label: 'About Page' },
-    { href: '/content/contact', label: 'Contact Page' },
+    { href: '/content/home', label: 'Home Page', icon: FileText },
+    { href: '/content/about', label: 'About Page', icon: Circle },
+    { href: '/content/contact', label: 'Contact Page', icon: Circle },
   ]},
   { type: 'group' as const, label: 'Properties', icon: Building2, items: [
-    { href: '/properties', label: 'All Properties' },
-    { href: '/categories', label: 'Categories' },
-    { href: '/facilities', label: 'Facilities' },
-    { href: '/agents', label: 'Agents' },
+    { href: '/properties', label: 'All Properties', icon: Building2 },
+    { href: '/categories', label: 'Categories', icon: Tags },
+    { href: '/facilities', label: 'Facilities', icon: Star },
+    { href: '/agents', label: 'Agents', icon: Users },
   ]},
   { type: 'group' as const, label: 'Marketing', icon: Megaphone, items: [
-    { href: '/services', label: 'Services' },
-    { href: '/testimonials', label: 'Testimonials' },
+    { href: '/services', label: 'Services', icon: Megaphone },
+    { href: '/testimonials', label: 'Testimonials', icon: Star },
   ]},
+  { type: 'section' as const, label: 'Operations' },
   { type: 'group' as const, label: 'Leads', icon: Inbox, items: [
-    { href: '/requests', label: 'Property Requests' },
-    { href: '/search', label: 'Search Analytics' },
+    { href: '/requests', label: 'Property Requests', icon: Inbox },
+    { href: '/search', label: 'Search Analytics', icon: Search },
   ]},
   { type: 'group' as const, label: 'Team & Access', icon: Shield, items: [
-    { href: '/users', label: 'Users' },
-    { href: '/roles', label: 'Roles & Permissions' },
-    { href: '/activity', label: 'Activity Log' },
+    { href: '/users', label: 'Users', icon: Users },
+    { href: '/roles', label: 'Roles & Permissions', icon: Shield },
+    { href: '/activity', label: 'Activity Log', icon: FileText },
   ]},
   { type: 'link' as const, href: '/leaderboard', label: 'Agent Leaderboard', icon: Trophy },
-  { type: 'link' as const, href: '/media', label: 'Media Library', icon: Image },
+  { type: 'link' as const, href: '/media', label: 'Media Library', icon: ImageIcon },
 ]
+
+function isActive(pathname: string, href: string) {
+  if (href === '/') return pathname === '/'
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
@@ -47,55 +55,81 @@ export default function Sidebar() {
   const { user, logout } = useAuth()
 
   return (
-    <aside className={`${collapsed ? 'w-[76px]' : 'w-[264px]'} flex-shrink-0 bg-gradient-to-b from-ink to-ink-2 text-white flex flex-col transition-all duration-200 relative z-20 sidebar`}>
-      <button onClick={() => setCollapsed(!collapsed)} className="absolute top-[26px] -right-3 w-6 h-6 rounded-full bg-brass text-ink flex items-center justify-center z-50 border-2 border-ink shadow-sm">
-        {collapsed ? <PanelLeftOpen size={13} /> : <PanelLeftClose size={13} />}
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <button
+        type="button"
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        onClick={() => setCollapsed(!collapsed)}
+        className="sidebar-toggle"
+      >
+        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
       </button>
 
-      <div className="flex items-center gap-2.5 px-5 py-[22px] border-b border-white/10 overflow-hidden whitespace-nowrap">
-        <div className="w-[34px] h-[34px] flex-shrink-0 relative">
-          <Image src="/logo.png" alt="Signature" fill className="object-contain brightness-0 invert" />
+      <Link href="/" className="sidebar-brand sidebar-brand-logo-only" aria-label="Signature Property Solutions admin">
+        <div className="brand-logo-wrap">
+          <Image src="/headerlogo.png" alt="Signature Property Solutions" fill sizes="190px" className="brand-logo-img" priority />
         </div>
-        {!collapsed && <div><div className="font-display font-semibold text-[18px] tracking-[.2px] leading-[1.1]">Signature</div><div className="text-[9.5px] text-silver tracking-[2px] uppercase mt-0.5">Property Solutions</div></div>}
-      </div>
+      </Link>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-3.5">
+      <nav className="nav" aria-label="Admin navigation">
         {NAV.map((item) => {
+          if (item.type === 'section') {
+            return <div key={item.label} className="nav-group-title">{item.label}</div>
+          }
+
           if (item.type === 'link') {
             const Icon = item.icon
-            const active = pathname === item.href
+            const active = isActive(pathname, item.href)
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium mb-0.5 transition-all relative whitespace-nowrap overflow-hidden ${active ? 'bg-brass/15 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
-                {active && <div className="absolute -left-3 top-2 bottom-2 w-[3px] bg-brass rounded-sm" />}
-                <Icon size={17} className="flex-shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+              <Link key={item.href} href={item.href} className={`nav-link ${active ? 'active' : ''}`} title={collapsed ? item.label : undefined}>
+                <span className="nav-icon"><Icon size={17} strokeWidth={1.9} /></span>
+                <span className="nav-label">{item.label}</span>
               </Link>
             )
           }
+
           const Icon = item.icon
           const open = openGroups[item.label]
+          const groupActive = item.items.some((child) => isActive(pathname, child.href))
           return (
-            <div key={item.label} className="mb-0.5">
-              <button onClick={() => setOpenGroups(prev => ({ ...prev, [item.label]: !prev[item.label] }))} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap overflow-hidden">
-                <Icon size={17} className="flex-shrink-0" />
-                {!collapsed && <span className="flex-1 text-left truncate">{item.label}</span>}
-                {!collapsed && <ChevronDown size={14} className={`text-white/40 transition-transform ${open ? '' : '-rotate-90'}`} />}
+            <div key={item.label} className={`nav-group ${open ? 'open' : ''} ${groupActive ? 'active' : ''}`}>
+              <button
+                type="button"
+                onClick={() => setOpenGroups(prev => ({ ...prev, [item.label]: !prev[item.label] }))}
+                className="nav-group-head"
+                title={collapsed ? item.label : undefined}
+              >
+                <span className="nav-icon"><Icon size={17} strokeWidth={1.9} /></span>
+                <span className="nav-label">{item.label}</span>
+                <ChevronDown size={14} className="nav-caret" />
               </button>
-              {!collapsed && <div className={`overflow-hidden transition-all ${open ? 'max-h-[400px]' : 'max-h-0'}`}>{item.items.map(child => (
-                <Link key={child.href} href={child.href} className={`flex items-center gap-2.5 pl-[41px] pr-3 py-[9px] rounded-lg text-[13.2px] relative ${pathname === child.href ? 'text-white bg-brass/15' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}>
-                  {pathname === child.href && <div className="absolute -left-3 top-2 bottom-2 w-[3px] bg-brass rounded-sm" />}
-                  <div className="w-1 h-1 rounded-full bg-current opacity-50 flex-shrink-0" />{child.label}
-                </Link>
-              ))}</div>}
+              <div className="nav-children">
+                {item.items.map(child => {
+                  const ChildIcon = child.icon
+                  const active = isActive(pathname, child.href)
+                  return (
+                    <Link key={child.href} href={child.href} className={`nav-child ${active ? 'active' : ''}`}>
+                      <span className="nav-child-dot" />
+                      <span className="nav-child-icon"><ChildIcon size={13} strokeWidth={1.9} /></span>
+                      <span className="nav-label">{child.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
           )
         })}
       </nav>
 
-      <div className="px-5 py-3.5 border-t border-white/10 flex items-center gap-2.5 overflow-hidden whitespace-nowrap">
-        <div className="w-8 h-8 rounded-full bg-brass text-white flex items-center justify-center text-[13px] font-semibold flex-shrink-0">{user?.username?.[0]?.toUpperCase() || 'J'}</div>
-        {!collapsed && <div className="flex-1 min-w-0"><div className="text-[13px] font-semibold text-white truncate">{user?.username || 'Jhon D.'}</div><div className="text-[11.5px] text-white/45">Administrator</div></div>}
-        {!collapsed && <button onClick={logout} className="text-white/40 hover:text-white transition-colors"><LogOut size={16} /></button>}
+      <div className="sidebar-foot">
+        <div className="avatar">{user?.username?.[0]?.toUpperCase() || 'A'}</div>
+        <div className="foot-text">
+          <div className="foot-name">{user?.username || 'Admin'}</div>
+          <div className="foot-role">Administrator</div>
+        </div>
+        <button type="button" onClick={logout} className="foot-logout" aria-label="Log out">
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   )
