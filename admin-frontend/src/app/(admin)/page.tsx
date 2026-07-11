@@ -1,65 +1,109 @@
 'use client'
+
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import Image from 'next/image'
+import { House, Inbox, RefreshCw, Search, Star, Users } from 'lucide-react'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { Building2, Users, Inbox, Star, Search, MapPin, RefreshCw } from 'lucide-react'
+import DashboardCharts from '@/components/dashboard/DashboardCharts'
+import PropertyMap from '@/components/dashboard/PropertyMap'
+import { liveSearchActivity } from '@/components/dashboard/analytics'
+import type {
+  Agent,
+  ApiCollection,
+  PaginatedApiResponse,
+  Property,
+  PropertyRequest,
+  Testimonial,
+} from '@/components/dashboard/types'
+import styles from '@/components/dashboard/Dashboard.module.css'
 
-const visitors = [210, 238, 225, 260, 301, 190, 175, 254, 289, 312, 298, 205, 188, 231]
-const requestsTrend = [4, 6, 5, 8, 7, 10, 9, 13]
-const topSearches = [
-  ['Apartment in Bole Atlas', 41],
-  ['Penthouse for rent', 29],
-  ['House for sale, Ayat', 24],
-  ['Office space Bole', 19],
-  ['Land for sale, CMC', 16],
-]
+function proxyPath(url: string) {
+  try {
+    const parsed = new URL(url, 'http://localhost')
+    const apiIndex = parsed.pathname.indexOf('/api/')
+    const pathname = apiIndex >= 0 ? parsed.pathname.slice(apiIndex + 4) : parsed.pathname
+    return `${pathname.startsWith('/') ? pathname : `/${pathname}`}${parsed.search}`
+  } catch {
+    return url
+  }
+}
 
-function MiniBars({ values, brass = true }: { values: number[]; brass?: boolean }) {
-  const max = Math.max(...values, 1)
+async function fetchCollection<T>(path: string): Promise<ApiCollection<T>> {
+  const firstResponse = await api.get<PaginatedApiResponse<T> | T[]>(path)
+  if (Array.isArray(firstResponse.data)) {
+    return { count: firstResponse.data.length, results: firstResponse.data }
+  }
+
+  const results = [...firstResponse.data.results]
+  const seenPages = new Set<string>()
+  let next = firstResponse.data.next
+
+  while (next) {
+    const pagePath = proxyPath(next)
+    if (seenPages.has(pagePath)) break
+    seenPages.add(pagePath)
+
+    const response = await api.get<PaginatedApiResponse<T> | T[]>(pagePath)
+    if (Array.isArray(response.data)) {
+      results.push(...response.data)
+      break
+    }
+    results.push(...response.data.results)
+    next = response.data.next
+  }
+
+  return { count: firstResponse.data.count, results }
+}
+
+function formatDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const day = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+  const time = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+  return `${day} · ${time}`
+}
+
+function displayName(username?: string) {
+  if (!username) return 'Admin'
+  return username.charAt(0).toLocaleUpperCase() + username.slice(1)
+}
+
+function DashboardHeader({ username }: { username?: string }) {
   return (
-    <div className="h-full flex items-end gap-2 px-1 pt-6">
-      {values.map((v, i) => (
-        <div key={i} className="flex-1 rounded-md" style={{ height: `${Math.max(12, (v / max) * 100)}%`, background: brass ? 'var(--brass)' : 'var(--silver)' }} />
-      ))}
+    <div className="page-head">
+      <div>
+        <div className="page-eyebrow">Overview</div>
+        <div className="page-title">Good to see you, {displayName(username)}</div>
+        <div className="page-desc">Here&apos;s what&apos;s happening across Signature Property Solutions today.</div>
+      </div>
     </div>
   )
 }
 
-function MiniLine({ values }: { values: number[] }) {
-  const max = Math.max(...values, 1)
-  const min = Math.min(...values)
-  const points = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * 100
-    const y = 90 - ((v - min) / Math.max(1, max - min)) * 70
-    return `${x},${y}`
-  }).join(' ')
+function DashboardLoading() {
+  const labels = ['Total Properties', 'Active Agents', 'New Leads', 'Published Testimonials']
   return (
-    <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
-      <polyline points={points} fill="none" stroke="var(--ink)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" />
-      <polyline points={points} fill="none" stroke="var(--brass)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" transform="translate(0 8)" opacity=".9" />
-    </svg>
-  )
-}
-
-function TrafficDonut() {
-  return (
-    <div className="h-full flex items-center gap-5">
-      <div className="w-[132px] h-[132px] rounded-full" style={{ background: 'conic-gradient(var(--ink) 0 36%, var(--brass) 36% 69%, var(--success) 69% 89%, var(--silver) 89% 100%)' }}>
-        <div className="w-[82px] h-[82px] rounded-full bg-card m-[25px]" />
-      </div>
-      <div className="flex-1 space-y-2">
-        {[
-          ['Direct', '36%', 'var(--ink)'],
-          ['Google', '33%', 'var(--brass)'],
-          ['Social', '20%', 'var(--success)'],
-          ['Referral', '11%', 'var(--silver)'],
-        ].map(([label, value, color]) => (
-          <div key={label}>
-            <div className="flex justify-between text-[11.5px] text-text-soft"><span>{label}</span><b className="text-ink">{value}</b></div>
-            <div className="h-[5px] rounded bg-border-soft mt-1"><div className="h-full rounded" style={{ width: value, background: color }} /></div>
+    <div aria-busy="true" aria-label="Loading dashboard data">
+      <div className="stat-grid">
+        {labels.map((label) => (
+          <div className="stat-card" key={label}>
+            <div className="stat-top"><div className="stat-icon"><RefreshCw size={17} className="animate-spin" /></div></div>
+            <div className={`stat-value ${styles.loadingValue}`}>—</div>
+            <div className="stat-label">{label}</div>
           </div>
         ))}
+      </div>
+      <div className={`panel ${styles.statePanel}`}>
+        <RefreshCw size={20} className="animate-spin text-brass-dark" />
+        <p>Loading the latest listings, leads, agents, and testimonials…</p>
       </div>
     </div>
   )
@@ -67,40 +111,86 @@ function TrafficDonut() {
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const enabled = !!user
+  const enabled = Boolean(user)
 
-  const { data: properties } = useQuery({ queryKey: ['properties'], queryFn: () => api.get('/properties/?page_size=100').then(r => r.data), enabled })
-  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: () => api.get('/agents/').then(r => r.data), enabled })
-  const { data: requests } = useQuery({ queryKey: ['requests'], queryFn: () => api.get('/requests/').then(r => r.data), enabled })
-  const { data: testimonials } = useQuery({ queryKey: ['testimonials'], queryFn: () => api.get('/testimonials/').then(r => r.data), enabled })
+  const propertiesQuery = useQuery({
+    queryKey: ['dashboard', 'properties'],
+    queryFn: () => fetchCollection<Property>('/properties/?ordering=-id'),
+    enabled,
+    retry: 1,
+  })
+  const agentsQuery = useQuery({
+    queryKey: ['dashboard', 'agents'],
+    queryFn: () => fetchCollection<Agent>('/agents/'),
+    enabled,
+    retry: 1,
+  })
+  const requestsQuery = useQuery({
+    queryKey: ['dashboard', 'requests'],
+    queryFn: () => fetchCollection<PropertyRequest>('/requests/?ordering=-created_at'),
+    enabled,
+    retry: 1,
+  })
+  const testimonialsQuery = useQuery({
+    queryKey: ['dashboard', 'testimonials'],
+    queryFn: () => fetchCollection<Testimonial>('/testimonials/'),
+    enabled,
+    retry: 1,
+  })
 
-  const propertyRows = properties?.results || []
-  const requestRows = requests?.results || []
-  const forSale = propertyRows.filter((p: any) => p.property_status === 'For Sale').length
-  const forRent = propertyRows.filter((p: any) => p.property_status === 'For Rent').length
-  const newLeads = requestRows.filter((r: any) => !r.is_reviewed).length
+  const queries = [propertiesQuery, agentsQuery, requestsQuery, testimonialsQuery]
+  const isLoading = queries.some((query) => query.isPending)
+  const isError = queries.some((query) => query.isError)
+  const isRefetching = queries.some((query) => query.isFetching)
+
+  if (isLoading) {
+    return (
+      <div>
+        <DashboardHeader username={user?.username} />
+        <DashboardLoading />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div>
+        <DashboardHeader username={user?.username} />
+        <div className={`panel ${styles.statePanel}`} role="alert">
+          <Inbox size={22} className="text-danger" />
+          <div className={styles.stateTitle}>Dashboard data could not be loaded</div>
+          <p>One or more data sources are unavailable. Check that the API is running, then try again.</p>
+          <button className="btn btn-ghost" type="button" onClick={() => void Promise.all(queries.map((query) => query.refetch()))} disabled={isRefetching}>
+            <RefreshCw size={15} className={isRefetching ? 'animate-spin' : ''} />
+            {isRefetching ? 'Retrying…' : 'Try again'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const properties = propertiesQuery.data ?? { count: 0, results: [] }
+  const agents = agentsQuery.data ?? { count: 0, results: [] }
+  const requests = requestsQuery.data ?? { count: 0, results: [] }
+  const testimonials = testimonialsQuery.data ?? { count: 0, results: [] }
+  const forSale = properties.results.filter((property) => property.property_status === 'For Sale').length
+  const forRent = properties.results.filter((property) => property.property_status === 'For Rent').length
+  const newLeads = requests.results.filter((request) => !request.is_reviewed).length
+  const publishedTestimonials = testimonials.results.filter((testimonial) => testimonial.is_published).length
+  const recentRequests = [...requests.results]
+    .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
+    .slice(0, 5)
 
   const stats = [
-    { label: 'Total Properties', value: properties?.count || 0, icon: Building2, sub: `${forSale} for sale · ${forRent} for rent` },
-    { label: 'Active Agents', value: agents?.count || 0, icon: Users, sub: 'Across all listings' },
-    { label: 'New Leads', value: newLeads, icon: Inbox, sub: `of ${requests?.count || 0} total requests` },
-    { label: 'Published Testimonials', value: testimonials?.count || 0, icon: Star, sub: `${testimonials?.count || 0} total` },
+    { label: 'Total Properties', value: properties.count, icon: House, sub: `${forSale} for sale · ${forRent} for rent` },
+    { label: 'Active Agents', value: agents.count, icon: Users, sub: 'Across all listings' },
+    { label: 'New Leads', value: newLeads, icon: Inbox, sub: `of ${requests.count} total requests` },
+    { label: 'Published Testimonials', value: publishedTestimonials, icon: Star, sub: `${testimonials.count} total` },
   ]
 
   return (
     <div>
-      <div className="page-head">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 relative flex-shrink-0">
-            <Image src="/logo.png" alt="Signature Property Solutions" fill className="object-contain" />
-          </div>
-          <div>
-            <div className="page-eyebrow">Overview</div>
-            <div className="page-title">Good to see you, {user?.username || 'Admin'}</div>
-            <div className="page-desc">Here&apos;s what&apos;s happening across Signature Property Solutions today.</div>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader username={user?.username} />
 
       <div className="stat-grid">
         {stats.map((stat) => {
@@ -116,35 +206,9 @@ export default function DashboardPage() {
         })}
       </div>
 
-      <div className="charts-grid">
-        <div className="panel">
-          <div className="panel-head"><h3>Property Requests — Week over Week</h3><span className="stat-trend trend-up">+44% vs last week</span></div>
-          <div className="chart-card"><MiniBars values={requestsTrend} /></div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Website Visitors &amp; Page Views</h3><span className="count-chip">Last 14 days</span></div>
-          <div className="chart-card"><MiniLine values={visitors} /></div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>What Visitors Are Searching For</h3><span className="count-chip">By search volume</span></div>
-          <div className="chart-card">
-            <div className="h-full flex flex-col justify-center gap-3">
-              {topSearches.map(([label, count]) => (
-                <div key={label}>
-                  <div className="flex justify-between text-[11.5px] text-text-soft mb-1"><span>{label}</span><b className="text-ink">{count}</b></div>
-                  <div className="h-2 rounded bg-border-soft"><div className="h-full rounded bg-silver" style={{ width: `${Number(count) * 2}%` }} /></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Traffic Sources</h3><span className="count-chip">Last 30 days</span></div>
-          <div className="chart-card"><TrafficDonut /></div>
-        </div>
-      </div>
+      <DashboardCharts />
 
-      <div className="panel mb-[18px]">
+      <section className="panel mb-[18px]">
         <div className="map-panel-head">
           <h3 className="text-[14.5px] font-semibold text-ink">Property Locations</h3>
           <div className="map-legend">
@@ -153,43 +217,57 @@ export default function DashboardPage() {
             <span>Click a pin for details</span>
           </div>
         </div>
-        <div className="map-wrap">
-          {propertyRows.slice(0, 7).map((p: any, i: number) => {
-            const left = [18, 42, 63, 31, 74, 52, 22][i] || 45
-            const top = [28, 42, 34, 61, 57, 70, 48][i] || 50
-            return (
-              <div key={p.id}>
-                <div className={`map-pin ${p.property_status === 'For Rent' ? 'rent' : ''}`} style={{ left: `${left}%`, top: `${top}%` }} />
-                {i < 3 && <div className="map-label" style={{ left: `${left}%`, top: `${top}%` }}><div className="cell-primary text-[12.5px]">{p.property_title}</div><div className="cell-sub flex items-center gap-1"><MapPin size={11} />{p.property_location}</div></div>}
-              </div>
-            )
-          })}
-        </div>
-      </div>
+        <PropertyMap properties={properties.results} />
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-[18px]">
-        <div className="panel">
-          <div className="panel-head"><h3>Recent Property Requests</h3><span className="text-[12.5px] font-semibold text-brass-dark">View all</span></div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px]">
-              <thead><tr><th>Contact</th><th>Interested In</th><th>Goal</th><th>Status</th></tr></thead>
-              <tbody>{requestRows.slice(0, 5).map((r: any) => (
-                <tr key={r.id}><td><div className="cell-primary">{r.name}</div><div className="cell-sub">{r.email || r.phone_number}</div></td><td>{r.property_type}<div className="cell-sub">{r.location}</div></td><td><span className="chip chip-brass">{r.goal}</span></td><td><span className={`chip ${r.is_reviewed ? 'chip-success' : 'chip-danger'}`}>{r.is_reviewed ? 'Reviewed' : 'New'}</span></td></tr>
-              ))}</tbody>
+      <div className={styles.dashboardBottom}>
+        <section className="panel">
+          <div className="panel-head">
+            <h3>Recent Property Requests</h3>
+            <Link href="/requests" className={styles.panelAction}>View all</Link>
+          </div>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr><th>Contact</th><th>Interested In</th><th>Goal</th><th>Received</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {recentRequests.length > 0 ? recentRequests.map((request) => (
+                  <tr key={request.id}>
+                    <td>
+                      <div className="cell-primary">{request.name || 'Unnamed contact'}</div>
+                      <div className="cell-sub">{request.email || request.phone_number || 'No contact details'}</div>
+                    </td>
+                    <td>{request.property_type || '—'}</td>
+                    <td><span className="chip chip-brass">{request.goal || 'Not specified'}</span></td>
+                    <td><span className="cell-sub">{formatDate(request.created_at)}</span></td>
+                    <td><span className={`chip ${request.is_reviewed ? 'chip-success' : 'chip-danger'}`}>{request.is_reviewed ? 'Reviewed' : 'New'}</span></td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={5} className={styles.emptyCell}>No property requests have been received yet.</td></tr>
+                )}
+              </tbody>
             </table>
           </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Live Search Activity</h3><span className="text-[12.5px] font-semibold text-brass-dark">View all</span></div>
-          <div className="panel-body pt-1">
-            {topSearches.map(([q, n]) => (
-              <div key={q} className="flex items-start gap-2.5 py-3 border-b border-border-soft last:border-0">
-                <div className="stat-icon !w-7 !h-7 flex-shrink-0"><Search size={13} /></div>
-                <div className="min-w-0 flex-1"><div className="text-[13px] font-semibold font-mono">&quot;{q}&quot;</div><div className="cell-sub">{n} searches · Addis Ababa</div></div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head">
+            <h3>Live Search Activity</h3>
+            <Link href="/search" className={styles.panelAction}>View all</Link>
+          </div>
+          <div className={`panel-body ${styles.searchList}`}>
+            {liveSearchActivity.map((query) => (
+              <div className={styles.searchItem} key={query.id}>
+                <div className={`stat-icon ${styles.searchIcon}`}><Search size={13} /></div>
+                <div className={styles.searchCopy}>
+                  <div className={`font-mono ${styles.searchText}`}>&quot;{query.searchText}&quot;</div>
+                  <div className="cell-sub">{query.location} · {query.resultsCount} results · {formatDate(query.createdAt)}</div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )

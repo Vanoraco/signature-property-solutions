@@ -14,8 +14,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem('sps_theme') as 'light' | 'dark' | null
     if (saved) {
-      setTheme(saved)
       document.documentElement.setAttribute('data-theme', saved)
+      const frame = window.requestAnimationFrame(() => setTheme(saved))
+      return () => window.cancelAnimationFrame(frame)
     }
   }, [])
 

@@ -1,0 +1,437 @@
+.panelHead {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.trafficCard {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.trafficChart {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.trafficPlot {
+  flex: 1;
+  min-height: 0;
+}
+
+.trafficLegend {
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  color: var(--text-soft);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.trafficLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trafficLegend i {
+  width: 9px;
+  height: 9px;
+  display: inline-block;
+}
+
+.visitorLegend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 8px;
+  color: var(--text-soft);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.visitorLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.visitorLegend i {
+  width: 10px;
+  height: 10px;
+  border: 2px solid;
+}
+
+.deviceMetrics {
+  width: 120px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deviceLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+.deviceLabel strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.deviceTrack {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-soft);
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.deviceTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brass);
+}
+
+.mapFrame {
+  position: relative;
+  min-width: 0;
+}
+
+.map {
+  position: relative;
+  z-index: 0;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.map::before {
+  content: none;
+  display: none;
+}
+
+.mapEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.mapStatus {
+  position: absolute;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-faint);
+  background: var(--canvas);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.pin {
+  width: 30px;
+  height: 30px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-6px);
+}
+
+.pinBody {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--ink);
+  border: 2px solid var(--brass);
+  transform: rotate(-45deg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pinBody.rent {
+  border-color: var(--success);
+}
+
+.pinDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brass);
+  transform: rotate(45deg);
+}
+
+.pinBody.rent .pinDot {
+  background: var(--success);
+}
+
+.map :global(.leaflet-popup-content-wrapper) {
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  overflow: hidden;
+  background: var(--card);
+  color: var(--text);
+}
+
+.map :global(.leaflet-popup-content) {
+  margin: 0;
+  width: 260px !important;
+}
+
+.map :global(.leaflet-popup-tip) {
+  background: var(--card);
+}
+
+.balloon > img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+  background: var(--border-soft);
+}
+
+.balloonBody {
+  padding: 12px 14px;
+}
+
+.balloonTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.balloonLocation {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+
+.balloonPrice {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.balloonMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.balloonAgent {
+  font-size: 11px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border-soft);
+  padding-top: 8px;
+  margin-bottom: 10px;
+}
+
+.balloonButton {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 8px;
+  border-radius: 7px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.balloonButton:hover {
+  background: var(--ink-2);
+}
+
+.dashboardBottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.panelAction {
+  color: var(--brass-dark);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panelAction:hover {
+  text-decoration: underline;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--canvas);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.table td {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+  font-size: 13.3px;
+}
+
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--canvas) 58%, transparent);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.emptyCell {
+  padding: 32px 18px !important;
+  color: var(--text-faint);
+  text-align: center;
+  font-size: 12.5px !important;
+}
+
+.searchList {
+  padding-top: 6px;
+}
+
+.searchItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.searchItem:last-child {
+  border-bottom: 0;
+}
+
+.searchIcon {
+  width: 28px !important;
+  height: 28px !important;
+  flex-shrink: 0;
+}
+
+.searchCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.searchText {
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.statePanel {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  color: var(--text-soft);
+}
+
+.statePanel p {
+  max-width: 440px;
+  font-size: 13px;
+}
+
+.stateTitle {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.loadingValue {
+  color: var(--text-faint);
+}
+
+@media (max-width: 980px) {
+  .dashboardBottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .trafficCard {
+    height: 300px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .trafficChart {
+    min-height: 184px;
+  }
+
+  .deviceMetrics {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .deviceLabel {
+    font-size: 10.5px;
+  }
+
+  .table th {
+    padding: 9px 12px;
+    font-size: 10px;
+  }
+
+  .table td {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+}

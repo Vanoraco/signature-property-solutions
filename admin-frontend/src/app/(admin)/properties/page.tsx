@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import DataTable, { Column } from '@/components/ui/DataTable'
@@ -42,7 +43,7 @@ export default function PropertiesPage() {
       key: 'property_title', label: 'Property',
       render: r => (
         <div className="flex items-center gap-2.5">
-          {r.main_image ? <img src={r.main_image} alt="" className="w-[42px] h-[42px] rounded-lg object-cover bg-border-soft" /> : <div className="w-[42px] h-[42px] rounded-lg bg-border-soft" />}
+          {r.main_image ? <Image src={r.main_image} alt="" width={42} height={42} className="w-[42px] h-[42px] rounded-lg object-cover bg-border-soft" /> : <div className="w-[42px] h-[42px] rounded-lg bg-border-soft" />}
           <div>
             <div className="font-semibold text-ink">{r.property_title}</div>
             <div className="text-[11.5px] text-text-faint font-mono">{r.property_id}</div>

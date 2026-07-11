@@ -6,7 +6,7 @@ export interface Column<T> {
   key: string
   label: string
   render?: (row: T) => React.ReactNode
-  sortVal?: (row: T) => any
+  sortVal?: (row: T) => unknown
   className?: string
 }
 
@@ -14,7 +14,7 @@ interface DataTableProps<T> {
   columns: Column<T>[]
   data: T[]
   searchPlaceholder?: string
-  searchKey?: string
+  searchKey?: keyof T
   pageSize?: number
   onRowClick?: (row: T) => void
   emptyMessage?: string
@@ -38,8 +38,8 @@ export default function DataTable<T extends { id: number | string }>({
     let result = data
     if (search && searchKey) {
       const q = search.toLowerCase()
-      result = result.filter((row: any) =>
-        String(row[searchKey] || '').toLowerCase().includes(q)
+      result = result.filter(row =>
+        String(row[searchKey] ?? '').toLowerCase().includes(q)
       )
     }
     return result
@@ -47,13 +47,15 @@ export default function DataTable<T extends { id: number | string }>({
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered
-    return [...filtered].sort((a: any, b: any) => {
+    return [...filtered].sort((a, b) => {
       const col = columns.find(c => c.key === sortKey)
-      const va = col?.sortVal ? col.sortVal(a) : a[sortKey]
-      const vb = col?.sortVal ? col.sortVal(b) : b[sortKey]
+      const va = col?.sortVal ? col.sortVal(a) : (a as Record<string, unknown>)[sortKey]
+      const vb = col?.sortVal ? col.sortVal(b) : (b as Record<string, unknown>)[sortKey]
       if (va == null) return 1
       if (vb == null) return -1
-      const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb
+      const cmp = typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: 'base' })
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [filtered, sortKey, sortDir, columns])
@@ -115,7 +117,7 @@ export default function DataTable<T extends { id: number | string }>({
               >
                 {columns.map(col => (
                   <td key={col.key} className={`px-[18px] py-[13px] text-[13.3px] align-middle ${col.className || ''}`}>
-                    {col.render ? col.render(row) : String((row as any)[col.key] ?? '—')}
+                    {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '—')}
                   </td>
                 ))}
               </tr>
