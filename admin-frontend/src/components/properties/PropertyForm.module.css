@@ -1,0 +1,104 @@
+.mediaSection { display: grid; gap: 18px; }
+
+.mediaFeatured,
+.mediaSlot {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--canvas);
+}
+
+.mediaFeatured {
+  grid-template-columns: minmax(220px, 1.25fr) minmax(170px, .75fr);
+  align-items: center;
+}
+
+.mediaPreview {
+  position: relative;
+  min-height: 132px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  color: var(--text-faint);
+  background: var(--card);
+}
+
+.mediaPreview img { object-fit: cover; }
+
+.mediaMeta {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mediaMeta strong { color: var(--ink); font-size: 13px; }
+
+.mediaMeta span {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mediaButton {
+  position: relative;
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-soft);
+  background: var(--card);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mediaButton:hover { color: var(--ink); border-color: var(--brass); }
+
+.mediaButton:focus-within {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px var(--brass-tint);
+}
+
+.mediaButton input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mediaFeatured .mediaButton,
+.mediaFeatured .errorText { grid-column: 2; }
+
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.galleryGrid .mediaPreview { min-height: 104px; }
+.errorText { margin: 0; color: var(--danger); font-size: 11.5px; }
+
+@media (max-width: 760px) {
+  .mediaFeatured { grid-template-columns: 1fr; }
+  .mediaFeatured .mediaButton,
+  .mediaFeatured .errorText { grid-column: auto; }
+  .galleryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .galleryGrid { grid-template-columns: 1fr; }
+}

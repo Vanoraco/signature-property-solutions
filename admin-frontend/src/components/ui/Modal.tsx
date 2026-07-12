@@ -9,8 +9,14 @@ interface ModalProps {
   description?: string
   children: React.ReactNode
   footer?: React.ReactNode
-  size?: 'default' | 'lg'
+  size?: 'default' | 'lg' | 'xl'
 }
+
+const modalWidths = {
+  default: 'max-w-[640px]',
+  lg: 'max-w-[840px]',
+  xl: 'max-w-[960px]',
+} as const
 
 export default function Modal({ open, onClose, title, description, children, footer, size = 'default' }: ModalProps) {
   useEffect(() => {
@@ -31,7 +37,7 @@ export default function Modal({ open, onClose, title, description, children, foo
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-6" onClick={onClose}>
       <div
-        className={`bg-card rounded-[14px] w-full ${size === 'lg' ? 'max-w-[840px]' : 'max-w-[640px]'} max-h-[88vh] flex flex-col shadow-lg animate-in`}
+        className={`bg-card rounded-[14px] w-full ${modalWidths[size]} max-h-[88vh] flex flex-col shadow-lg animate-in`}
         style={{ animation: 'modalIn 0.18s cubic-bezier(0.2,0.8,0.3,1)' }}
         onClick={e => e.stopPropagation()}
       >
