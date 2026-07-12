@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import PropertyForm from './PropertyForm'
@@ -82,6 +82,7 @@ describe('PropertyForm', () => {
     await user.click(screen.getByRole('button', { name: 'Validate property' }))
     expect(await screen.findByText('Enter a property title.')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Basic Info' })).toHaveAttribute('aria-selected', 'true')
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Property title' })).toHaveFocus())
   })
 
   it('renders normalized server errors beside their fields', async () => {

@@ -33,6 +33,7 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: 'amenities', label: 'Amenities' },
   { id: 'media', label: 'Media' },
 ]
+const propertyFieldOrder = Object.keys(PROPERTY_FIELD_TABS) as PropertyFieldName[]
 
 interface FieldProps {
   label: string
@@ -87,6 +88,7 @@ export default function PropertyForm({
   )
   const [slugLocked, setSlugLocked] = useState(Boolean(initialProperty))
   const [facilitySearch, setFacilitySearch] = useState('')
+  const [pendingFocus, setPendingFocus] = useState<PropertyFieldName | null>(null)
   const {
     register,
     control,
@@ -98,6 +100,7 @@ export default function PropertyForm({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: propertyToFormValues(initialProperty),
     mode: 'onBlur',
+    shouldFocusError: false,
   })
 
   const title = useWatch({ control, name: 'property_title' })
@@ -114,6 +117,11 @@ export default function PropertyForm({
       ? PROPERTY_FIELD_TABS[firstApiErrorField]
       : tabSelection.tab
   const selectTab = (tab: TabId) => setTabSelection({ tab, apiErrors })
+
+  useEffect(() => {
+    if (!pendingFocus || PROPERTY_FIELD_TABS[pendingFocus] !== activeTab) return
+    document.getElementById(`property-${pendingFocus}`)?.focus()
+  }, [activeTab, pendingFocus])
 
   useEffect(() => {
     if (!slugLocked) {
@@ -143,10 +151,15 @@ export default function PropertyForm({
   )
 
   const showFirstError = (invalid: FieldErrors<PropertyFormValues>) => {
-    const firstField = Object.keys(invalid)[0] as PropertyFieldName | undefined
+    const firstField = propertyFieldOrder.find(field => invalid[field])
     if (!firstField) return
-    selectTab(PROPERTY_FIELD_TABS[firstField])
-    window.setTimeout(() => document.getElementById(`property-${firstField}`)?.focus(), 0)
+    const errorTab = PROPERTY_FIELD_TABS[firstField]
+    if (errorTab === activeTab) {
+      document.getElementById(`property-${firstField}`)?.focus()
+      return
+    }
+    setPendingFocus(firstField)
+    selectTab(errorTab)
   }
 
   const submitValid = async (values: PropertyFormValues) => {
