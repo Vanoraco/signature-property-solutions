@@ -1,21 +1,21 @@
+import tempfile
+from io import BytesIO
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.http import QueryDict
 from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
+from rest_framework.test import APITestCase
 
 from signatureapp.models import propertys, catagory, facilities
 from signatureapp.search import PropertySearch, building_types, parse_price
 
 
-# A tiny valid PNG (1x1 transparent) so the required ImageField passes validation.
-_TINY_PNG = (
-    b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
-    b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\x00\x01'
-    b'\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
-)
-
-
 def _icon():
-    return SimpleUploadedFile('icon.png', _TINY_PNG, content_type='image/png')
+    image_data = BytesIO()
+    Image.new('RGBA', (1, 1), (0, 0, 0, 0)).save(image_data, format='PNG')
+    return SimpleUploadedFile('icon.png', image_data.getvalue(), content_type='image/png')
 
 
 class ParsePriceTests(TestCase):
@@ -315,4 +315,80 @@ class SearchSuggestTests(TestCase):
         resp = self.client.get('/search/suggest/', {'q': 'zzznonexistent'})
         data = resp.json()
         self.assertEqual(data['results'], [])
+
+
+class PropertyApiMutationTests(APITestCase):
+    def setUp(self):
+        self.media_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.media_directory.cleanup)
+        self.media_override = self.settings(MEDIA_ROOT=self.media_directory.name)
+        self.media_override.enable()
+        self.addCleanup(self.media_override.disable)
+        self.user = get_user_model().objects.create_user(
+            username='property-editor-test',
+            password='test-pass',
+        )
+        self.client.force_authenticate(self.user)
+        self.category = catagory.objects.create(
+            catagorys='Apartment',
+            slug='property-editor-apartment',
+            icon=_icon(),
+        )
+        self.facility = facilities.objects.create(
+            facilities_name='Parking',
+            slug='property-editor-parking',
+        )
+
+    def payload(self):
+        return {
+            'property_id': 'SPS-TEST-1',
+            'property_title': 'Property Editor Test',
+            'slug': 'property-editor-test',
+            'price': '8,500,000 ETB',
+            'property_types': self.category.id,
+            'agent': '',
+            'facilitie': [self.facility.id],
+            'property_location': 'Bole',
+            'property_size': 160,
+            'property_area': 180,
+            'property_status': 'For Sale',
+            'property_floor': 6,
+            'bedrooms': '3',
+            'bathrooms': '2',
+            'furnished': 'Furnished',
+            'property_short_discription': 'Created through the admin property editor contract.',
+            'video_link': '',
+            'main_image': _icon(),
+        }
+
+    def test_create_property_with_multipart_relations_and_image(self):
+        response = self.client.post('/api/properties/', self.payload(), format='multipart')
+
+        self.assertEqual(response.status_code, 201, response.data)
+        created = propertys.objects.get(slug='property-editor-test')
+        self.assertEqual(created.property_types, self.category)
+        self.assertEqual(list(created.facilitie.all()), [self.facility])
+        self.assertTrue(created.main_image.name)
+
+    def test_patch_without_image_preserves_existing_image(self):
+        response = self.client.post('/api/properties/', self.payload(), format='multipart')
+        self.assertEqual(response.status_code, 201, response.data)
+        created = propertys.objects.get(slug='property-editor-test')
+        original_image = created.main_image.name
+
+        patch_response = self.client.patch(
+            f'/api/properties/{created.id}/',
+            {
+                'property_title': 'Updated Property Editor Test',
+                'agent': '',
+                'facilitie': [self.facility.id],
+                'video_link': '',
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(patch_response.status_code, 200, patch_response.data)
+        created.refresh_from_db()
+        self.assertEqual(created.property_title, 'Updated Property Editor Test')
+        self.assertEqual(created.main_image.name, original_image)
 
