@@ -7,6 +7,9 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (config.url) config.url = config.url.replace(/\/(\?|$)/, '$1')
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    config.headers.delete('Content-Type')
+  }
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('access_token')
     if (token) config.headers.Authorization = `Bearer ${token}`
