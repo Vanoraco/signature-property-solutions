@@ -4,11 +4,10 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertCircle,
   Check,
-  CheckCircle2,
   Compass,
   Edit,
+  LoaderCircle,
   Plus,
   Tag,
   Trash2,
@@ -16,6 +15,10 @@ import {
 import api from '@/lib/api'
 import { fetchCollection } from '@/lib/api-collection'
 import Modal from '@/components/ui/Modal'
+import AdminToast, {
+  createAdminToastFeedback,
+  type AdminToastFeedback,
+} from '@/components/ui/AdminToast'
 import EntityTable, { type EntityColumn } from './EntityTable'
 import LookupForm from './LookupForm'
 import {
@@ -35,11 +38,6 @@ interface LookupManagerProps {
 interface SaveLookupArgs {
   values: LookupFormValues
   recordId?: number
-}
-
-interface Feedback {
-  message: string
-  tone: 'success' | 'danger'
 }
 
 interface DeleteLookupResult {
@@ -87,7 +85,7 @@ export default function LookupManager({ kind }: LookupManagerProps) {
   const [deleteTargets, setDeleteTargets] = useState<LookupRecord[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [saveErrors, setSaveErrors] = useState<LookupApiErrors | null>(null)
-  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
   const recordsQuery = useQuery({
     queryKey: config.queryKey,
@@ -139,10 +137,9 @@ export default function LookupManager({ kind }: LookupManagerProps) {
     onSuccess: async (_response, variables) => {
       await invalidateLookupConsumers()
       closeEditor()
-      setFeedback({
-        tone: 'success',
-        message: `${config.singular} ${variables.recordId ? 'updated' : 'created'} successfully.`,
-      })
+      setFeedback(createAdminToastFeedback(
+        `${config.singular} ${variables.recordId ? 'updated' : 'created'} successfully.`,
+      ))
     },
     onError: error => {
       setSaveErrors(normalizeLookupApiErrors(responseData(error), kind))
@@ -172,21 +169,20 @@ export default function LookupManager({ kind }: LookupManagerProps) {
         const failureMessage = detail && typeof detail === 'object' && 'detail' in detail
           ? String((detail as { detail: unknown }).detail)
           : `${config.singular} could not be deleted.`
-        setFeedback({
-          tone: 'danger',
-          message: deletedCount > 0
+        setFeedback(createAdminToastFeedback(
+          deletedCount > 0
             ? `${deletedCount} of ${deletedCount + failures.length} records deleted. ${failures.length} failed. ${failureMessage}`
             : failureMessage,
-        })
+          'danger',
+        ))
         return
       }
 
-      setFeedback({
-        tone: 'success',
-        message: deletedCount === 1
+      setFeedback(createAdminToastFeedback(
+        deletedCount === 1
           ? `${config.singular} deleted successfully.`
           : `${deletedCount} ${config.title.toLocaleLowerCase()} deleted successfully.`,
-      })
+      ))
     },
     onError: error => {
       const detail = responseData(error)
@@ -194,16 +190,16 @@ export default function LookupManager({ kind }: LookupManagerProps) {
         ? String((detail as { detail: unknown }).detail)
         : `${config.singular} could not be deleted.`
       setDeleteTargets([])
-      setFeedback({ tone: 'danger', message })
+      setFeedback(createAdminToastFeedback(message, 'danger'))
     },
   })
 
   const requestDelete = (target: LookupRecord) => {
     if (kind === 'categories' && target.property_count > 0) {
-      setFeedback({
-        tone: 'danger',
-        message: `${lookupName(target)} cannot be deleted while ${target.property_count} ${target.property_count === 1 ? 'property uses' : 'properties use'} it.`,
-      })
+      setFeedback(createAdminToastFeedback(
+        `${lookupName(target)} cannot be deleted while ${target.property_count} ${target.property_count === 1 ? 'property uses' : 'properties use'} it.`,
+        'danger',
+      ))
       return
     }
     setFeedback(null)
@@ -215,10 +211,10 @@ export default function LookupManager({ kind }: LookupManagerProps) {
       ? targets.find(target => target.property_count > 0)
       : undefined
     if (protectedRecord) {
-      setFeedback({
-        tone: 'danger',
-        message: `${lookupName(protectedRecord)} is still used by properties. Remove protected categories from the selection before deleting.`,
-      })
+      setFeedback(createAdminToastFeedback(
+        `${lookupName(protectedRecord)} is still used by properties. Remove protected categories from the selection before deleting.`,
+        'danger',
+      ))
       return
     }
     setFeedback(null)
@@ -267,13 +263,13 @@ export default function LookupManager({ kind }: LookupManagerProps) {
       headerClassName: 'text-right',
       className: 'w-[118px]',
       render: record => (
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="entity-row-actions">
           <button
             type="button"
             aria-label={`Edit ${lookupName(record)}`}
             title={`Edit ${config.singular.toLocaleLowerCase()}`}
             onClick={() => openEdit(record)}
-            className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-card text-text-soft hover:bg-canvas hover:text-text-main"
+            className="entity-row-action"
           >
             <Edit aria-hidden="true" size={14} />
           </button>
@@ -284,7 +280,7 @@ export default function LookupManager({ kind }: LookupManagerProps) {
               ? 'This category is still used by properties'
               : `Delete ${config.singular.toLocaleLowerCase()}`}
             onClick={() => requestDelete(record)}
-            className={`grid h-8 w-8 place-items-center rounded-lg border border-danger-tint bg-danger-tint text-danger hover:bg-[#f6d9d6] ${kind === 'categories' && record.property_count > 0 ? 'opacity-55' : ''}`}
+            className={`entity-row-action entity-row-action-danger ${kind === 'categories' && record.property_count > 0 ? 'entity-row-action-muted' : ''}`}
           >
             <Trash2 aria-hidden="true" size={14} />
           </button>
@@ -310,15 +306,12 @@ export default function LookupManager({ kind }: LookupManagerProps) {
       </div>
 
       {feedback ? (
-        <div
-          role={feedback.tone === 'danger' ? 'alert' : 'status'}
-          className={`mb-4 flex items-center gap-2 rounded-lg border px-3.5 py-3 text-[12.5px] font-semibold ${feedback.tone === 'success' ? 'border-success/20 bg-success-tint text-success' : 'border-danger/20 bg-danger-tint text-danger'}`}
-        >
-          {feedback.tone === 'success'
-            ? <CheckCircle2 aria-hidden="true" size={16} />
-            : <AlertCircle aria-hidden="true" size={16} />}
-          {feedback.message}
-        </div>
+        <AdminToast
+          eventId={feedback.id}
+          tone={feedback.tone}
+          message={feedback.message}
+          onDismiss={() => setFeedback(null)}
+        />
       ) : null}
 
       {recordsQuery.isLoading ? (
@@ -352,8 +345,11 @@ export default function LookupManager({ kind }: LookupManagerProps) {
         footer={(
           <>
             <button type="button" className="btn btn-ghost" onClick={closeEditor} disabled={saveMutation.isPending}>Cancel</button>
-            <button type="submit" form="lookup-editor-form" className="btn btn-primary" disabled={saveMutation.isPending}>
-              <Check aria-hidden="true" size={14} /> {saveMutation.isPending ? 'Saving...' : `Save ${config.singular}`}
+            <button type="submit" form="lookup-editor-form" className="btn btn-primary" disabled={saveMutation.isPending} aria-busy={saveMutation.isPending}>
+              {saveMutation.isPending
+                ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                : <Check aria-hidden="true" size={14} />}
+              {saveMutation.isPending ? 'Saving...' : `Save ${config.singular}`}
             </button>
           </>
         )}
@@ -371,23 +367,29 @@ export default function LookupManager({ kind }: LookupManagerProps) {
         open={deleteTargets.length > 0}
         onClose={() => setDeleteTargets([])}
         title={deletingMany ? `Delete ${deleteTargets.length} ${config.title}?` : `Delete ${config.singular}?`}
+        footer={(
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => setDeleteTargets([])} disabled={deleteMutation.isPending}>Cancel</button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => deleteMutation.mutate(deleteTargets)}
+              disabled={deleteMutation.isPending}
+              aria-busy={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                : <Trash2 aria-hidden="true" size={14} />}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </button>
+          </>
+        )}
       >
         <p className="text-[13.5px] text-text-soft">
           {deletingMany
             ? `${deleteTargets.length} records will be permanently removed. This cannot be undone.`
             : `"${deleteLabel}" will be permanently removed. This cannot be undone.`}
         </p>
-        <div className="mt-5 flex justify-end gap-2.5">
-          <button type="button" className="btn btn-ghost" onClick={() => setDeleteTargets([])}>Cancel</button>
-          <button
-            type="button"
-            className="btn bg-danger text-white hover:bg-[#b03e35]"
-            onClick={() => deleteMutation.mutate(deleteTargets)}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 aria-hidden="true" size={14} /> {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
       </Modal>
     </div>
   )

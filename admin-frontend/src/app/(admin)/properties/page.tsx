@@ -3,10 +3,14 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, CheckCircle2, Edit, Plus, Trash2 } from 'lucide-react'
+import { Edit, LoaderCircle, Plus, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import DataTable, { type Column } from '@/components/ui/DataTable'
 import Modal from '@/components/ui/Modal'
+import AdminToast, {
+  createAdminToastFeedback,
+  type AdminToastFeedback,
+} from '@/components/ui/AdminToast'
 import PropertyForm from '@/components/properties/PropertyForm'
 import {
   normalizeApiErrors,
@@ -28,11 +32,6 @@ interface SavePropertyArgs {
   propertyId?: number
 }
 
-interface Feedback {
-  message: string
-  tone: 'success' | 'danger'
-}
-
 function responseData(error: unknown) {
   if (!error || typeof error !== 'object') return undefined
   return (error as { response?: { data?: unknown } }).response?.data
@@ -44,7 +43,7 @@ export default function PropertiesPage() {
   const [editing, setEditing] = useState<PropertyRecord | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [saveErrors, setSaveErrors] = useState<NormalizedApiErrors | null>(null)
-  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
   const propertiesQuery = useQuery<ApiCollection<PropertyRecord>>({
     queryKey: ['properties'],
@@ -103,10 +102,9 @@ export default function PropertiesPage() {
     onSuccess: async (_response, variables) => {
       await queryClient.invalidateQueries({ queryKey: ['properties'] })
       closePropertyModal()
-      setFeedback({
-        tone: 'success',
-        message: variables.propertyId ? 'Property updated successfully.' : 'Property created successfully.',
-      })
+      setFeedback(createAdminToastFeedback(
+        variables.propertyId ? 'Property updated successfully.' : 'Property created successfully.',
+      ))
     },
     onError: error => {
       setSaveErrors(normalizeApiErrors(responseData(error)))
@@ -119,11 +117,11 @@ export default function PropertiesPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['properties'] })
       setDeleteId(null)
-      setFeedback({ tone: 'success', message: 'Property deleted successfully.' })
+      setFeedback(createAdminToastFeedback('Property deleted successfully.'))
     },
     onError: () => {
       setDeleteId(null)
-      setFeedback({ tone: 'danger', message: 'The property could not be deleted.' })
+      setFeedback(createAdminToastFeedback('The property could not be deleted.', 'danger'))
     },
   })
 
@@ -240,15 +238,12 @@ export default function PropertiesPage() {
       </div>
 
       {feedback ? (
-        <div
-          role={feedback.tone === 'danger' ? 'alert' : 'status'}
-          className={`mb-4 flex items-center gap-2 rounded-lg border px-3.5 py-3 text-[12.5px] font-semibold ${feedback.tone === 'success' ? 'border-success/20 bg-success-tint text-success' : 'border-danger/20 bg-danger-tint text-danger'}`}
-        >
-          {feedback.tone === 'success'
-            ? <CheckCircle2 aria-hidden="true" size={16} />
-            : <AlertCircle aria-hidden="true" size={16} />}
-          {feedback.message}
-        </div>
+        <AdminToast
+          eventId={feedback.id}
+          tone={feedback.tone}
+          message={feedback.message}
+          onDismiss={() => setFeedback(null)}
+        />
       ) : null}
 
       {propertiesQuery.isLoading ? (
@@ -306,21 +301,32 @@ export default function PropertiesPage() {
         />
       </Modal>
 
-      <Modal open={deleteId !== null} onClose={() => setDeleteId(null)} title="Delete Property" size="default">
+      <Modal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        title="Delete Property"
+        size="default"
+        footer={(
+          <>
+            <button type="button" onClick={() => setDeleteId(null)} className="btn btn-ghost" disabled={deleteMutation.isPending}>Cancel</button>
+            <button
+              type="button"
+              onClick={() => {
+                if (deleteId !== null) deleteMutation.mutate(deleteId)
+              }}
+              className="btn btn-danger"
+              disabled={deleteMutation.isPending}
+              aria-busy={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                : <Trash2 aria-hidden="true" size={14} />}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </button>
+          </>
+        )}
+      >
         <p className="text-text-soft text-[13.5px]">Are you sure you want to delete this property? This action cannot be undone.</p>
-        <div className="flex justify-end gap-2.5 mt-5">
-          <button type="button" onClick={() => setDeleteId(null)} className="btn btn-ghost">Cancel</button>
-          <button
-            type="button"
-            onClick={() => {
-              if (deleteId !== null) deleteMutation.mutate(deleteId)
-            }}
-            className="px-4 py-2 rounded-lg text-[13.5px] font-semibold bg-danger text-white hover:bg-[#b03e35]"
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
       </Modal>
     </div>
   )

@@ -104,7 +104,7 @@ export default function Modal({ open, onClose, title, description, children, foo
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`bg-card rounded-[14px] w-full ${modalWidths[size]} max-h-[88vh] flex flex-col shadow-lg animate-in outline-none`}
+        className={`bg-card rounded-[14px] w-full ${modalWidths[size]} flex flex-col animate-in outline-none ${styles.dialog}`}
         style={{ animation: 'modalIn 0.18s cubic-bezier(0.2,0.8,0.3,1)' }}
         onClick={e => e.stopPropagation()}
         role="dialog"
@@ -129,7 +129,7 @@ export default function Modal({ open, onClose, title, description, children, foo
         </div>
         <div className={`overflow-y-auto flex-1 ${styles.body}`}>{children}</div>
         {footer && (
-          <div className={`border-t border-border-soft flex justify-end gap-2.5 ${styles.footer}`}>{footer}</div>
+          <div className={styles.footer}>{footer}</div>
         )}
       </div>
       <style jsx>{`@keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }`}</style>

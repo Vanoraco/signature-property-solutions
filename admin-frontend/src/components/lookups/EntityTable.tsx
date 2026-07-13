@@ -11,6 +11,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import styles from './EntityTable.module.css'
 
 export interface EntityColumn<T> {
   key: string
@@ -174,9 +175,9 @@ export default function EntityTable<T extends { id: number }>({
   const pageStart = Math.max(1, Math.min(safePage - 2, totalPages - 4))
 
   return (
-    <div className="panel">
-      <div className="toolbar">
-        <label className="search-box">
+    <div className={`panel ${styles.root}`}>
+      <div className={styles.toolbar}>
+        <label className={styles.searchBox}>
           <Search aria-hidden="true" size={15} />
           <span className="sr-only">Search {entityLabel.toLocaleLowerCase()}</span>
           <input
@@ -187,47 +188,48 @@ export default function EntityTable<T extends { id: number }>({
               setSearch(event.target.value)
               setPage(1)
             }}
-            className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-text-main outline-none"
+            className={styles.searchInput}
           />
         </label>
-        <span className="count-chip">
+        <span className={styles.recordCount}>
           {sorted.length} record{sorted.length === 1 ? '' : 's'}
         </span>
-        <span className="flex-1" />
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={saveCurrentView}
-          title="Save current search and sort"
-        >
-          <Bookmark aria-hidden="true" size={13} /> Save View
-        </button>
-        <label>
-          <span className="sr-only">Records per page</span>
-          <select
-            className="min-h-[34px] rounded-lg border border-border bg-card px-2.5 text-[12.5px] font-semibold text-text-soft outline-none focus:border-brass focus:ring-2 focus:ring-brass-tint"
-            value={pageSize}
-            onChange={event => {
-              setPageSize(Number(event.target.value))
-              setPage(1)
-            }}
+        <div className={styles.toolbarActions}>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm ${styles.saveViewButton}`}
+            onClick={saveCurrentView}
+            title="Save current search and sort"
           >
-            {PAGE_SIZES.map(size => <option key={size} value={size}>{size} / page</option>)}
-          </select>
-        </label>
+            <Bookmark aria-hidden="true" size={13} /> Save View
+          </button>
+          <label>
+            <span className="sr-only">Records per page</span>
+            <select
+              className={styles.pageSizeSelect}
+              value={pageSize}
+              onChange={event => {
+                setPageSize(Number(event.target.value))
+                setPage(1)
+              }}
+            >
+              {PAGE_SIZES.map(size => <option key={size} value={size}>{size} / page</option>)}
+            </select>
+          </label>
+        </div>
       </div>
 
       {savedViews.length > 0 ? (
-        <div className="flex min-h-[42px] flex-wrap items-center gap-2 border-b border-border-soft px-[18px] py-2">
-          <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text-faint">
+        <div className={styles.savedViews}>
+          <span className={styles.savedViewLabel}>
             <Bookmark aria-hidden="true" size={12} /> Views:
           </span>
           {savedViews.map(view => (
-            <span key={view.id} className="inline-flex items-center overflow-hidden rounded-full border border-border bg-card text-[11.5px] font-semibold text-text-soft">
-              <button type="button" className="px-2.5 py-1 hover:bg-canvas" onClick={() => applyView(view)}>{view.name}</button>
+            <span key={view.id} className={styles.savedView}>
+              <button type="button" className={styles.savedViewApply} onClick={() => applyView(view)}>{view.name}</button>
               <button
                 type="button"
-                className="border-l border-border px-1.5 py-1 hover:bg-danger-tint hover:text-danger"
+                className={styles.savedViewDelete}
                 onClick={() => persistViews(savedViews.filter(candidate => candidate.id !== view.id))}
                 aria-label={`Delete ${view.name} view`}
                 title="Delete saved view"
@@ -240,27 +242,29 @@ export default function EntityTable<T extends { id: number }>({
       ) : null}
 
       {selectedRows.length > 0 ? (
-        <div className="toolbar bg-brass-tint">
-          <span className="text-[13px] font-semibold text-brass-dark">
+        <div className={styles.bulkBar}>
+          <span className={styles.selectedCount}>
             {selectedRows.length} selected
           </span>
-          <span className="flex-1" />
-          <button type="button" className="btn btn-danger-ghost btn-sm" onClick={() => onRequestBulkDelete(selectedRows)}>
-            <Trash2 aria-hidden="true" size={13} /> Delete Selected
-          </button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSelectionChange(new Set())}>
-            <X aria-hidden="true" size={13} /> Clear
-          </button>
+          <div className={styles.bulkActions}>
+            <button type="button" className="btn btn-danger-ghost btn-sm" onClick={() => onRequestBulkDelete(selectedRows)}>
+              <Trash2 aria-hidden="true" size={13} /> Delete Selected
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSelectionChange(new Set())}>
+              <X aria-hidden="true" size={13} /> Clear
+            </button>
+          </div>
         </div>
       ) : null}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[680px]">
+      <div className={styles.scroller}>
+        <table className={styles.table}>
           <thead>
             <tr>
-              <th className="w-[48px] border-b border-border bg-[#FAFBFB] px-[18px] py-[11px] text-left">
+              <th className={`${styles.headerCell} ${styles.headerCheckbox}`}>
                 <input
                   type="checkbox"
+                  className={styles.checkbox}
                   checked={allVisibleSelected}
                   onChange={toggleVisible}
                   aria-label="Select all visible records"
@@ -279,19 +283,19 @@ export default function EntityTable<T extends { id: number }>({
                   <th
                     key={column.key}
                     aria-sort={ariaSort}
-                    className={`border-b border-border bg-[#FAFBFB] text-left text-[11px] font-semibold uppercase tracking-[0.6px] text-text-faint whitespace-nowrap ${sortable ? 'p-0 hover:text-text-soft' : 'px-[18px] py-[11px]'} ${column.headerClassName || ''}`}
+                    className={`${styles.headerCell} ${sortable ? styles.sortableHeader : ''} ${column.key === 'actions' ? styles.alignRight : ''} ${column.headerClassName || ''}`}
                   >
                     {sortable ? (
                       <button
                         type="button"
                         onClick={() => toggleSort(column)}
-                        className="inline-flex w-full items-center gap-1 rounded-[3px] border-0 bg-transparent px-[18px] py-[11px] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-inset"
+                        className={styles.sortButton}
                       >
                         {column.label}
                         {sortKey === column.key
                           ? sortDir === 'asc'
-                            ? <ChevronUp aria-hidden="true" className="opacity-50" size={12} />
-                            : <ChevronDown aria-hidden="true" className="opacity-50" size={12} />
+                            ? <ChevronUp aria-hidden="true" className={styles.sortIcon} size={12} />
+                            : <ChevronDown aria-hidden="true" className={styles.sortIcon} size={12} />
                           : null}
                       </button>
                     ) : (
@@ -304,17 +308,18 @@ export default function EntityTable<T extends { id: number }>({
           </thead>
           <tbody>
             {visibleRows.map(row => (
-              <tr key={row.id} className="border-b border-border-soft last:border-b-0 hover:bg-[#FAFBFC]">
-                <td className="px-[18px] py-[13px] align-middle">
+              <tr key={row.id} className={styles.row} data-selected={selectedIds.has(row.id)}>
+                <td className={styles.cell}>
                   <input
                     type="checkbox"
+                    className={styles.checkbox}
                     checked={selectedIds.has(row.id)}
                     onChange={() => toggleRow(row.id)}
                     aria-label={`Select ${searchText(row).split('\n')[0]}`}
                   />
                 </td>
                 {columns.map(column => (
-                  <td key={column.key} className={`px-[18px] py-[13px] align-middle text-[13.3px] ${column.className || ''}`}>
+                  <td key={column.key} className={`${styles.cell} ${column.className || ''}`}>
                     {column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? '—')}
                   </td>
                 ))}
@@ -322,12 +327,12 @@ export default function EntityTable<T extends { id: number }>({
             ))}
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-5 py-14 text-center">
-                  <Search aria-hidden="true" className="mx-auto mb-2 text-text-faint opacity-60" size={28} />
-                  <div className="font-display text-[15px] font-semibold text-ink">
+                <td colSpan={columns.length + 1} className={styles.emptyCell}>
+                  <Search aria-hidden="true" className={styles.emptyIcon} size={28} />
+                  <div className={styles.emptyTitle}>
                     {emptyMessage || `No ${entityLabel.toLocaleLowerCase()} match`}
                   </div>
-                  <div className="mt-1 text-[12.5px] text-text-faint">Try a different search term.</div>
+                  <div className={styles.emptyHint}>Try a different search term.</div>
                 </td>
               </tr>
             ) : null}
@@ -335,14 +340,14 @@ export default function EntityTable<T extends { id: number }>({
         </table>
       </div>
 
-      <div className="flex min-h-[58px] flex-wrap items-center justify-between gap-3 border-t border-border-soft px-4 py-3">
-        <span className="text-[12.5px] text-text-faint">Showing {start}-{end} of {sorted.length}</span>
-        <div className="flex items-center gap-1.5">
+      <div className={styles.footer}>
+        <span className={styles.range}>Showing {start}-{end} of {sorted.length}</span>
+        <div className={styles.pagination}>
           <button
             type="button"
             onClick={() => setPage(current => Math.max(1, current - 1))}
             disabled={safePage === 1}
-            className="grid h-8 w-8 place-items-center rounded-[7px] border border-border bg-card text-text-soft hover:bg-canvas disabled:opacity-35"
+            className={styles.pageButton}
             aria-label="Previous page"
             title="Previous page"
           >
@@ -353,7 +358,7 @@ export default function EntityTable<T extends { id: number }>({
               type="button"
               key={pageNumber}
               onClick={() => setPage(pageNumber)}
-              className={`grid h-8 w-8 place-items-center rounded-[7px] border text-[12.5px] font-semibold ${pageNumber === safePage ? 'border-ink bg-ink text-white' : 'border-border bg-card text-text-soft hover:bg-canvas'}`}
+              className={styles.pageButton}
               aria-label={`Page ${pageNumber}`}
               aria-current={pageNumber === safePage ? 'page' : undefined}
             >
@@ -364,7 +369,7 @@ export default function EntityTable<T extends { id: number }>({
             type="button"
             onClick={() => setPage(current => Math.min(totalPages, current + 1))}
             disabled={safePage === totalPages}
-            className="grid h-8 w-8 place-items-center rounded-[7px] border border-border bg-card text-text-soft hover:bg-canvas disabled:opacity-35"
+            className={styles.pageButton}
             aria-label="Next page"
             title="Next page"
           >

@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { AlertCircle, Check, CheckCircle2, Edit, Plus, Trash2, UserRound } from 'lucide-react'
+import { Check, Edit, LoaderCircle, Plus, Trash2, UserRound } from 'lucide-react'
 import api from '@/lib/api'
 import { fetchCollection, type ApiCollection } from '@/lib/api-collection'
 import AgentForm from '@/components/agents/AgentForm'
@@ -17,15 +17,14 @@ import {
 import type { AgentRecord } from '@/components/agents/types'
 import EntityTable, { type EntityColumn } from '@/components/lookups/EntityTable'
 import Modal from '@/components/ui/Modal'
+import AdminToast, {
+  createAdminToastFeedback,
+  type AdminToastFeedback,
+} from '@/components/ui/AdminToast'
 
 interface SaveAgentArgs {
   values: AgentFormValues
   agentId?: number
-}
-
-interface Feedback {
-  message: string
-  tone: 'success' | 'danger'
 }
 
 interface BulkDeleteResult {
@@ -46,26 +45,25 @@ async function invalidateAgentCaches(queryClient: QueryClient) {
   )
 }
 
-function bulkDeleteFeedback(result: BulkDeleteResult): Feedback {
+function bulkDeleteFeedback(result: BulkDeleteResult): AdminToastFeedback {
   const deletedCount = result.deleted.length
   const failedCount = result.failed.length
 
   if (failedCount === 0) {
-    return {
-      tone: 'success',
-      message: `${deletedCount} ${deletedCount === 1 ? 'agent' : 'agents'} deleted successfully.`,
-    }
+    return createAdminToastFeedback(
+      `${deletedCount} ${deletedCount === 1 ? 'agent' : 'agents'} deleted successfully.`,
+    )
   }
   if (deletedCount === 0) {
-    return {
-      tone: 'danger',
-      message: `No agents were deleted. ${failedCount} ${failedCount === 1 ? 'request' : 'requests'} failed.`,
-    }
+    return createAdminToastFeedback(
+      `No agents were deleted. ${failedCount} ${failedCount === 1 ? 'request' : 'requests'} failed.`,
+      'danger',
+    )
   }
-  return {
-    tone: 'danger',
-    message: `${deletedCount} ${deletedCount === 1 ? 'agent was' : 'agents were'} deleted; ${failedCount} could not be deleted.`,
-  }
+  return createAdminToastFeedback(
+    `${deletedCount} ${deletedCount === 1 ? 'agent was' : 'agents were'} deleted; ${failedCount} could not be deleted.`,
+    'danger',
+  )
 }
 
 function responseData(error: unknown) {
@@ -93,7 +91,7 @@ export default function AgentsPage() {
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<AgentRecord[] | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set())
   const [saveErrors, setSaveErrors] = useState<AgentApiErrors | null>(null)
-  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
   const agentsQuery = useQuery<ApiCollection<AgentRecord>>({
     queryKey: ['agents'],
@@ -132,10 +130,9 @@ export default function AgentsPage() {
     onSuccess: async (_response, variables) => {
       await invalidateAgentCaches(queryClient)
       closeEditor()
-      setFeedback({
-        tone: 'success',
-        message: variables.agentId ? 'Agent updated successfully.' : 'Agent created successfully.',
-      })
+      setFeedback(createAdminToastFeedback(
+        variables.agentId ? 'Agent updated successfully.' : 'Agent created successfully.',
+      ))
     },
     onError: error => {
       setSaveErrors(normalizeAgentApiErrors(responseData(error)))
@@ -152,11 +149,11 @@ export default function AgentsPage() {
         return next
       })
       setDeleteTarget(null)
-      setFeedback({ tone: 'success', message: 'Agent deleted successfully.' })
+      setFeedback(createAdminToastFeedback('Agent deleted successfully.'))
     },
     onError: () => {
       setDeleteTarget(null)
-      setFeedback({ tone: 'danger', message: 'The agent could not be deleted.' })
+      setFeedback(createAdminToastFeedback('The agent could not be deleted.', 'danger'))
     },
   })
 
@@ -223,7 +220,7 @@ export default function AgentsPage() {
       headerClassName: 'text-right',
       className: 'w-[118px]',
       render: agent => (
-        <div className="flex items-center gap-1.5 justify-end">
+        <div className="entity-row-actions">
           <button
             type="button"
             aria-label={`Edit ${agent.name}`}
@@ -232,7 +229,7 @@ export default function AgentsPage() {
               event.stopPropagation()
               openEdit(agent)
             }}
-            className="w-8 h-8 rounded-lg border border-border bg-card flex items-center justify-center text-text-soft hover:bg-canvas hover:text-text-main"
+            className="entity-row-action"
           >
             <Edit aria-hidden="true" size={14} />
           </button>
@@ -245,7 +242,7 @@ export default function AgentsPage() {
               setFeedback(null)
               setDeleteTarget(agent)
             }}
-            className="w-8 h-8 rounded-lg border border-danger-tint bg-danger-tint text-danger flex items-center justify-center hover:bg-[#f6d9d6]"
+            className={`entity-row-action entity-row-action-danger ${agent.listing_count > 0 ? 'entity-row-action-muted' : ''}`}
           >
             <Trash2 aria-hidden="true" size={14} />
           </button>
@@ -255,6 +252,7 @@ export default function AgentsPage() {
   ]
 
   const deleteBlocked = (deleteTarget?.listing_count ?? 0) > 0
+  const bulkDeleteBlocked = bulkDeleteTargets?.some(agent => agent.listing_count > 0) ?? false
 
   return (
     <div>
@@ -270,15 +268,12 @@ export default function AgentsPage() {
       </div>
 
       {feedback ? (
-        <div
-          role={feedback.tone === 'danger' ? 'alert' : 'status'}
-          className={`mb-4 flex items-center gap-2 rounded-lg border px-3.5 py-3 text-[12.5px] font-semibold ${feedback.tone === 'success' ? 'border-success/20 bg-success-tint text-success' : 'border-danger/20 bg-danger-tint text-danger'}`}
-        >
-          {feedback.tone === 'success'
-            ? <CheckCircle2 aria-hidden="true" size={16} />
-            : <AlertCircle aria-hidden="true" size={16} />}
-          {feedback.message}
-        </div>
+        <AdminToast
+          eventId={feedback.id}
+          tone={feedback.tone}
+          message={feedback.message}
+          onDismiss={() => setFeedback(null)}
+        />
       ) : null}
 
       {agentsQuery.isLoading ? (
@@ -315,8 +310,10 @@ export default function AgentsPage() {
         footer={(
           <>
             <button type="button" onClick={closeEditor} className="btn btn-ghost" disabled={saveMutation.isPending}>Cancel</button>
-            <button type="submit" form="agent-editor-form" className="btn btn-primary" disabled={saveMutation.isPending}>
-              <Check aria-hidden="true" size={15} />
+            <button type="submit" form="agent-editor-form" className="btn btn-primary" disabled={saveMutation.isPending} aria-busy={saveMutation.isPending}>
+              {saveMutation.isPending
+                ? <LoaderCircle aria-hidden="true" className="animate-spin" size={15} />
+                : <Check aria-hidden="true" size={15} />}
               {saveMutation.isPending ? 'Saving...' : 'Save Agent'}
             </button>
           </>
@@ -335,6 +332,29 @@ export default function AgentsPage() {
         onClose={() => setDeleteTarget(null)}
         title={deleteBlocked ? 'Agent Cannot Be Deleted' : 'Delete Agent'}
         size="default"
+        footer={(
+          <>
+            <button type="button" onClick={() => setDeleteTarget(null)} className="btn btn-ghost" disabled={deleteMutation.isPending}>
+              {deleteBlocked ? 'Close' : 'Cancel'}
+            </button>
+            {!deleteBlocked ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (deleteTarget) deleteMutation.mutate(deleteTarget)
+                }}
+                className="btn btn-danger"
+                disabled={deleteMutation.isPending}
+                aria-busy={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending
+                  ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                  : <Trash2 aria-hidden="true" size={14} />}
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            ) : null}
+          </>
+        )}
       >
         {deleteBlocked ? (
           <div role="alert" className="rounded-lg border border-brass/25 bg-brass-tint p-4 text-[13.5px] text-text-soft">
@@ -344,32 +364,36 @@ export default function AgentsPage() {
         ) : (
           <p className="text-text-soft text-[13.5px]">Are you sure you want to delete {deleteTarget?.name}? This action cannot be undone.</p>
         )}
-        <div className="flex justify-end gap-2.5 mt-5">
-          <button type="button" onClick={() => setDeleteTarget(null)} className="btn btn-ghost">
-            {deleteBlocked ? 'Close' : 'Cancel'}
-          </button>
-          {!deleteBlocked ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (deleteTarget) deleteMutation.mutate(deleteTarget)
-              }}
-              className="px-4 py-2 rounded-lg text-[13.5px] font-semibold bg-danger text-white hover:bg-[#b03e35] disabled:opacity-45"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </button>
-          ) : null}
-        </div>
       </Modal>
 
       <Modal
         open={bulkDeleteTargets !== null}
         onClose={() => setBulkDeleteTargets(null)}
-        title={bulkDeleteTargets?.some(agent => agent.listing_count > 0) ? 'Selected Agents Cannot Be Deleted' : 'Delete Selected Agents'}
+        title={bulkDeleteBlocked ? 'Selected Agents Cannot Be Deleted' : 'Delete Selected Agents'}
         size="default"
+        footer={(
+          <>
+            <button type="button" onClick={() => setBulkDeleteTargets(null)} className="btn btn-ghost" disabled={bulkDeleteMutation.isPending}>
+              {bulkDeleteBlocked ? 'Close' : 'Cancel'}
+            </button>
+            {bulkDeleteTargets && !bulkDeleteBlocked ? (
+              <button
+                type="button"
+                onClick={() => bulkDeleteMutation.mutate(bulkDeleteTargets)}
+                className="btn btn-danger"
+                disabled={bulkDeleteMutation.isPending}
+                aria-busy={bulkDeleteMutation.isPending}
+              >
+                {bulkDeleteMutation.isPending
+                  ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                  : <Trash2 aria-hidden="true" size={14} />}
+                {bulkDeleteMutation.isPending ? 'Deleting...' : 'Delete Selected'}
+              </button>
+            ) : null}
+          </>
+        )}
       >
-        {bulkDeleteTargets?.some(agent => agent.listing_count > 0) ? (
+        {bulkDeleteBlocked ? (
           <div role="alert" className="rounded-lg border border-brass/25 bg-brass-tint p-4 text-[13.5px] text-text-soft">
             <p className="font-semibold text-ink">One or more selected agents still have active listings.</p>
             <p className="mt-1.5">Reassign or delete those properties before removing the selected agents.</p>
@@ -379,21 +403,6 @@ export default function AgentsPage() {
             Delete {bulkDeleteTargets?.length ?? 0} selected {(bulkDeleteTargets?.length ?? 0) === 1 ? 'agent' : 'agents'}? This action cannot be undone.
           </p>
         )}
-        <div className="flex justify-end gap-2.5 mt-5">
-          <button type="button" onClick={() => setBulkDeleteTargets(null)} className="btn btn-ghost">
-            {bulkDeleteTargets?.some(agent => agent.listing_count > 0) ? 'Close' : 'Cancel'}
-          </button>
-          {bulkDeleteTargets && !bulkDeleteTargets.some(agent => agent.listing_count > 0) ? (
-            <button
-              type="button"
-              onClick={() => bulkDeleteMutation.mutate(bulkDeleteTargets)}
-              className="px-4 py-2 rounded-lg text-[13.5px] font-semibold bg-danger text-white hover:bg-[#b03e35] disabled:opacity-45"
-              disabled={bulkDeleteMutation.isPending}
-            >
-              {bulkDeleteMutation.isPending ? 'Deleting...' : 'Delete Selected'}
-            </button>
-          ) : null}
-        </div>
       </Modal>
     </div>
   )
