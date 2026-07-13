@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 import styles from './Modal.module.css'
 
@@ -19,9 +19,20 @@ const modalWidths = {
   xl: 'max-w-[960px]',
 } as const
 
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
 export default function Modal({ open, onClose, title, description, children, footer, size = 'default' }: ModalProps) {
   const titleId = useId()
   const descriptionId = useId()
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) {
@@ -31,9 +42,59 @@ export default function Modal({ open, onClose, title, description, children, foo
   }, [open])
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    if (open) window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    if (!open) return
+
+    const returnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+    dialogRef.current?.focus()
+
+    return () => {
+      if (returnFocus?.isConnected) returnFocus.focus()
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+
+    const handler = (event: KeyboardEvent) => {
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(focusableSelector),
+      )
+      const first = focusableElements[0]
+      const last = focusableElements[focusableElements.length - 1]
+
+      if (!first || !last) {
+        event.preventDefault()
+        dialog.focus()
+        return
+      }
+
+      const activeElement = document.activeElement
+      if (!dialog.contains(activeElement)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+      } else if (event.shiftKey && (activeElement === first || activeElement === dialog)) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (activeElement === last || activeElement === dialog)) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
   if (!open) return null
@@ -41,7 +102,9 @@ export default function Modal({ open, onClose, title, description, children, foo
   return (
     <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center ${styles.overlay}`} onClick={onClose}>
       <div
-        className={`bg-card rounded-[14px] w-full ${modalWidths[size]} max-h-[88vh] flex flex-col shadow-lg animate-in`}
+        ref={dialogRef}
+        tabIndex={-1}
+        className={`bg-card rounded-[14px] w-full ${modalWidths[size]} max-h-[88vh] flex flex-col shadow-lg animate-in outline-none`}
         style={{ animation: 'modalIn 0.18s cubic-bezier(0.2,0.8,0.3,1)' }}
         onClick={e => e.stopPropagation()}
         role="dialog"
