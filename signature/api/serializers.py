@@ -19,13 +19,22 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_property_count(self, obj):
+        if hasattr(obj, 'property_count'):
+            return obj.property_count
         return propertys.objects.filter(property_types=obj).count()
 
 
 class FacilitySerializer(serializers.ModelSerializer):
+    property_count = serializers.SerializerMethodField()
+
     class Meta:
         model = facilities
         fields = '__all__'
+
+    def get_property_count(self, obj):
+        if hasattr(obj, 'property_count'):
+            return obj.property_count
+        return propertys.objects.filter(facilitie=obj).count()
 
 
 class AgentSerializer(serializers.ModelSerializer):
@@ -36,6 +45,8 @@ class AgentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_listing_count(self, obj):
+        if hasattr(obj, 'listing_count'):
+            return obj.listing_count
         return propertys.objects.filter(agent=obj).count()
 
 

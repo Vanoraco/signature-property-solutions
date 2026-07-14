@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
 import {
   Check,
@@ -13,6 +13,10 @@ import {
   X,
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
+import AdminToast, {
+  createAdminToastFeedback,
+  type AdminToastFeedback,
+} from '@/components/ui/AdminToast'
 
 type FieldType = 'text' | 'tel' | 'email' | 'textarea' | 'select'
 
@@ -27,11 +31,6 @@ interface FormField {
 interface FieldDraft extends FormField {
   isNew: boolean
   optionsText: string
-}
-
-interface Feedback {
-  message: string
-  tone: 'success' | 'danger'
 }
 
 const FIELD_TYPE_META: Record<FieldType, string> = {
@@ -75,19 +74,10 @@ export default function FormBuilderPage() {
   const [editorError, setEditorError] = useState('')
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<Feedback | null>(null)
-  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
-  useEffect(() => {
-    return () => {
-      if (feedbackTimer.current) clearTimeout(feedbackTimer.current)
-    }
-  }, [])
-
-  const showFeedback = (message: string, tone: Feedback['tone'] = 'success') => {
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current)
-    setFeedback({ message, tone })
-    feedbackTimer.current = setTimeout(() => setFeedback(null), 2400)
+  const showFeedback = (message: string, tone: AdminToastFeedback['tone'] = 'success') => {
+    setFeedback(createAdminToastFeedback(message, tone))
   }
 
   const openFieldEditor = (field?: FormField) => {
@@ -153,7 +143,7 @@ export default function FormBuilderPage() {
 
   const removeField = (id: string) => {
     setFields(current => current.filter(field => field.id !== id))
-    showFeedback('Field removed', 'danger')
+    showFeedback('Field removed')
   }
 
   const moveField = (id: string, targetIndex: number) => {
@@ -506,20 +496,14 @@ export default function FormBuilderPage() {
         )}
       </Modal>
 
-      {feedback && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-5 right-5 z-[120] flex min-w-[220px] items-center gap-2.5 rounded-[9px] bg-ink px-4 py-3 text-[13px] font-medium text-white shadow-lg"
-        >
-          {feedback.tone === 'success' ? (
-            <Check size={16} className="text-[#7CE0B4]" />
-          ) : (
-            <Trash2 size={16} className="text-[#F19A93]" />
-          )}
-          {feedback.message}
-        </div>
-      )}
+      {feedback ? (
+        <AdminToast
+          eventId={feedback.id}
+          tone={feedback.tone}
+          message={feedback.message}
+          onDismiss={() => setFeedback(null)}
+        />
+      ) : null}
     </div>
   )
 }

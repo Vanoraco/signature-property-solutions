@@ -36,7 +36,7 @@
   min-width: 0;
 }
 
-.mediaMeta strong { color: var(--ink); font-size: 13px; }
+.mediaMeta strong { color: var(--text); font-size: 13px; }
 
 .mediaMeta span {
   overflow: hidden;
@@ -64,7 +64,32 @@
   font-weight: 700;
 }
 
-.mediaButton:hover { color: var(--ink); border-color: var(--brass); }
+.mediaActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mediaLibraryButton {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: 7px;
+  color: var(--text-soft);
+  background: var(--admin-surface-subtle);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mediaLibraryButton:hover { color: var(--text); border-color: var(--brass); }
+.mediaLibraryButton:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+.mediaButton:hover { color: var(--text); border-color: var(--brass); }
 
 .mediaButton:focus-within {
   border-color: var(--brass);
@@ -80,7 +105,7 @@
   white-space: nowrap;
 }
 
-.mediaFeatured .mediaButton,
+.mediaFeatured .mediaActions,
 .mediaFeatured .errorText { grid-column: 2; }
 
 .galleryGrid {
@@ -94,7 +119,7 @@
 
 @media (max-width: 760px) {
   .mediaFeatured { grid-template-columns: 1fr; }
-  .mediaFeatured .mediaButton,
+  .mediaFeatured .mediaActions,
   .mediaFeatured .errorText { grid-column: auto; }
   .galleryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -125,7 +150,7 @@
   font-weight: 700;
 }
 
-.tab:hover { color: var(--ink); }
+.tab:hover { color: var(--text); }
 .tabActive { color: var(--brass-dark); border-bottom-color: var(--brass); }
 
 .errorDot {
@@ -143,7 +168,7 @@
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .spanTwo { grid-column: 1 / -1; }
 .field { display: grid; align-content: start; gap: 6px; min-width: 0; }
-.label { color: var(--text-main); font-size: 11.5px; font-weight: 750; }
+.label { color: var(--text); font-size: 11.5px; font-weight: 750; }
 .required { color: var(--danger); }
 
 .input,
@@ -152,7 +177,7 @@
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 7px;
-  color: var(--text-main);
+  color: var(--text);
   background: var(--card);
   font: inherit;
   font-size: 13px;
@@ -192,7 +217,7 @@
 .lookupState { color: var(--text-soft); border: 1px solid var(--border); background: var(--canvas); }
 .facilitySection { display: grid; gap: 14px; outline: none; }
 .facilityToolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.facilityToolbar h4 { margin: 0; color: var(--ink); font-family: var(--font-display); font-size: 16px; }
+.facilityToolbar h4 { margin: 0; color: var(--text); font-family: var(--font-display); font-size: 16px; }
 .facilityToolbar p { margin: 3px 0 0; color: var(--text-faint); font-size: 11.5px; }
 
 .facilitySearch {
@@ -208,7 +233,7 @@
   background: var(--card);
 }
 
-.facilitySearch input { width: 100%; border: 0; outline: 0; color: var(--text-main); background: transparent; font-size: 12px; }
+.facilitySearch input { width: 100%; border: 0; outline: 0; color: var(--text); background: transparent; font-size: 12px; }
 .facilityGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 
 .facilityOption {
@@ -227,7 +252,7 @@
 
 .facilityOption input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .facilityOption input:focus-visible + .facilityCheck { outline: 2px solid var(--brass); outline-offset: 2px; }
-.facilityChecked { color: var(--ink); border-color: var(--brass); background: var(--brass-tint); }
+.facilityChecked { color: var(--text); border-color: var(--brass); background: var(--brass-tint); }
 
 .facilityCheck {
   display: grid;
@@ -237,7 +262,7 @@
   flex: 0 0 17px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  color: var(--ink);
+  color: var(--text);
   background: var(--card);
 }
 

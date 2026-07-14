@@ -1,8 +1,11 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Search, Bell, Sun, Moon, RefreshCw, ChevronRight, Menu, Inbox } from 'lucide-react'
+import {
+  Search, Bell, Sun, Moon, RefreshCw, ChevronRight, ChevronDown,
+  Menu, Inbox, UserRound, LogOut,
+} from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { useTheme } from '@/lib/theme'
 
@@ -22,6 +25,7 @@ const PAGE_TITLES: Record<string, [string, string]> = {
   '/activity': ['Team & Access', 'Activity Log'],
   '/leaderboard': ['Performance', 'Agent Leaderboard'],
   '/media': ['Library', 'Media Library'],
+  '/profile': ['Account', 'Profile'],
   '/content/home': ['Content', 'Home Page'],
   '/content/about': ['Content', 'About Page'],
   '/content/contact': ['Content', 'Contact Page'],
@@ -64,6 +68,8 @@ interface TopbarProps {
   onOpenCommandPalette: () => void
 }
 
+type OpenPanel = 'notifications' | 'account' | null
+
 function getBreadcrumb(pathname: string): [string, string] {
   const exact = PAGE_TITLES[pathname]
   if (exact) return exact
@@ -81,24 +87,57 @@ export default function Topbar({ onOpenMobileMenu, onOpenCommandPalette }: Topba
   const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const notificationWrapRef = useRef<HTMLDivElement>(null)
+  const notificationButtonRef = useRef<HTMLButtonElement>(null)
+  const accountWrapRef = useRef<HTMLDivElement>(null)
+  const accountButtonRef = useRef<HTMLButtonElement>(null)
+  const previousPathnameRef = useRef(pathname)
   const [notifications, setNotifications] = useState<AdminNotification[]>(() =>
     SEEDED_NOTIFICATIONS.map(notification => ({ ...notification })),
   )
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [group, title] = getBreadcrumb(pathname)
+  const notificationsOpen = openPanel === 'notifications'
+  const accountOpen = openPanel === 'account'
   const unreadCount = notifications.filter(notification => !notification.read).length
 
   useEffect(() => {
-    if (!notificationsOpen) return
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setNotificationsOpen(false)
+    if (!openPanel) return
+
+    const closeOnPointerDown = (event: PointerEvent) => {
+      const openWrapper = openPanel === 'notifications'
+        ? notificationWrapRef.current
+        : accountWrapRef.current
+
+      if (openWrapper && !openWrapper.contains(event.target as Node)) {
+        setOpenPanel(null)
+      }
     }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setOpenPanel(null)
+      if (openPanel === 'notifications') notificationButtonRef.current?.focus()
+      if (openPanel === 'account') accountButtonRef.current?.focus()
+    }
+
+    document.addEventListener('pointerdown', closeOnPointerDown)
     window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [notificationsOpen])
+    return () => {
+      document.removeEventListener('pointerdown', closeOnPointerDown)
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [openPanel])
+
+  useEffect(() => {
+    if (previousPathnameRef.current === pathname) return
+    previousPathnameRef.current = pathname
+    const closeFrame = window.requestAnimationFrame(() => setOpenPanel(null))
+    return () => window.cancelAnimationFrame(closeFrame)
+  }, [pathname])
 
   const markAllRead = () => {
     setNotifications(current => current.map(notification => ({ ...notification, read: true })))
@@ -108,8 +147,18 @@ export default function Topbar({ onOpenMobileMenu, onOpenCommandPalette }: Topba
     setNotifications(current => current.map(item => (
       item.id === notification.id ? { ...item, read: true } : item
     )))
-    setNotificationsOpen(false)
+    setOpenPanel(null)
     router.push(notification.href)
+  }
+
+  const openProfile = () => {
+    setOpenPanel(null)
+    router.push('/profile')
+  }
+
+  const handleLogout = () => {
+    setOpenPanel(null)
+    logout()
   }
 
   const refreshData = async () => {
@@ -142,18 +191,16 @@ export default function Topbar({ onOpenMobileMenu, onOpenCommandPalette }: Topba
           <kbd className="topbar-shortcut">⌘K</kbd>
         </button>
 
-        <div className="notif-wrap">
-          {notificationsOpen ? (
-            <button type="button" className="click-catch border-0 p-0" onClick={() => setNotificationsOpen(false)} aria-label="Close notifications" />
-          ) : null}
+        <div className="notif-wrap" ref={notificationWrapRef}>
           <button
+            ref={notificationButtonRef}
             type="button"
             className="icon-btn notification-btn"
             title="Notifications"
             aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}
             aria-expanded={notificationsOpen}
             aria-controls="notification-panel"
-            onClick={() => setNotificationsOpen(open => !open)}
+            onClick={() => setOpenPanel(current => current === 'notifications' ? null : 'notifications')}
           >
             <Bell size={17} />
             {unreadCount ? <span className="badge-count">{unreadCount}</span> : null}
@@ -193,8 +240,46 @@ export default function Topbar({ onOpenMobileMenu, onOpenCommandPalette }: Topba
           <RefreshCw size={17} className={refreshing ? 'animate-spin' : undefined} />
         </button>
 
-        <div className="avatar topbar-avatar" title={user?.email || user?.username || 'Account'} aria-label={user?.username || 'Account'}>
-          {getInitials(user?.username)}
+        <div className="account-wrap" ref={accountWrapRef}>
+          <button
+            ref={accountButtonRef}
+            type="button"
+            className="account-trigger"
+            aria-label={`${accountOpen ? 'Close' : 'Open'} account menu for ${user?.username || 'account'}`}
+            aria-haspopup="menu"
+            aria-expanded={accountOpen}
+            aria-controls="account-menu"
+            onClick={() => setOpenPanel(current => current === 'account' ? null : 'account')}
+          >
+            <span className="avatar topbar-avatar" aria-hidden="true">
+              {getInitials(user?.username)}
+            </span>
+            <ChevronDown size={14} className="account-chevron" aria-hidden="true" />
+          </button>
+
+          {accountOpen ? (
+            <div id="account-menu" className="account-menu" role="menu" aria-label="Account menu">
+              <div className="account-identity">
+                <span className="avatar account-menu-avatar" aria-hidden="true">
+                  {getInitials(user?.username)}
+                </span>
+                <span className="account-identity-copy">
+                  <strong>{user?.username || 'Administrator'}</strong>
+                  <span>{user?.email || 'No email provided'}</span>
+                </span>
+              </div>
+              <div className="account-menu-actions">
+                <button type="button" className="account-menu-item" role="menuitem" onClick={openProfile}>
+                  <UserRound size={16} aria-hidden="true" />
+                  <span>Profile</span>
+                </button>
+                <button type="button" className="account-menu-item account-menu-item-danger" role="menuitem" onClick={handleLogout}>
+                  <LogOut size={16} aria-hidden="true" />
+                  <span>Log out</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>
