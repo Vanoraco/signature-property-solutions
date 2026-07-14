@@ -23,8 +23,8 @@ function proxyPath(url: string) {
   }
 }
 
-export async function fetchCollection<T>(path: string): Promise<ApiCollection<T>> {
-  const firstResponse = await api.get<PaginatedApiResponse<T> | T[]>(path)
+export async function fetchCollection<T>(path: string, signal?: AbortSignal): Promise<ApiCollection<T>> {
+  const firstResponse = await api.get<PaginatedApiResponse<T> | T[]>(path, { signal })
   if (Array.isArray(firstResponse.data)) {
     return { count: firstResponse.data.length, results: firstResponse.data }
   }
@@ -38,7 +38,7 @@ export async function fetchCollection<T>(path: string): Promise<ApiCollection<T>
     if (seenPages.has(pagePath)) break
     seenPages.add(pagePath)
 
-    const response = await api.get<PaginatedApiResponse<T> | T[]>(pagePath)
+    const response = await api.get<PaginatedApiResponse<T> | T[]>(pagePath, { signal })
     if (Array.isArray(response.data)) {
       results.push(...response.data)
       break

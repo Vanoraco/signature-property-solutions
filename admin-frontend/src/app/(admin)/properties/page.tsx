@@ -1,18 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit, LoaderCircle, Plus, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
-import { fetchCollection } from '@/lib/api-collection'
+import {
+  adminQueryKeys,
+  agentsQueryOptions,
+  lookupQueryOptions,
+  propertiesQueryOptions,
+} from '@/lib/admin-queries'
 import EntityTable, { type EntityColumn } from '@/components/lookups/EntityTable'
 import Modal from '@/components/ui/Modal'
 import AdminToast, {
   createAdminToastFeedback,
   type AdminToastFeedback,
 } from '@/components/ui/AdminToast'
-import PropertyForm from '@/components/properties/PropertyForm'
 import {
   normalizeApiErrors,
   normalizeResults,
@@ -21,12 +26,17 @@ import {
   type PropertyFormValues,
 } from '@/components/properties/property-form'
 import type {
-  AgentOption,
-  ApiCollection,
-  CategoryOption,
-  FacilityOption,
   PropertyRecord,
 } from '@/components/properties/types'
+
+const loadPropertyForm = () => import('@/components/properties/PropertyForm')
+const PropertyForm = dynamic(loadPropertyForm, {
+  loading: () => (
+    <div className="flex min-h-[420px] items-center justify-center" role="status" aria-label="Loading property editor">
+      <LoaderCircle aria-hidden="true" className="animate-spin text-brass" size={22} />
+    </div>
+  ),
+})
 
 interface SavePropertyArgs {
   values: PropertyFormValues
@@ -66,26 +76,20 @@ export default function PropertiesPage() {
   const [saveErrors, setSaveErrors] = useState<NormalizedApiErrors | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
-  const propertiesQuery = useQuery({
-    queryKey: ['properties'],
-    queryFn: () => fetchCollection<PropertyRecord>('/properties/'),
-  })
+  const propertiesQuery = useQuery(propertiesQueryOptions)
 
-  const categoriesQuery = useQuery<ApiCollection<CategoryOption>>({
-    queryKey: ['property-form', 'categories'],
-    queryFn: () => api.get('/categories/?page_size=100').then(response => response.data),
+  const categoriesQuery = useQuery({
+    ...lookupQueryOptions('categories'),
     enabled: modalOpen,
   })
 
-  const agentsQuery = useQuery<ApiCollection<AgentOption>>({
-    queryKey: ['property-form', 'agents'],
-    queryFn: () => api.get('/agents/?page_size=100').then(response => response.data),
+  const agentsQuery = useQuery({
+    ...agentsQueryOptions,
     enabled: modalOpen,
   })
 
-  const facilitiesQuery = useQuery<ApiCollection<FacilityOption>>({
-    queryKey: ['property-form', 'facilities'],
-    queryFn: () => api.get('/facilities/?page_size=100').then(response => response.data),
+  const facilitiesQuery = useQuery({
+    ...lookupQueryOptions('facilities'),
     enabled: modalOpen,
   })
 
@@ -96,6 +100,7 @@ export default function PropertiesPage() {
   }
 
   const openCreate = () => {
+    void loadPropertyForm()
     setFeedback(null)
     setSaveErrors(null)
     setEditing(null)
@@ -103,6 +108,7 @@ export default function PropertiesPage() {
   }
 
   const openEdit = (property: PropertyRecord) => {
+    void loadPropertyForm()
     setFeedback(null)
     setSaveErrors(null)
     setEditing(property)
@@ -121,7 +127,7 @@ export default function PropertiesPage() {
       setFeedback(null)
     },
     onSuccess: async (_response, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['properties'] })
+      await queryClient.invalidateQueries({ queryKey: adminQueryKeys.properties })
       closePropertyModal()
       setFeedback(createAdminToastFeedback(
         variables.propertyId ? 'Property updated successfully.' : 'Property created successfully.',
@@ -144,7 +150,7 @@ export default function PropertiesPage() {
       }, { deleted: [], failed: [] })
     },
     onSuccess: async result => {
-      await queryClient.invalidateQueries({ queryKey: ['properties'] })
+      await queryClient.invalidateQueries({ queryKey: adminQueryKeys.properties })
       setDeleteTargets([])
       setSelectedIds(new Set(result.failed.map(property => property.id)))
 
@@ -244,6 +250,9 @@ export default function PropertiesPage() {
             type="button"
             aria-label={`Edit ${property.property_title}`}
             title="Edit property"
+            onMouseEnter={() => void loadPropertyForm()}
+            onFocus={() => void loadPropertyForm()}
+            onTouchStart={() => void loadPropertyForm()}
             onClick={event => {
               event.stopPropagation()
               openEdit(property)
@@ -289,7 +298,14 @@ export default function PropertiesPage() {
           <div className="page-title">All Properties</div>
           <div className="page-desc">Manage every property record shown across the site.</div>
         </div>
-        <button type="button" onClick={openCreate} className="btn btn-brass">
+        <button
+          type="button"
+          onClick={openCreate}
+          onMouseEnter={() => void loadPropertyForm()}
+          onFocus={() => void loadPropertyForm()}
+          onTouchStart={() => void loadPropertyForm()}
+          className="btn btn-brass"
+        >
           <Plus aria-hidden="true" size={16} /> New Property
         </button>
       </div>

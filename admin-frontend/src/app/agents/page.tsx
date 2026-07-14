@@ -1,12 +1,12 @@
 'use client'
 
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { Check, Edit, LoaderCircle, Plus, Trash2, UserRound } from 'lucide-react'
 import api from '@/lib/api'
-import { fetchCollection, type ApiCollection } from '@/lib/api-collection'
-import AgentForm from '@/components/agents/AgentForm'
+import { agentsQueryOptions } from '@/lib/admin-queries'
 import {
   normalizeAgentApiErrors,
   normalizeAgents,
@@ -21,6 +21,15 @@ import AdminToast, {
   createAdminToastFeedback,
   type AdminToastFeedback,
 } from '@/components/ui/AdminToast'
+
+const loadAgentForm = () => import('@/components/agents/AgentForm')
+const AgentForm = dynamic(loadAgentForm, {
+  loading: () => (
+    <div className="flex min-h-[320px] items-center justify-center" role="status" aria-label="Loading agent editor">
+      <LoaderCircle aria-hidden="true" className="animate-spin text-brass" size={22} />
+    </div>
+  ),
+})
 
 interface SaveAgentArgs {
   values: AgentFormValues
@@ -93,10 +102,7 @@ export default function AgentsPage() {
   const [saveErrors, setSaveErrors] = useState<AgentApiErrors | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
-  const agentsQuery = useQuery<ApiCollection<AgentRecord>>({
-    queryKey: ['agents'],
-    queryFn: () => fetchCollection<AgentRecord>('/agents/'),
-  })
+  const agentsQuery = useQuery(agentsQueryOptions)
 
   const closeEditor = () => {
     setModalOpen(false)
@@ -105,6 +111,7 @@ export default function AgentsPage() {
   }
 
   const openCreate = () => {
+    void loadAgentForm()
     setFeedback(null)
     setSaveErrors(null)
     setEditing(null)
@@ -112,6 +119,7 @@ export default function AgentsPage() {
   }
 
   const openEdit = (agent: AgentRecord) => {
+    void loadAgentForm()
     setFeedback(null)
     setSaveErrors(null)
     setEditing(agent)
@@ -225,6 +233,9 @@ export default function AgentsPage() {
             type="button"
             aria-label={`Edit ${agent.name}`}
             title="Edit agent"
+            onMouseEnter={() => void loadAgentForm()}
+            onFocus={() => void loadAgentForm()}
+            onTouchStart={() => void loadAgentForm()}
             onClick={event => {
               event.stopPropagation()
               openEdit(agent)
@@ -262,7 +273,14 @@ export default function AgentsPage() {
           <h1 className="page-title">Agents</h1>
           <p className="page-desc">Manage every agent record shown across the site.</p>
         </div>
-        <button type="button" onClick={openCreate} className="btn btn-brass">
+        <button
+          type="button"
+          onClick={openCreate}
+          onMouseEnter={() => void loadAgentForm()}
+          onFocus={() => void loadAgentForm()}
+          onTouchStart={() => void loadAgentForm()}
+          className="btn btn-brass"
+        >
           <Plus aria-hidden="true" size={16} /> New Agent
         </button>
       </div>

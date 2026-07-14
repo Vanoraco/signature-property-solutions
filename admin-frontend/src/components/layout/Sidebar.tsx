@@ -1,14 +1,16 @@
 'use client'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, FileText, Building2, Megaphone, Inbox,
   Shield, Trophy, Image as ImageIcon, ChevronLeft, ChevronRight, ChevronDown, LogOut
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
+import { prefetchAdminRouteData } from '@/lib/admin-queries'
 
 type AdminNavLink = {
   type: 'link'
@@ -72,8 +74,15 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNavigate }: SidebarProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Properties: true })
   const pathname = usePathname()
+  const router = useRouter()
+  const queryClient = useQueryClient()
   const { logout } = useAuth()
   const visuallyCollapsed = collapsed && !mobileOpen
+
+  const preloadRoute = useCallback((href: string) => {
+    router.prefetch(href)
+    void prefetchAdminRouteData(queryClient, href)
+  }, [queryClient, router])
 
   const handleLogout = () => {
     onNavigate()
@@ -93,7 +102,15 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
         {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
       </button>
 
-      <Link href="/" onClick={onNavigate} className="sidebar-brand" aria-label="Signature Property Solutions admin">
+      <Link
+        href="/"
+        onClick={onNavigate}
+        onMouseEnter={() => preloadRoute('/')}
+        onFocus={() => preloadRoute('/')}
+        onTouchStart={() => preloadRoute('/')}
+        className="sidebar-brand"
+        aria-label="Signature Property Solutions admin"
+      >
         <span className="sidebar-logo-full" aria-hidden="true">
           <Image src="/headerlogo.png" alt="" fill sizes="220px" className="sidebar-logo-image" priority />
         </span>
@@ -112,6 +129,9 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
                 key={item.href}
                 href={item.href}
                 onClick={onNavigate}
+                onMouseEnter={() => preloadRoute(item.href)}
+                onFocus={() => preloadRoute(item.href)}
+                onTouchStart={() => preloadRoute(item.href)}
                 className={`nav-link ${active ? 'active' : ''}`}
                 title={visuallyCollapsed ? item.label : undefined}
                 aria-current={active ? 'page' : undefined}
@@ -146,6 +166,9 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
                       key={child.href}
                       href={child.href}
                       onClick={onNavigate}
+                      onMouseEnter={() => preloadRoute(child.href)}
+                      onFocus={() => preloadRoute(child.href)}
+                      onTouchStart={() => preloadRoute(child.href)}
                       className={`nav-child ${active ? 'active' : ''}`}
                       aria-current={active ? 'page' : undefined}
                     >

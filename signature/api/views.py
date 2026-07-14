@@ -92,6 +92,31 @@ def _verified_image_format(path, file_handle=None):
             handle.close()
 
 
+def _inspected_image_format(path):
+    expected_format = SUPPORTED_MEDIA_IMAGE_FORMATS.get(path.suffix.lower())
+    if not expected_format:
+        return None
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            with Image.open(path) as image:
+                detected_format = image.format
+                width, height = image.size
+                if width <= 0 or height <= 0 or width * height > MAX_MEDIA_IMAGE_PIXELS:
+                    return None
+        return detected_format if detected_format == expected_format else None
+    except (
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+        OSError,
+        SyntaxError,
+        UnidentifiedImageError,
+        ValueError,
+    ):
+        return None
+
+
 def _media_asset_url(relative_path):
     media_url = settings.MEDIA_URL.rstrip('/') + '/'
     return media_url + quote(relative_path, safe='/')
@@ -102,7 +127,7 @@ def _media_asset_record(path, media_root):
         resolved_path = path.resolve(strict=True)
         if not resolved_path.is_file() or not _is_within_media_root(resolved_path, media_root):
             return None
-        image_format = _verified_image_format(resolved_path)
+        image_format = _inspected_image_format(resolved_path)
         if not image_format:
             return None
         stat = resolved_path.stat()

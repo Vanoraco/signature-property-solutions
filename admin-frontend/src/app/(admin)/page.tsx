@@ -1,60 +1,45 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { House, Inbox, RefreshCw, Search, Star, Users } from 'lucide-react'
-import api from '@/lib/api'
+import {
+  agentsQueryOptions,
+  dashboardRequestsQueryOptions,
+  dashboardTestimonialsQueryOptions,
+  propertiesQueryOptions,
+} from '@/lib/admin-queries'
 import { useAuth } from '@/lib/auth'
-import DashboardCharts from '@/components/dashboard/DashboardCharts'
-import PropertyMap from '@/components/dashboard/PropertyMap'
 import { liveSearchActivity } from '@/components/dashboard/analytics'
-import type {
-  Agent,
-  ApiCollection,
-  PaginatedApiResponse,
-  Property,
-  PropertyRequest,
-  Testimonial,
-} from '@/components/dashboard/types'
 import styles from '@/components/dashboard/Dashboard.module.css'
 
-function proxyPath(url: string) {
-  try {
-    const parsed = new URL(url, 'http://localhost')
-    const apiIndex = parsed.pathname.indexOf('/api/')
-    const pathname = apiIndex >= 0 ? parsed.pathname.slice(apiIndex + 4) : parsed.pathname
-    return `${pathname.startsWith('/') ? pathname : `/${pathname}`}${parsed.search}`
-  } catch {
-    return url
-  }
-}
-
-async function fetchCollection<T>(path: string): Promise<ApiCollection<T>> {
-  const firstResponse = await api.get<PaginatedApiResponse<T> | T[]>(path)
-  if (Array.isArray(firstResponse.data)) {
-    return { count: firstResponse.data.length, results: firstResponse.data }
-  }
-
-  const results = [...firstResponse.data.results]
-  const seenPages = new Set<string>()
-  let next = firstResponse.data.next
-
-  while (next) {
-    const pagePath = proxyPath(next)
-    if (seenPages.has(pagePath)) break
-    seenPages.add(pagePath)
-
-    const response = await api.get<PaginatedApiResponse<T> | T[]>(pagePath)
-    if (Array.isArray(response.data)) {
-      results.push(...response.data)
-      break
-    }
-    results.push(...response.data.results)
-    next = response.data.next
-  }
-
-  return { count: firstResponse.data.count, results }
-}
+const CHART_PLACEHOLDERS = [0, 1, 2, 3] as const
+const DashboardCharts = dynamic(
+  () => import('@/components/dashboard/DashboardCharts'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="charts-grid" role="status" aria-label="Loading dashboard charts">
+        {CHART_PLACEHOLDERS.map(index => (
+          <section key={index} className="panel h-[300px] animate-pulse" aria-hidden="true" />
+        ))}
+      </div>
+    ),
+  },
+)
+const PropertyMap = dynamic(
+  () => import('@/components/dashboard/PropertyMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className={styles.mapFrame}>
+        <div className={`map-wrap ${styles.map}`} aria-hidden="true" />
+        <div className={styles.mapStatus} role="status">Loading property map...</div>
+      </div>
+    ),
+  },
+)
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -114,26 +99,22 @@ export default function DashboardPage() {
   const enabled = Boolean(user)
 
   const propertiesQuery = useQuery({
-    queryKey: ['dashboard', 'properties'],
-    queryFn: () => fetchCollection<Property>('/properties/?ordering=-id'),
+    ...propertiesQueryOptions,
     enabled,
     retry: 1,
   })
   const agentsQuery = useQuery({
-    queryKey: ['dashboard', 'agents'],
-    queryFn: () => fetchCollection<Agent>('/agents/'),
+    ...agentsQueryOptions,
     enabled,
     retry: 1,
   })
   const requestsQuery = useQuery({
-    queryKey: ['dashboard', 'requests'],
-    queryFn: () => fetchCollection<PropertyRequest>('/requests/?ordering=-created_at'),
+    ...dashboardRequestsQueryOptions,
     enabled,
     retry: 1,
   })
   const testimonialsQuery = useQuery({
-    queryKey: ['dashboard', 'testimonials'],
-    queryFn: () => fetchCollection<Testimonial>('/testimonials/'),
+    ...dashboardTestimonialsQueryOptions,
     enabled,
     retry: 1,
   })

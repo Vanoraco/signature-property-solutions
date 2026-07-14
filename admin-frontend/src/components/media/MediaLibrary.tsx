@@ -5,26 +5,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Check, FolderOpen, Images, LoaderCircle, Search } from 'lucide-react'
 import api from '@/lib/api'
+import { mediaAssetsQueryOptions, type MediaAsset } from '@/lib/admin-queries'
 import Modal from '@/components/ui/Modal'
 import styles from './MediaLibrary.module.css'
 
-export interface MediaAsset {
-  path: string
-  name: string
-  url: string
-  size: number
-  modified_at: string
-}
-
-interface MediaAssetCollection {
-  count: number
-  results: MediaAsset[]
-}
-
-async function fetchMediaAssets() {
-  const response = await api.get<MediaAssetCollection>('/media-assets/')
-  return response.data
-}
+export type { MediaAsset } from '@/lib/admin-queries'
 
 function inferImageType(filename: string) {
   const extension = filename.split('.').pop()?.toLowerCase()
@@ -67,11 +52,7 @@ function folderName(path: string) {
 export function MediaBrowser({ selectedPath, onSelect, disabled = false }: MediaBrowserProps) {
   const [search, setSearch] = useState('')
   const [folder, setFolder] = useState('All folders')
-  const assetsQuery = useQuery({
-    queryKey: ['media-assets'],
-    queryFn: fetchMediaAssets,
-    staleTime: 60_000,
-  })
+  const assetsQuery = useQuery(mediaAssetsQueryOptions)
 
   const assets = useMemo(() => assetsQuery.data?.results ?? [], [assetsQuery.data])
   const folders = useMemo(() => (

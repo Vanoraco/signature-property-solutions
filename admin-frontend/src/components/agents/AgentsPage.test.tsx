@@ -125,7 +125,7 @@ describe('AgentsPage', () => {
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
 
     await user.click(await screen.findByRole('button', { name: 'New Agent' }))
-    await user.type(screen.getByRole('textbox', { name: 'Full name' }), 'Sara Tesfaye')
+    await user.type(await screen.findByRole('textbox', { name: 'Full name' }), 'Sara Tesfaye')
     await user.type(screen.getByRole('textbox', { name: 'Phone number' }), '+251 933 000 333')
     await user.type(screen.getByRole('textbox', { name: 'Email' }), 'sara@example.com')
     await user.upload(screen.getByLabelText('Agent photo file'), photo)

@@ -2,6 +2,7 @@ import os
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from PIL import Image
@@ -66,6 +67,25 @@ class MediaAssetApiTests(APITestCase):
         self.assertEqual(newest['modified_at'], '2026-01-01T00:00:00+00:00')
         self.assertEqual(newest['url'], '/images/products/new%20image.jpg')
         self.assertEqual(response.data['results'][1]['size'], older.stat().st_size)
+
+    def test_list_does_not_fully_decode_images(self):
+        self.create_image('library/listed.png')
+        self.authenticate()
+
+        with (
+            patch('signature.api.views._verified_image_format') as full_verification,
+            patch(
+                'PIL.ImageFile.ImageFile.load',
+                side_effect=AssertionError('Media listing must not decode image pixels.'),
+            ) as image_load,
+        ):
+            response = self.client.get('/api/media-assets/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['path'], 'library/listed.png')
+        full_verification.assert_not_called()
+        image_load.assert_not_called()
 
     def test_download_returns_the_selected_image(self):
         image_path = self.create_image('products/download me.png')

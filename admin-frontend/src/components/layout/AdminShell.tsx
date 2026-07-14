@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth'
+import { ADMIN_PREFETCH_ROUTES, warmAdminQueryCache } from '@/lib/admin-queries'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import CommandPalette from '@/components/layout/CommandPalette'
@@ -10,6 +12,7 @@ import CommandPalette from '@/components/layout/CommandPalette'
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { user, loading } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -31,6 +34,25 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     window.addEventListener('keydown', openCommandPalette)
     return () => window.removeEventListener('keydown', openCommandPalette)
   }, [isLogin, user])
+
+  useEffect(() => {
+    if (isLogin || !user) return
+
+    void warmAdminQueryCache(queryClient)
+
+    const warmRouteBundles = () => {
+      ADMIN_PREFETCH_ROUTES.forEach(route => router.prefetch(route))
+    }
+
+    const requestIdleCallback = window.requestIdleCallback?.bind(window)
+    if (requestIdleCallback) {
+      const idleId = requestIdleCallback(warmRouteBundles, { timeout: 1_500 })
+      return () => window.cancelIdleCallback(idleId)
+    }
+
+    const timerId = window.setTimeout(warmRouteBundles, 250)
+    return () => window.clearTimeout(timerId)
+  }, [isLogin, queryClient, router, user])
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
   const closeCommandPalette = useCallback(() => setCommandPaletteOpen(false), [])

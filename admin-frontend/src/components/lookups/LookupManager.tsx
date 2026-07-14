@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,14 +14,13 @@ import {
   Trash2,
 } from 'lucide-react'
 import api from '@/lib/api'
-import { fetchCollection } from '@/lib/api-collection'
+import { adminQueryKeys, lookupQueryOptions } from '@/lib/admin-queries'
 import Modal from '@/components/ui/Modal'
 import AdminToast, {
   createAdminToastFeedback,
   type AdminToastFeedback,
 } from '@/components/ui/AdminToast'
 import EntityTable, { type EntityColumn } from './EntityTable'
-import LookupForm from './LookupForm'
 import {
   isCategory,
   lookupName,
@@ -30,6 +30,15 @@ import {
   type LookupFormValues,
 } from './lookup-form'
 import type { LookupKind, LookupRecord } from './types'
+
+const loadLookupForm = () => import('./LookupForm')
+const LookupForm = dynamic(loadLookupForm, {
+  loading: () => (
+    <div className="flex min-h-[240px] items-center justify-center" role="status" aria-label="Loading editor">
+      <LoaderCircle aria-hidden="true" className="animate-spin text-brass" size={22} />
+    </div>
+  ),
+})
 
 interface LookupManagerProps {
   kind: LookupKind
@@ -50,7 +59,7 @@ const CONFIG = {
     title: 'Categories',
     singular: 'Category',
     endpoint: '/categories',
-    queryKey: ['categories'],
+    queryKey: adminQueryKeys.categories,
     nameLabel: 'Category',
     countLabel: 'Listings',
     searchPlaceholder: 'Search categories...',
@@ -60,7 +69,7 @@ const CONFIG = {
     title: 'Facilities',
     singular: 'Facility',
     endpoint: '/facilities',
-    queryKey: ['facilities'],
+    queryKey: adminQueryKeys.facilities,
     nameLabel: 'Facility',
     countLabel: 'Used In',
     searchPlaceholder: 'Search facilities...',
@@ -87,10 +96,7 @@ export default function LookupManager({ kind }: LookupManagerProps) {
   const [saveErrors, setSaveErrors] = useState<LookupApiErrors | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
-  const recordsQuery = useQuery({
-    queryKey: config.queryKey,
-    queryFn: () => fetchCollection<LookupRecord>(`${config.endpoint}/`),
-  })
+  const recordsQuery = useQuery(lookupQueryOptions(kind))
 
   const records = recordsQuery.data?.results ?? []
 
@@ -110,6 +116,7 @@ export default function LookupManager({ kind }: LookupManagerProps) {
   }
 
   const openCreate = () => {
+    void loadLookupForm()
     setFeedback(null)
     setSaveErrors(null)
     setEditing(null)
@@ -117,6 +124,7 @@ export default function LookupManager({ kind }: LookupManagerProps) {
   }
 
   const openEdit = (record: LookupRecord) => {
+    void loadLookupForm()
     setFeedback(null)
     setSaveErrors(null)
     setEditing(record)
@@ -268,6 +276,9 @@ export default function LookupManager({ kind }: LookupManagerProps) {
             type="button"
             aria-label={`Edit ${lookupName(record)}`}
             title={`Edit ${config.singular.toLocaleLowerCase()}`}
+            onMouseEnter={() => void loadLookupForm()}
+            onFocus={() => void loadLookupForm()}
+            onTouchStart={() => void loadLookupForm()}
             onClick={() => openEdit(record)}
             className="entity-row-action"
           >
@@ -300,7 +311,14 @@ export default function LookupManager({ kind }: LookupManagerProps) {
           <h1 className="page-title">{config.title}</h1>
           <div className="page-desc">{config.description}</div>
         </div>
-        <button type="button" className="btn btn-brass" onClick={openCreate}>
+        <button
+          type="button"
+          className="btn btn-brass"
+          onClick={openCreate}
+          onMouseEnter={() => void loadLookupForm()}
+          onFocus={() => void loadLookupForm()}
+          onTouchStart={() => void loadLookupForm()}
+        >
           <Plus aria-hidden="true" size={16} /> New {config.singular}
         </button>
       </div>

@@ -76,7 +76,7 @@ describe('LookupManager', () => {
     renderManager('categories')
 
     await user.click(await screen.findByRole('button', { name: 'New Category' }))
-    await user.type(screen.getByRole('textbox', { name: /Category Name/i }), 'Penthouse')
+    await user.type(await screen.findByRole('textbox', { name: /Category Name/i }), 'Penthouse')
     await user.upload(screen.getByLabelText('Category icon file'), icon)
     await user.click(screen.getByRole('button', { name: 'Save Category' }))
 
