@@ -2,7 +2,8 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { ImageIcon, Upload } from 'lucide-react'
+import { ImageIcon, Images, Upload } from 'lucide-react'
+import MediaPickerDialog, { type MediaAsset } from '@/components/media/MediaLibrary'
 import type { PropertyMediaField } from './types'
 import styles from './PropertyForm.module.css'
 
@@ -11,12 +12,24 @@ interface MediaSlotProps {
   label: string
   existing?: string | null
   file?: File | null
+  libraryPreview?: string | null
   error?: string
   featured?: boolean
   onChange: (field: PropertyMediaField, file: File) => void
+  onChooseExisting: (field: PropertyMediaField) => void
 }
 
-function MediaSlot({ field, label, existing, file, error, featured, onChange }: MediaSlotProps) {
+function MediaSlot({
+  field,
+  label,
+  existing,
+  file,
+  libraryPreview,
+  error,
+  featured,
+  onChange,
+  onChooseExisting,
+}: MediaSlotProps) {
   const previewRef = useRef<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(file ?? null)
@@ -24,6 +37,12 @@ function MediaSlot({ field, label, existing, file, error, featured, onChange }: 
   useEffect(() => () => {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current)
   }, [])
+
+  useEffect(() => {
+    if (!libraryPreview || !previewRef.current) return
+    URL.revokeObjectURL(previewRef.current)
+    previewRef.current = null
+  }, [libraryPreview])
 
   const selectFile = (selected: File) => {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current)
@@ -34,7 +53,7 @@ function MediaSlot({ field, label, existing, file, error, featured, onChange }: 
     onChange(field, selected)
   }
 
-  const source = preview ?? existing ?? null
+  const source = libraryPreview ?? preview ?? existing ?? null
   const displayedFile = file ?? selectedFile
 
   return (
@@ -51,20 +70,25 @@ function MediaSlot({ field, label, existing, file, error, featured, onChange }: 
         <span>{displayedFile ? displayedFile.name : existing ? 'Current image' : 'No image selected'}</span>
         {displayedFile ? <span>{(displayedFile.size / 1024 / 1024).toFixed(2)} MB</span> : null}
       </div>
-      <label className={styles.mediaButton}>
-        <Upload aria-hidden="true" size={15} />
-        {source ? 'Replace image' : 'Choose image'}
-        <input
-          type="file"
-          accept="image/*"
-          aria-label={`${label} file`}
-          onChange={event => {
-            const selected = event.target.files?.[0]
-            if (selected) selectFile(selected)
-            event.target.value = ''
-          }}
-        />
-      </label>
+      <div className={styles.mediaActions}>
+        <label className={styles.mediaButton}>
+          <Upload aria-hidden="true" size={15} />
+          {source ? 'Replace image' : 'Choose image'}
+          <input
+            type="file"
+            accept="image/*"
+            aria-label={`${label} file`}
+            onChange={event => {
+              const selected = event.target.files?.[0]
+              if (selected) selectFile(selected)
+              event.target.value = ''
+            }}
+          />
+        </label>
+        <button type="button" className={styles.mediaLibraryButton} onClick={() => onChooseExisting(field)}>
+          <Images aria-hidden="true" size={15} /> Choose existing
+        </button>
+      </div>
       {error ? <p className={styles.errorText}>{error}</p> : null}
     </section>
   )
@@ -87,30 +111,65 @@ const galleryFields: Array<{ field: PropertyMediaField; label: string }> = [
 ]
 
 export default function PropertyMediaFields({ existing, files, errors, onChange }: PropertyMediaFieldsProps) {
+  const [activeField, setActiveField] = useState<PropertyMediaField | null>(null)
+  const [libraryPreviews, setLibraryPreviews] = useState<Partial<Record<PropertyMediaField, string>>>({})
+  const fieldLabels = Object.fromEntries([
+    ['main_image', 'Main image'],
+    ...galleryFields.map(item => [item.field, item.label]),
+  ]) as Record<PropertyMediaField, string>
+
+  const selectExisting = (file: File, asset: MediaAsset) => {
+    if (!activeField) return
+    setLibraryPreviews(current => ({ ...current, [activeField]: asset.url }))
+    onChange(activeField, file)
+  }
+
+  const selectLocal = (field: PropertyMediaField, file: File) => {
+    setLibraryPreviews(current => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+    onChange(field, file)
+  }
+
   return (
-    <div className={styles.mediaSection}>
-      <MediaSlot
-        field="main_image"
-        label="Main image"
-        existing={existing.main_image}
-        file={files.main_image}
-        error={errors.main_image}
-        featured
-        onChange={onChange}
-      />
-      <div className={styles.galleryGrid}>
-        {galleryFields.map(item => (
-          <MediaSlot
-            key={item.field}
-            field={item.field}
-            label={item.label}
-            existing={existing[item.field]}
-            file={files[item.field]}
-            error={errors[item.field]}
-            onChange={onChange}
-          />
-        ))}
+    <>
+      <div className={styles.mediaSection}>
+        <MediaSlot
+          field="main_image"
+          label="Main image"
+          existing={existing.main_image}
+          file={files.main_image}
+          libraryPreview={libraryPreviews.main_image}
+          error={errors.main_image}
+          featured
+          onChange={selectLocal}
+          onChooseExisting={setActiveField}
+        />
+        <div className={styles.galleryGrid}>
+          {galleryFields.map(item => (
+            <MediaSlot
+              key={item.field}
+              field={item.field}
+              label={item.label}
+              existing={existing[item.field]}
+              file={files[item.field]}
+              libraryPreview={libraryPreviews[item.field]}
+              error={errors[item.field]}
+              onChange={selectLocal}
+              onChooseExisting={setActiveField}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+      <MediaPickerDialog
+        open={activeField !== null}
+        onClose={() => setActiveField(null)}
+        onSelect={selectExisting}
+        title={activeField ? `Choose ${fieldLabels[activeField]}` : 'Choose Existing Image'}
+      />
+    </>
   )
 }

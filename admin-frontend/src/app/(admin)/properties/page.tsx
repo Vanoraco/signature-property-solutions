@@ -5,7 +5,8 @@ import Image from 'next/image'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit, LoaderCircle, Plus, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
-import DataTable, { type Column } from '@/components/ui/DataTable'
+import { fetchCollection } from '@/lib/api-collection'
+import EntityTable, { type EntityColumn } from '@/components/lookups/EntityTable'
 import Modal from '@/components/ui/Modal'
 import AdminToast, {
   createAdminToastFeedback,
@@ -32,22 +33,42 @@ interface SavePropertyArgs {
   propertyId?: number
 }
 
+interface DeletePropertiesResult {
+  deleted: PropertyRecord[]
+  failed: PropertyRecord[]
+}
+
 function responseData(error: unknown) {
   if (!error || typeof error !== 'object') return undefined
   return (error as { response?: { data?: unknown } }).response?.data
+}
+
+function propertySearchText(property: PropertyRecord) {
+  return [
+    property.property_title,
+    property.property_id,
+    property.slug,
+    property.property_location,
+    property.category_name,
+    property.price,
+    property.property_status,
+    property.agent_name,
+    ...property.facilitie_names,
+  ].filter(Boolean).join('\n')
 }
 
 export default function PropertiesPage() {
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<PropertyRecord | null>(null)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteTargets, setDeleteTargets] = useState<PropertyRecord[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set())
   const [saveErrors, setSaveErrors] = useState<NormalizedApiErrors | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
-  const propertiesQuery = useQuery<ApiCollection<PropertyRecord>>({
+  const propertiesQuery = useQuery({
     queryKey: ['properties'],
-    queryFn: () => api.get('/properties/?page_size=100').then(response => response.data),
+    queryFn: () => fetchCollection<PropertyRecord>('/properties/'),
   })
 
   const categoriesQuery = useQuery<ApiCollection<CategoryOption>>({
@@ -113,22 +134,52 @@ export default function PropertiesPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.delete(`/properties/${id}/`),
-    onSuccess: async () => {
+    mutationFn: async (targets: PropertyRecord[]): Promise<DeletePropertiesResult> => {
+      const requests = await Promise.allSettled(
+        targets.map(property => api.delete(`/properties/${property.id}/`)),
+      )
+      return requests.reduce<DeletePropertiesResult>((result, request, index) => {
+        result[request.status === 'fulfilled' ? 'deleted' : 'failed'].push(targets[index])
+        return result
+      }, { deleted: [], failed: [] })
+    },
+    onSuccess: async result => {
       await queryClient.invalidateQueries({ queryKey: ['properties'] })
-      setDeleteId(null)
-      setFeedback(createAdminToastFeedback('Property deleted successfully.'))
+      setDeleteTargets([])
+      setSelectedIds(new Set(result.failed.map(property => property.id)))
+
+      if (result.failed.length === 0) {
+        setFeedback(createAdminToastFeedback(
+          result.deleted.length === 1
+            ? 'Property deleted successfully.'
+            : `${result.deleted.length} properties deleted successfully.`,
+        ))
+        return
+      }
+
+      setFeedback(createAdminToastFeedback(
+        result.deleted.length === 0
+          ? `No properties were deleted. ${result.failed.length} ${result.failed.length === 1 ? 'request' : 'requests'} failed.`
+          : `${result.deleted.length} ${result.deleted.length === 1 ? 'property was' : 'properties were'} deleted; ${result.failed.length} could not be deleted.`,
+        'danger',
+      ))
     },
     onError: () => {
-      setDeleteId(null)
+      setDeleteTargets([])
       setFeedback(createAdminToastFeedback('The property could not be deleted.', 'danger'))
     },
   })
 
-  const columns: Column<PropertyRecord>[] = [
+  const requestDelete = (targets: PropertyRecord[]) => {
+    setFeedback(null)
+    setDeleteTargets(targets)
+  }
+
+  const columns: EntityColumn<PropertyRecord>[] = [
     {
       key: 'property_title',
       label: 'Property',
+      className: 'min-w-[230px]',
       render: property => (
         <div className="flex items-center gap-2.5">
           {property.main_image ? (
@@ -142,9 +193,9 @@ export default function PropertiesPage() {
           ) : (
             <div className="w-[42px] h-[42px] rounded-lg bg-border-soft" />
           )}
-          <div>
-            <div className="font-semibold text-ink">{property.property_title}</div>
-            <div className="text-[11.5px] text-text-faint font-mono">{property.property_id || 'No ID'}</div>
+          <div className="min-w-0">
+            <div className="cell-primary">{property.property_title}</div>
+            <div className="cell-sub font-mono">{property.property_id || 'No ID'}</div>
           </div>
         </div>
       ),
@@ -153,13 +204,15 @@ export default function PropertiesPage() {
     {
       key: 'property_location',
       label: 'Location',
+      className: 'min-w-[170px]',
       render: property => <span className="text-text-soft">{property.property_location}</span>,
     },
     {
       key: 'category_name',
       label: 'Category',
+      className: 'min-w-[130px]',
       render: property => (
-        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full bg-border-soft text-text-soft">
+        <span className="chip chip-gray">
           {property.category_name}
         </span>
       ),
@@ -167,23 +220,26 @@ export default function PropertiesPage() {
     {
       key: 'price',
       label: 'Price',
-      render: property => <span className="font-semibold font-mono text-ink">{property.price}</span>,
+      className: 'min-w-[130px]',
+      render: property => <span className="cell-primary font-mono whitespace-nowrap">{property.price}</span>,
       sortVal: property => property.price_amount ?? 0,
     },
     {
       key: 'property_status',
       label: 'Status',
+      className: 'min-w-[110px]',
       render: property => (
-        <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full ${property.property_status === 'For Sale' ? 'bg-brass-tint text-brass-dark' : 'bg-success-tint text-success'}`}>
+        <span className={`chip ${property.property_status === 'For Sale' ? 'chip-brass' : 'chip-success'}`}>
           {property.property_status}
         </span>
       ),
     },
     {
       key: 'actions',
-      label: '',
+      label: 'Actions',
+      className: 'w-[118px]',
       render: property => (
-        <div className="flex items-center gap-1.5 justify-end">
+        <div className="entity-row-actions">
           <button
             type="button"
             aria-label={`Edit ${property.property_title}`}
@@ -192,7 +248,7 @@ export default function PropertiesPage() {
               event.stopPropagation()
               openEdit(property)
             }}
-            className="w-8 h-8 rounded-lg border border-border bg-card flex items-center justify-center text-text-soft hover:bg-canvas hover:text-text-main"
+            className="entity-row-action"
           >
             <Edit aria-hidden="true" size={14} />
           </button>
@@ -202,9 +258,9 @@ export default function PropertiesPage() {
             title="Delete property"
             onClick={event => {
               event.stopPropagation()
-              setDeleteId(property.id)
+              requestDelete([property])
             }}
-            className="w-8 h-8 rounded-lg border border-danger-tint bg-danger-tint text-danger flex items-center justify-center hover:bg-[#f6d9d6]"
+            className="entity-row-action entity-row-action-danger"
           >
             <Trash2 aria-hidden="true" size={14} />
           </button>
@@ -213,6 +269,7 @@ export default function PropertiesPage() {
     },
   ]
 
+  const properties = propertiesQuery.data?.results ?? []
   const lookupLoading = categoriesQuery.isLoading || agentsQuery.isLoading || facilitiesQuery.isLoading
   const lookupError = categoriesQuery.isError || agentsQuery.isError || facilitiesQuery.isError
 
@@ -233,7 +290,7 @@ export default function PropertiesPage() {
           <div className="page-desc">Manage every property record shown across the site.</div>
         </div>
         <button type="button" onClick={openCreate} className="btn btn-brass">
-          <Plus aria-hidden="true" size={16} /> Add Property
+          <Plus aria-hidden="true" size={16} /> New Property
         </button>
       </div>
 
@@ -256,12 +313,17 @@ export default function PropertiesPage() {
           <button type="button" className="btn btn-ghost mt-3" onClick={() => propertiesQuery.refetch()}>Retry</button>
         </div>
       ) : (
-        <DataTable
+        <EntityTable
           columns={columns}
-          data={normalizeResults(propertiesQuery.data)}
-          searchKey="property_title"
+          data={properties}
+          entityLabel="Properties"
           searchPlaceholder="Search properties..."
-          onRowClick={openEdit}
+          searchText={propertySearchText}
+          storageKey="signature-admin-properties-views"
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onRequestBulkDelete={requestDelete}
+          emptyMessage="No properties match"
         />
       )}
 
@@ -302,17 +364,17 @@ export default function PropertiesPage() {
       </Modal>
 
       <Modal
-        open={deleteId !== null}
-        onClose={() => setDeleteId(null)}
-        title="Delete Property"
+        open={deleteTargets.length > 0}
+        onClose={() => setDeleteTargets([])}
+        title={deleteTargets.length === 1 ? 'Delete Property?' : `Delete ${deleteTargets.length} Properties?`}
         size="default"
         footer={(
           <>
-            <button type="button" onClick={() => setDeleteId(null)} className="btn btn-ghost" disabled={deleteMutation.isPending}>Cancel</button>
+            <button type="button" onClick={() => setDeleteTargets([])} className="btn btn-ghost" disabled={deleteMutation.isPending}>Cancel</button>
             <button
               type="button"
               onClick={() => {
-                if (deleteId !== null) deleteMutation.mutate(deleteId)
+                if (deleteTargets.length > 0) deleteMutation.mutate(deleteTargets)
               }}
               className="btn btn-danger"
               disabled={deleteMutation.isPending}
@@ -326,7 +388,11 @@ export default function PropertiesPage() {
           </>
         )}
       >
-        <p className="text-text-soft text-[13.5px]">Are you sure you want to delete this property? This action cannot be undone.</p>
+        <p className="text-text-soft text-[13.5px]">
+          {deleteTargets.length === 1
+            ? `"${deleteTargets[0]?.property_title}" will be permanently removed. This cannot be undone.`
+            : `${deleteTargets.length} selected properties will be permanently removed. This cannot be undone.`}
+        </p>
       </Modal>
     </div>
   )

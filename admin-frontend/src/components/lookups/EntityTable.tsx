@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import {
   Bookmark,
   ChevronDown,
@@ -11,6 +11,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import Modal from '@/components/ui/Modal'
 import styles from './EntityTable.module.css'
 
 export interface EntityColumn<T> {
@@ -85,6 +86,9 @@ export default function EntityTable<T extends { id: number }>({
   const [pageSize, setPageSize] = useState(8)
   const [page, setPage] = useState(1)
   const [savedViews, setSavedViews] = useState<SavedView[]>([])
+  const [saveViewOpen, setSaveViewOpen] = useState(false)
+  const [viewName, setViewName] = useState('')
+  const saveViewFormId = useId()
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setSavedViews(readSavedViews(storageKey)), 0)
@@ -148,8 +152,18 @@ export default function EntityTable<T extends { id: number }>({
     }
   }
 
+  const closeSaveView = () => {
+    setSaveViewOpen(false)
+    setViewName('')
+  }
+
+  const openSaveView = () => {
+    setViewName(search.trim())
+    setSaveViewOpen(true)
+  }
+
   const saveCurrentView = () => {
-    const name = window.prompt('Name this view (e.g. "Unreviewed leads"):', search || '')?.trim()
+    const name = viewName.trim()
     if (!name) return
     const view: SavedView = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -160,6 +174,7 @@ export default function EntityTable<T extends { id: number }>({
       pageSize,
     }
     persistViews([...savedViews, view])
+    closeSaveView()
   }
 
   const applyView = (view: SavedView) => {
@@ -175,7 +190,8 @@ export default function EntityTable<T extends { id: number }>({
   const pageStart = Math.max(1, Math.min(safePage - 2, totalPages - 4))
 
   return (
-    <div className={`panel ${styles.root}`}>
+    <>
+      <div className={`panel ${styles.root}`}>
       <div className={styles.toolbar}>
         <label className={styles.searchBox}>
           <Search aria-hidden="true" size={15} />
@@ -198,7 +214,7 @@ export default function EntityTable<T extends { id: number }>({
           <button
             type="button"
             className={`btn btn-ghost btn-sm ${styles.saveViewButton}`}
-            onClick={saveCurrentView}
+            onClick={openSaveView}
             title="Save current search and sort"
           >
             <Bookmark aria-hidden="true" size={13} /> Save View
@@ -377,6 +393,42 @@ export default function EntityTable<T extends { id: number }>({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+
+      <Modal
+        open={saveViewOpen}
+        onClose={closeSaveView}
+        title="Save View"
+        footer={(
+          <>
+            <button type="button" className="btn btn-ghost" onClick={closeSaveView}>Cancel</button>
+            <button type="submit" form={saveViewFormId} className="btn btn-primary" disabled={!viewName.trim()}>
+              <Bookmark aria-hidden="true" size={14} /> Save View
+            </button>
+          </>
+        )}
+      >
+        <form
+          id={saveViewFormId}
+          className={styles.saveViewForm}
+          onSubmit={event => {
+            event.preventDefault()
+            saveCurrentView()
+          }}
+        >
+          <label className={styles.dialogLabel}>
+            View name
+            <input
+              type="text"
+              value={viewName}
+              onChange={event => setViewName(event.target.value)}
+              className={styles.dialogInput}
+              autoFocus
+              maxLength={80}
+            />
+          </label>
+        </form>
+      </Modal>
+    </>
   )
 }

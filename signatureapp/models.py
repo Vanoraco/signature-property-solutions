@@ -55,6 +55,7 @@ class egent(models.Model):
     class Meta:
         verbose_name =("egent")
         verbose_name_plural =("Agent")
+        ordering = ["-id"]
 
     def __str__(self):
         return self.name

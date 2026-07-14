@@ -358,7 +358,7 @@ export default function AgentsPage() {
       >
         {deleteBlocked ? (
           <div role="alert" className="rounded-lg border border-brass/25 bg-brass-tint p-4 text-[13.5px] text-text-soft">
-            <p className="font-semibold text-ink">{deleteTarget?.name} is assigned to {deleteTarget?.listing_count} active {deleteTarget?.listing_count === 1 ? 'listing' : 'listings'}.</p>
+            <p className="font-semibold text-text-main">{deleteTarget?.name} is assigned to {deleteTarget?.listing_count} active {deleteTarget?.listing_count === 1 ? 'listing' : 'listings'}.</p>
             <p className="mt-1.5">Reassign or delete those properties before removing this agent.</p>
           </div>
         ) : (
@@ -395,7 +395,7 @@ export default function AgentsPage() {
       >
         {bulkDeleteBlocked ? (
           <div role="alert" className="rounded-lg border border-brass/25 bg-brass-tint p-4 text-[13.5px] text-text-soft">
-            <p className="font-semibold text-ink">One or more selected agents still have active listings.</p>
+            <p className="font-semibold text-text-main">One or more selected agents still have active listings.</p>
             <p className="mt-1.5">Reassign or delete those properties before removing the selected agents.</p>
           </div>
         ) : (

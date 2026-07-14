@@ -48,3 +48,32 @@ it('operates sortable column buttons from the keyboard and exposes sort directio
   expect(nameHeader).toHaveAttribute('aria-sort', 'descending')
   expect(within(screen.getAllByRole('row')[1]).getByText('Zulu')).toBeInTheDocument()
 })
+
+it('uses a themed dialog to save a table view', async () => {
+  const user = userEvent.setup()
+  const storageKey = 'entity-table-save-view-test'
+  window.localStorage.removeItem(storageKey)
+
+  render(
+    <EntityTable
+      columns={columns}
+      data={[{ id: 1, name: 'Alpha' }]}
+      entityLabel="Records"
+      searchPlaceholder="Search records..."
+      searchText={row => row.name}
+      storageKey={storageKey}
+      selectedIds={new Set()}
+      onSelectionChange={vi.fn()}
+      onRequestBulkDelete={vi.fn()}
+    />,
+  )
+
+  await user.click(screen.getByRole('button', { name: 'Save View' }))
+  const dialog = screen.getByRole('dialog', { name: 'Save View' })
+  await user.type(within(dialog).getByRole('textbox', { name: 'View name' }), 'Night listings')
+  await user.click(within(dialog).getByRole('button', { name: 'Save View' }))
+
+  expect(screen.queryByRole('dialog', { name: 'Save View' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Night listings' })).toBeInTheDocument()
+  window.localStorage.removeItem(storageKey)
+})

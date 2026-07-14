@@ -25,6 +25,28 @@ function ModalHarness() {
   )
 }
 
+function NestedModalHarness() {
+  const [outerOpen, setOuterOpen] = useState(false)
+  const [innerOpen, setInnerOpen] = useState(false)
+
+  return (
+    <>
+      <button type="button" onClick={() => setOuterOpen(true)}>Open property editor</button>
+      <Modal open={outerOpen} onClose={() => setOuterOpen(false)} title="Property editor">
+        <button type="button" onClick={() => setInnerOpen(true)}>Choose existing image</button>
+        <Modal
+          open={innerOpen}
+          onClose={() => setInnerOpen(false)}
+          title="Media Library"
+          layer="nested"
+        >
+          <button type="button">Select image</button>
+        </Modal>
+      </Modal>
+    </>
+  )
+}
+
 it('moves focus into the dialog, traps Tab, and restores the opener on close', async () => {
   const user = userEvent.setup()
   render(<ModalHarness />)
@@ -44,4 +66,21 @@ it('moves focus into the dialog, traps Tab, and restores the opener on close', a
   await user.keyboard('{Escape}')
   expect(screen.queryByRole('dialog', { name: 'Edit record' })).not.toBeInTheDocument()
   expect(opener).toHaveFocus()
+})
+
+it('keeps the parent modal open when Escape closes a nested modal', async () => {
+  const user = userEvent.setup()
+  render(<NestedModalHarness />)
+
+  await user.click(screen.getByRole('button', { name: 'Open property editor' }))
+  await user.click(screen.getByRole('button', { name: 'Choose existing image' }))
+
+  expect(screen.getByRole('dialog', { name: 'Media Library' })).toBeInTheDocument()
+  expect(document.body).toHaveStyle({ overflow: 'hidden' })
+
+  await user.keyboard('{Escape}')
+
+  expect(screen.queryByRole('dialog', { name: 'Media Library' })).not.toBeInTheDocument()
+  expect(screen.getByRole('dialog', { name: 'Property editor' })).toBeInTheDocument()
+  expect(document.body).toHaveStyle({ overflow: 'hidden' })
 })

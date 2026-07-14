@@ -11,6 +11,7 @@ interface ModalProps {
   children: React.ReactNode
   footer?: React.ReactNode
   size?: 'default' | 'lg' | 'xl'
+  layer?: 'default' | 'nested'
 }
 
 const modalWidths = {
@@ -29,15 +30,32 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
-export default function Modal({ open, onClose, title, description, children, footer, size = 'default' }: ModalProps) {
+let bodyLockCount = 0
+let previousBodyOverflow = ''
+
+export default function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  size = 'default',
+  layer = 'default',
+}: ModalProps) {
   const titleId = useId()
   const descriptionId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) {
+      if (bodyLockCount === 0) previousBodyOverflow = document.body.style.overflow
+      bodyLockCount += 1
       document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
+      return () => {
+        bodyLockCount = Math.max(0, bodyLockCount - 1)
+        if (bodyLockCount === 0) document.body.style.overflow = previousBodyOverflow
+      }
     }
   }, [open])
 
@@ -60,6 +78,8 @@ export default function Modal({ open, onClose, title, description, children, foo
     const handler = (event: KeyboardEvent) => {
       const dialog = dialogRef.current
       if (!dialog) return
+      const openDialogs = Array.from(document.querySelectorAll<HTMLElement>('[data-admin-modal="true"]'))
+      if (openDialogs.at(-1) !== dialog) return
 
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -100,11 +120,16 @@ export default function Modal({ open, onClose, title, description, children, foo
   if (!open) return null
 
   return (
-    <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center ${styles.overlay}`} onClick={onClose}>
+    <div
+      className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center ${styles.overlay}`}
+      style={{ zIndex: layer === 'nested' ? 140 : 100 }}
+      onClick={onClose}
+    >
       <div
         ref={dialogRef}
+        data-admin-modal="true"
         tabIndex={-1}
-        className={`bg-card rounded-[14px] w-full ${modalWidths[size]} flex flex-col animate-in outline-none ${styles.dialog}`}
+        className={`rounded-[14px] w-full ${modalWidths[size]} flex flex-col animate-in outline-none ${styles.dialog}`}
         style={{ animation: 'modalIn 0.18s cubic-bezier(0.2,0.8,0.3,1)' }}
         onClick={e => e.stopPropagation()}
         role="dialog"
@@ -112,15 +137,15 @@ export default function Modal({ open, onClose, title, description, children, foo
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
       >
-        <div className={`border-b border-border-soft flex items-center justify-between ${styles.header}`}>
+        <div className={styles.header}>
           <div>
-            <h3 id={titleId} className="font-display text-lg font-semibold text-ink">{title}</h3>
-            {description && <p id={descriptionId} className="text-[12px] text-text-faint mt-0.5">{description}</p>}
+            <h3 id={titleId} className={styles.title}>{title}</h3>
+            {description && <p id={descriptionId} className={styles.description}>{description}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-text-soft hover:bg-canvas"
+            className={styles.closeButton}
             aria-label="Close modal"
             title="Close"
           >

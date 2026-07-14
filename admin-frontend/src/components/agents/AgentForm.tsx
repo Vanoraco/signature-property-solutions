@@ -3,8 +3,9 @@
 import Image from 'next/image'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, ImageIcon, Upload } from 'lucide-react'
+import { AlertCircle, ImageIcon, Images, Upload } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
+import MediaPickerDialog from '@/components/media/MediaLibrary'
 import {
   agentFormSchema,
   agentToFormValues,
@@ -56,6 +57,7 @@ export default function AgentForm({
 }: AgentFormProps) {
   const previewRef = useRef<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
   const {
     register,
     control,
@@ -69,6 +71,14 @@ export default function AgentForm({
     mode: 'onBlur',
   })
   const selectedImage = useWatch({ control, name: 'image' })
+
+  const selectImage = (file: File) => {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+    const nextPreview = URL.createObjectURL(file)
+    previewRef.current = nextPreview
+    setPreview(nextPreview)
+    setValue('image', file, { shouldDirty: true, shouldValidate: true })
+  }
 
   useEffect(() => () => {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current)
@@ -102,33 +112,39 @@ export default function AgentForm({
         </div>
         <div className={styles.photoDetails}>
           <strong>Agent photo</strong>
-          <label className={styles.fileButton}>
-            <Upload aria-hidden="true" size={15} />
-            {imageSource ? 'Replace photo' : 'Choose photo'}
-            <input
-              id="agent-image"
-              type="file"
-              accept="image/*"
-              aria-label="Agent photo file"
-              aria-invalid={Boolean(errors.image)}
-              aria-describedby={`agent-image-hint${errors.image ? ' agent-image-error' : ''}`}
-              onChange={event => {
-                const file = event.target.files?.[0]
-                if (file) {
-                  if (previewRef.current) URL.revokeObjectURL(previewRef.current)
-                  const nextPreview = URL.createObjectURL(file)
-                  previewRef.current = nextPreview
-                  setPreview(nextPreview)
-                  setValue('image', file, { shouldDirty: true, shouldValidate: true })
-                }
-                event.target.value = ''
-              }}
-            />
-          </label>
+          <div className={styles.photoActions}>
+            <label className={styles.fileButton}>
+              <Upload aria-hidden="true" size={15} />
+              {imageSource ? 'Replace photo' : 'Choose photo'}
+              <input
+                id="agent-image"
+                type="file"
+                accept="image/*"
+                aria-label="Agent photo file"
+                aria-invalid={Boolean(errors.image)}
+                aria-describedby={`agent-image-hint${errors.image ? ' agent-image-error' : ''}`}
+                onChange={event => {
+                  const file = event.target.files?.[0]
+                  if (file) selectImage(file)
+                  event.target.value = ''
+                }}
+              />
+            </label>
+            <button type="button" className={styles.libraryButton} onClick={() => setMediaPickerOpen(true)}>
+              <Images aria-hidden="true" size={15} /> Choose existing
+            </button>
+          </div>
           <span id="agent-image-hint" className={styles.fileName}>{selectedImage ? selectedImage.name : imageSource ? 'Current photo' : 'JPG, PNG, or WebP up to 10 MB'}</span>
           {errors.image?.message ? <p id="agent-image-error" className={styles.errorText}>{errors.image.message}</p> : null}
         </div>
       </div>
+
+      <MediaPickerDialog
+        open={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelect={file => selectImage(file)}
+        title="Choose Agent Photo"
+      />
 
       <div className={styles.grid}>
         <Field label="Full name" htmlFor="agent-name" error={errors.name?.message} required spanTwo>

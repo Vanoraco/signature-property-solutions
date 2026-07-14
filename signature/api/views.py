@@ -1,8 +1,18 @@
+import os
+import warnings
+from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
+from urllib.parse import quote
+
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery, Value
 from django.db.models.functions import Coalesce
+from django.http import FileResponse
+from PIL import Image, UnidentifiedImageError
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -18,6 +28,159 @@ from .serializers import (
     AboutSerializer, ServiceSerializer, ContactSerializer,
     TestimonialSerializer, PropertyRequestSerializer, PropertyRequestListSerializer,
 )
+
+
+SUPPORTED_MEDIA_IMAGE_FORMATS = {
+    '.bmp': 'BMP',
+    '.gif': 'GIF',
+    '.jpeg': 'JPEG',
+    '.jpg': 'JPEG',
+    '.png': 'PNG',
+    '.tif': 'TIFF',
+    '.tiff': 'TIFF',
+    '.webp': 'WEBP',
+}
+MAX_MEDIA_IMAGE_PIXELS = 40_000_000
+
+
+def _media_root():
+    return Path(settings.MEDIA_ROOT).resolve()
+
+
+def _is_within_media_root(path, media_root):
+    try:
+        path.relative_to(media_root)
+    except ValueError:
+        return False
+    return True
+
+
+def _verified_image_format(path, file_handle=None):
+    expected_format = SUPPORTED_MEDIA_IMAGE_FORMATS.get(path.suffix.lower())
+    if not expected_format:
+        return None
+
+    should_close = file_handle is None
+    handle = file_handle or path.open('rb')
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            with Image.open(handle) as image:
+                detected_format = image.format
+                width, height = image.size
+                if width <= 0 or height <= 0 or width * height > MAX_MEDIA_IMAGE_PIXELS:
+                    return None
+                image.verify()
+
+            handle.seek(0)
+            with Image.open(handle) as image:
+                image.load()
+        return detected_format if detected_format == expected_format else None
+    except (
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+        OSError,
+        SyntaxError,
+        UnidentifiedImageError,
+        ValueError,
+    ):
+        return None
+    finally:
+        if should_close:
+            handle.close()
+
+
+def _media_asset_url(relative_path):
+    media_url = settings.MEDIA_URL.rstrip('/') + '/'
+    return media_url + quote(relative_path, safe='/')
+
+
+def _media_asset_record(path, media_root):
+    try:
+        resolved_path = path.resolve(strict=True)
+        if not resolved_path.is_file() or not _is_within_media_root(resolved_path, media_root):
+            return None
+        image_format = _verified_image_format(resolved_path)
+        if not image_format:
+            return None
+        stat = resolved_path.stat()
+        relative_path = resolved_path.relative_to(media_root).as_posix()
+    except (OSError, RuntimeError, ValueError):
+        return None
+
+    return {
+        'path': relative_path,
+        'name': resolved_path.name,
+        'url': _media_asset_url(relative_path),
+        'size': stat.st_size,
+        'modified_at': datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        '_modified_timestamp': stat.st_mtime,
+    }
+
+
+def _resolve_media_asset_path(raw_path):
+    if not raw_path or not isinstance(raw_path, str) or '\x00' in raw_path:
+        raise ValidationError({'path': 'A media path is required.'})
+
+    normalized_path = raw_path.replace('\\', '/')
+    raw_parts = normalized_path.split('/')
+    relative_path = PurePosixPath(normalized_path)
+    if (
+        relative_path.is_absolute()
+        or any(part in {'', '.', '..'} or ':' in part for part in raw_parts)
+    ):
+        raise ValidationError({'path': 'Invalid media path.'})
+
+    media_root = _media_root()
+    try:
+        resolved_path = media_root.joinpath(*relative_path.parts).resolve(strict=True)
+    except FileNotFoundError as error:
+        raise NotFound('Media asset not found.') from error
+    except (OSError, RuntimeError, ValueError) as error:
+        raise ValidationError({'path': 'Invalid media path.'}) from error
+
+    if not resolved_path.is_file() or not _is_within_media_root(resolved_path, media_root):
+        raise ValidationError({'path': 'Invalid media path.'})
+    if resolved_path.suffix.lower() not in SUPPORTED_MEDIA_IMAGE_FORMATS:
+        raise ValidationError({'path': 'Only supported image files can be downloaded.'})
+    return resolved_path
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def media_asset_list(request):
+    media_root = _media_root()
+    assets = []
+    if media_root.is_dir():
+        for directory, _, filenames in os.walk(media_root, followlinks=False):
+            for filename in filenames:
+                record = _media_asset_record(Path(directory, filename), media_root)
+                if record:
+                    assets.append(record)
+
+    assets.sort(key=lambda asset: (-asset['_modified_timestamp'], asset['path'].lower()))
+    for asset in assets:
+        asset.pop('_modified_timestamp')
+    return Response({'count': len(assets), 'results': assets})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def media_asset_download(request):
+    resolved_path = _resolve_media_asset_path(request.query_params.get('path'))
+    file_handle = resolved_path.open('rb')
+    image_format = _verified_image_format(resolved_path, file_handle=file_handle)
+    if not image_format:
+        file_handle.close()
+        raise ValidationError({'path': 'The selected file is not a valid supported image.'})
+
+    file_handle.seek(0)
+    return FileResponse(
+        file_handle,
+        as_attachment=True,
+        filename=resolved_path.name,
+        content_type=Image.MIME.get(image_format, 'application/octet-stream'),
+    )
 
 
 def property_usage_count(relation):
@@ -40,6 +203,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             'username': self.user.username,
             'email': self.user.email,
             'is_staff': self.user.is_staff,
+            'is_superuser': self.user.is_superuser,
         }
         return data
 

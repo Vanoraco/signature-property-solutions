@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, ImageIcon, Upload } from 'lucide-react'
+import { AlertCircle, ImageIcon, Images, Upload } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
+import MediaPickerDialog from '@/components/media/MediaLibrary'
 import {
   lookupFormSchema,
   lookupToFormValues,
@@ -32,6 +33,7 @@ export default function LookupForm({ kind, initialRecord, apiErrors, onSubmit }:
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     initialRecord && 'icon' in initialRecord ? initialRecord.icon : null,
   )
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
   const isCategory = kind === 'categories'
   const singular = isCategory ? 'category' : 'facility'
   const defaultValues = useMemo(() => lookupToFormValues(initialRecord), [initialRecord])
@@ -48,6 +50,12 @@ export default function LookupForm({ kind, initialRecord, apiErrors, onSubmit }:
   })
 
   const icon = useWatch({ control, name: 'icon' })
+
+  const selectIcon = (file: File) => {
+    clearApiFieldError('icon')
+    setValue('icon', file, { shouldDirty: true, shouldValidate: true })
+    if (typeof URL.createObjectURL === 'function') setPreviewUrl(URL.createObjectURL(file))
+  }
 
   useEffect(() => () => {
     if (previewUrl?.startsWith('blob:')) URL.revokeObjectURL(previewUrl)
@@ -152,25 +160,27 @@ export default function LookupForm({ kind, initialRecord, apiErrors, onSubmit }:
               <div className={styles.uploadMeta}>
                 <strong>{previewUrl ? 'Icon selected' : 'Choose an icon'}</strong>
                 <span id="lookup-icon-file-hint" className={styles.fileName}>{icon instanceof File ? icon.name : 'PNG, JPG, or WebP up to 10 MB'}</span>
-                <label className={styles.uploadButton}>
-                  <Upload aria-hidden="true" size={13} /> {previewUrl ? 'Replace Icon' : 'Choose Icon'}
-                  <input
-                    id="lookup-icon"
-                    type="file"
-                    accept="image/*"
-                    aria-label="Category icon file"
-                    aria-invalid={Boolean(iconError)}
-                    aria-describedby={iconDescription}
-                    onChange={event => {
-                      clearApiFieldError('icon')
-                      const file = event.target.files?.[0] ?? null
-                      setValue('icon', file, { shouldValidate: true })
-                      if (file && typeof URL.createObjectURL === 'function') {
-                        setPreviewUrl(URL.createObjectURL(file))
-                      }
-                    }}
-                  />
-                </label>
+                <div className={styles.uploadActions}>
+                  <label className={styles.uploadButton}>
+                    <Upload aria-hidden="true" size={13} /> {previewUrl ? 'Replace Icon' : 'Choose Icon'}
+                    <input
+                      id="lookup-icon"
+                      type="file"
+                      accept="image/*"
+                      aria-label="Category icon file"
+                      aria-invalid={Boolean(iconError)}
+                      aria-describedby={iconDescription}
+                      onChange={event => {
+                        const file = event.target.files?.[0]
+                        if (file) selectIcon(file)
+                        event.target.value = ''
+                      }}
+                    />
+                  </label>
+                  <button type="button" className={styles.libraryButton} onClick={() => setMediaPickerOpen(true)}>
+                    <Images aria-hidden="true" size={13} /> Choose existing
+                  </button>
+                </div>
               </div>
             </div>
             {iconRequired && !(icon instanceof File) ? <span id="lookup-icon-requirement" className={styles.hint}>An icon is required for a new category.</span> : null}
@@ -178,6 +188,14 @@ export default function LookupForm({ kind, initialRecord, apiErrors, onSubmit }:
           </div>
         ) : null}
       </div>
+      {isCategory ? (
+        <MediaPickerDialog
+          open={mediaPickerOpen}
+          onClose={() => setMediaPickerOpen(false)}
+          onSelect={file => selectIcon(file)}
+          title="Choose Category Icon"
+        />
+      ) : null}
       <p className="sr-only">Save this {singular} using the modal footer button.</p>
     </form>
   )

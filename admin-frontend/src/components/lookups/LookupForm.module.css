@@ -2,7 +2,7 @@
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .spanTwo { grid-column: 1 / -1; }
 .field { display: grid; align-content: start; gap: 6px; min-width: 0; }
-.label { color: var(--text-main); font-size: 11.5px; font-weight: 750; }
+.label { color: var(--text); font-size: 11.5px; font-weight: 750; }
 .required { color: var(--danger); }
 
 .input {
@@ -11,7 +11,7 @@
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 7px;
-  color: var(--text-main);
+  color: var(--text);
   background: var(--card);
   font: inherit;
   font-size: 13px;
@@ -65,7 +65,7 @@
 
 .preview img { width: 100%; height: 100%; object-fit: cover; }
 .uploadMeta { display: grid; align-content: center; justify-items: start; gap: 6px; min-width: 0; }
-.uploadMeta strong { color: var(--ink); font-size: 12.5px; }
+.uploadMeta strong { color: var(--text); font-size: 12.5px; }
 .fileName { max-width: 100%; overflow: hidden; color: var(--text-faint); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
 
 .uploadButton {
@@ -85,9 +85,29 @@
   font-weight: 700;
 }
 
-.uploadButton:hover { color: var(--ink); border-color: var(--brass); }
+.uploadButton:hover { color: var(--text); border-color: var(--brass); }
 .uploadButton:focus-within { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-tint); }
 .uploadButton input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.uploadActions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+
+.libraryButton {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: 7px;
+  color: var(--text-soft);
+  background: var(--admin-surface-subtle);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.libraryButton:hover { color: var(--text); border-color: var(--brass); }
+.libraryButton:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
 @media (max-width: 700px) {
   .grid { grid-template-columns: 1fr; }
