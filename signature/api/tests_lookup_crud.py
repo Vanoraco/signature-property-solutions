@@ -28,6 +28,7 @@ class LookupCrudApiTests(APITestCase):
         self.user = get_user_model().objects.create_user(
             username='lookup-crud-test',
             password='test-pass',
+            is_staff=True,
         )
         self.client.force_authenticate(self.user)
 
@@ -68,6 +69,26 @@ class LookupCrudApiTests(APITestCase):
         self.assertEqual(facility_response.data['property_count'], 1)
         self.assertEqual(agent_response.status_code, status.HTTP_200_OK)
         self.assertEqual(agent_response.data['listing_count'], 1)
+
+    def test_image_urls_use_forwarded_public_host(self):
+        category = catagory.objects.create(
+            catagorys='Forwarded Host Category',
+            slug='forwarded-host-category',
+            icon=image_file('forwarded-host.png'),
+        )
+
+        with self.settings(ALLOWED_HOSTS=['admin.signaturepropertysolutions.com']):
+            response = self.client.get(
+                f'/api/categories/{category.id}/',
+                HTTP_X_FORWARDED_HOST='admin.signaturepropertysolutions.com',
+                HTTP_X_FORWARDED_PROTO='https',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data['icon'],
+            'https://admin.signaturepropertysolutions.com/images/catagory/forwarded-host.png',
+        )
 
     def test_lookup_lists_use_a_fixed_number_of_count_queries(self):
         for index in range(3):

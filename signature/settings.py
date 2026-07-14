@@ -13,11 +13,19 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
+
+
+def env_list(name, default=()):
+    value = os.getenv(name)
+    if value is None:
+        return list(default)
+    return [item.strip() for item in value.split(',') if item.strip()]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -26,12 +34,25 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False').strip().lower() in {'1', 'true', 'yes', 'on'}
 
-ALLOWED_HOSTS = ['signaturepropertysolutions.com','www.signaturepropertysolutions.com','187.124.38.135','localhost','127.0.0.1']
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'unsafe-development-key-change-me'
+    else:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is false.')
 
-SITE_NAME = 'Signature Property Solutions'
-SITE_URL = 'https://signaturepropertysolutions.com'
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', [
+    'signaturepropertysolutions.com',
+    'www.signaturepropertysolutions.com',
+    'admin.signaturepropertysolutions.com',
+    '187.124.38.135',
+    'localhost',
+    '127.0.0.1',
+])
+
+SITE_NAME = os.getenv('SITE_NAME', 'Signature Property Solutions')
+SITE_URL = os.getenv('SITE_URL', 'https://signaturepropertysolutions.com').rstrip('/')
 
 ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
 
@@ -84,13 +105,20 @@ TEMPLATES = [
 ]
 
 SECURE_SSL_REDIRECT = DEBUG is False
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 SECURE_HSTS_SECONDS = 31536000 if DEBUG is False else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = DEBUG is False
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 CSRF_COOKIE_SECURE = DEBUG is False
 SESSION_COOKIE_SECURE = DEBUG is False
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', [
+    SITE_URL,
+    'https://admin.signaturepropertysolutions.com',
+])
 
 WSGI_APPLICATION = 'signature.wsgi.application'
 
@@ -101,7 +129,7 @@ WSGI_APPLICATION = 'signature.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': Path(os.getenv('DATABASE_PATH', BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -141,13 +169,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'statics'
+STATIC_ROOT = Path(os.getenv('STATIC_ROOT', BASE_DIR / 'statics'))
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
 
 MEDIA_URL = '/images/'
-MEDIA_ROOT = BASE_DIR / 'images'
+MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'images'))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -234,7 +262,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAdminUser',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
@@ -242,6 +270,9 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ),
+    'DEFAULT_THROTTLE_RATES': {
+        'admin_login': '10/minute',
+    },
 }
 
 from datetime import timedelta
@@ -255,13 +286,13 @@ SIMPLE_JWT = {
 
 # ---------- CORS ----------
 
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS', [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
     'https://signaturepropertysolutions.com',
     'https://www.signaturepropertysolutions.com',
-]
+])
 
 CORS_ALLOW_CREDENTIALS = True

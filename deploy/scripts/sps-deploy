@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -r "$SCRIPT_DIR/common.sh" ]]; then
+  # shellcheck source=common.sh
+  source "$SCRIPT_DIR/common.sh"
+else
+  # shellcheck source=/usr/local/lib/sps-deploy/common.sh
+  source /usr/local/lib/sps-deploy/common.sh
+fi
+
+branch="main"
+allow_empty_state=false
+skip_public_verify=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --branch)
+      [[ $# -ge 2 ]] || die "--branch requires a value."
+      branch="$2"
+      shift
+      ;;
+    --allow-empty-state)
+      allow_empty_state=true
+      ;;
+    --skip-public-verify)
+      skip_public_verify=true
+      ;;
+    *)
+      die "Unknown option: $1"
+      ;;
+  esac
+  shift
+done
+
+require_root
+require_user
+require_commands git runuser flock sqlite3 tar sha256sum systemctl curl uv install
+[[ -d "$APP_DIR/.git" ]] || die "Application checkout not found: $APP_DIR"
+[[ -d "$APP_DIR/admin-frontend" ]] || die "Admin frontend not found: $APP_DIR/admin-frontend"
+UV_BIN="$(command -v uv)"
+NPM_BIN="/usr/bin/npm"
+[[ -x "$NPM_BIN" ]] || die "npm must be installed at $NPM_BIN to match sps-admin.service."
+run_as_app test -x "$UV_BIN" || die "The '$APP_USER' user cannot execute uv at $UV_BIN"
+run_as_app test -x "$NPM_BIN" || die "The '$APP_USER' user cannot execute npm at $NPM_BIN"
+
+install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" "$STATE_DIR" "$STATE_DIR/media" "$STATE_DIR/deployments"
+exec 9>"$DEPLOY_LOCK_FILE"
+flock -n 9 || die "Another SPS deployment or rollback is already running."
+
+load_env_file "$DJANGO_ENV_FILE"
+DATABASE_PATH="${DATABASE_PATH:-${STATE_DIR}/db.sqlite3}"
+MEDIA_ROOT="${MEDIA_ROOT:-${STATE_DIR}/media}"
+STATIC_ROOT="${STATIC_ROOT:-${APP_DIR}/statics}"
+
+[[ "${DEBUG:-False}" =~ ^([Ff]alse|0|no|off)$ ]] || die "DEBUG must be False in production."
+[[ -n "${SECRET_KEY:-}" ]] || die "SECRET_KEY is missing from $DJANGO_ENV_FILE"
+[[ "$SECRET_KEY" != replace-* && "$SECRET_KEY" != REPLACE_* ]] || die "Replace the placeholder SECRET_KEY before deploying."
+[[ "$DATABASE_PATH" == "$STATE_DIR/db.sqlite3" ]] || die "DATABASE_PATH must be $STATE_DIR/db.sqlite3"
+[[ "$MEDIA_ROOT" == "$STATE_DIR/media" ]] || die "MEDIA_ROOT must be $STATE_DIR/media"
+[[ "$STATIC_ROOT" == "$APP_DIR/statics" ]] || die "STATIC_ROOT must be $APP_DIR/statics"
+[[ "${DJANGO_SETTINGS_MODULE:-}" == "sps_settings" ]] || die "DJANGO_SETTINGS_MODULE must be sps_settings"
+[[ "${PYTHONPATH:-}" == *"$CONFIG_DIR"* ]] || die "PYTHONPATH must include $CONFIG_DIR"
+[[ -r "$CONFIG_DIR/sps_settings.py" && -r "$CONFIG_DIR/sps_auth.py" ]] \
+  || die "Deployment runtime modules are missing from $CONFIG_DIR"
+
+if [[ -f "$APP_DIR/db.sqlite3" && ! -f "$DATABASE_PATH" ]]; then
+  die "Legacy database detected at $APP_DIR/db.sqlite3. Externalize it to $DATABASE_PATH before pulling."
+fi
+if [[ ! -f "$DATABASE_PATH" && "$allow_empty_state" == false ]]; then
+  die "Database not found at $DATABASE_PATH. Use --allow-empty-state only for a genuinely new installation."
+fi
+
+ensure_clean_checkout
+previous_commit="$(run_as_app git -C "$APP_DIR" rev-parse HEAD)"
+current_branch="$(run_as_app git -C "$APP_DIR" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+if [[ -n "$current_branch" && "$current_branch" != "$branch" ]]; then
+  die "Production checkout is on '$current_branch'; expected '$branch' or a detached rollback commit."
+fi
+
+backup_command=(/usr/local/sbin/sps-backup)
+if [[ ! -x "${backup_command[0]}" ]]; then
+  backup_command=(bash "$SCRIPT_DIR/sps-backup")
+fi
+backup_path="$("${backup_command[@]}")"
+[[ -d "$backup_path" ]] || die "Backup command did not produce a valid backup directory."
+
+admin_stopped=false
+deployment_succeeded=false
+on_exit() {
+  local status=$?
+  if [[ "$deployment_succeeded" == false ]]; then
+    log "Deployment failed. The pre-deploy backup is: $backup_path"
+    log "After correcting the cause, roll back with: sudo sps-rollback --backup $backup_path"
+    if [[ "$admin_stopped" == true ]]; then
+      systemctl start sps-admin.service >/dev/null 2>&1 || true
+    fi
+  fi
+  exit "$status"
+}
+trap on_exit EXIT
+
+log "Fetching origin/$branch. The working tree is still on $previous_commit."
+run_as_app git -C "$APP_DIR" fetch --prune origin "$branch"
+remote_ref="refs/remotes/origin/$branch"
+run_as_app git -C "$APP_DIR" rev-parse --verify "$remote_ref" >/dev/null
+run_as_app git -C "$APP_DIR" merge-base --is-ancestor "$previous_commit" "$remote_ref" \
+  || die "The deployed commit is not an ancestor of origin/$branch; refusing a non-fast-forward deployment."
+
+if [[ -z "$current_branch" ]]; then
+  local_branch_commit="$(run_as_app git -C "$APP_DIR" rev-parse "refs/heads/$branch")"
+  run_as_app git -C "$APP_DIR" merge-base --is-ancestor "$local_branch_commit" "$remote_ref" \
+    || die "Local $branch contains commits that are not on origin/$branch."
+  run_as_app git -C "$APP_DIR" switch "$branch"
+fi
+
+log "Updating $branch with a fast-forward-only pull."
+run_as_app git -C "$APP_DIR" pull --ff-only origin "$branch"
+deployed_commit="$(run_as_app git -C "$APP_DIR" rev-parse HEAD)"
+
+install -m 0644 "$APP_DIR/deploy/runtime/sps_settings.py" "$CONFIG_DIR/sps_settings.py"
+install -m 0644 "$APP_DIR/deploy/runtime/sps_auth.py" "$CONFIG_DIR/sps_auth.py"
+
+log "Synchronizing locked Python dependencies."
+(
+  cd "$APP_DIR"
+  run_as_app "$UV_BIN" sync --frozen --no-dev
+  run_as_app "$APP_DIR/.venv/bin/python" manage.py check --deploy
+  run_as_app "$APP_DIR/.venv/bin/python" manage.py migrate --noinput
+  run_as_app "$APP_DIR/.venv/bin/python" manage.py collectstatic --noinput
+)
+
+load_env_file "$ADMIN_ENV_FILE"
+log "Stopping the admin briefly while its immutable production build is replaced."
+systemctl stop sps-admin.service
+admin_stopped=true
+
+(
+  cd "$APP_DIR/admin-frontend"
+  run_as_app "$NPM_BIN" ci --include=dev
+  run_as_app "$NPM_BIN" run build
+)
+install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" "$APP_DIR/admin-frontend/.next/cache"
+
+install -m 0644 "$APP_DIR/deploy/systemd/sps-django.service" /etc/systemd/system/sps-django.service
+install -m 0644 "$APP_DIR/deploy/systemd/sps-admin.service" /etc/systemd/system/sps-admin.service
+systemctl daemon-reload
+systemctl restart sps-django.service sps-admin.service
+admin_stopped=false
+
+verify_command=(/usr/local/sbin/sps-verify)
+if [[ ! -x "${verify_command[0]}" ]]; then
+  verify_command=(bash "$SCRIPT_DIR/sps-verify")
+fi
+if [[ "$skip_public_verify" == true ]]; then
+  "${verify_command[@]}" --local-only
+else
+  "${verify_command[@]}"
+fi
+
+metadata_tmp="${STATE_DIR}/deployments/.last-success.$$"
+cat >"$metadata_tmp" <<EOF
+deployed_at=$(date --utc '+%Y%m%dT%H%M%SZ')
+previous_commit=${previous_commit}
+deployed_commit=${deployed_commit}
+backup_path=${backup_path}
+EOF
+chown "$APP_USER:$APP_GROUP" "$metadata_tmp"
+chmod 0640 "$metadata_tmp"
+mv -- "$metadata_tmp" "$STATE_DIR/deployments/last-success.env"
+
+# Keep the installed operational commands current after a verified rollout.
+if [[ -d "$APP_DIR/deploy/scripts" ]]; then
+  install -d -m 0755 /usr/local/lib/sps-deploy
+  install -m 0644 "$APP_DIR/deploy/scripts/common.sh" /usr/local/lib/sps-deploy/common.sh
+  install -m 0755 "$APP_DIR/deploy/scripts/sps-backup" /usr/local/sbin/sps-backup
+  install -m 0755 "$APP_DIR/deploy/scripts/sps-deploy" /usr/local/sbin/sps-deploy
+  install -m 0755 "$APP_DIR/deploy/scripts/sps-verify" /usr/local/sbin/sps-verify
+  install -m 0755 "$APP_DIR/deploy/scripts/sps-rollback" /usr/local/sbin/sps-rollback
+fi
+
+deployment_succeeded=true
+trap - EXIT
+log "Deployment completed: ${previous_commit:0:12} -> ${deployed_commit:0:12}"
+log "Backup retained at: $backup_path"

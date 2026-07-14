@@ -5,6 +5,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
 from django.conf import settings
+from django.db import connection
 from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery, Value
 from django.db.models.functions import Coalesce
@@ -12,9 +13,10 @@ from django.http import FileResponse
 from PIL import Image, UnidentifiedImageError
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -147,7 +149,7 @@ def _resolve_media_asset_path(raw_path):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def media_asset_list(request):
     media_root = _media_root()
     assets = []
@@ -165,7 +167,7 @@ def media_asset_list(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def media_asset_download(request):
     resolved_path = _resolve_media_asset_path(request.query_params.get('path'))
     file_handle = resolved_path.open('rb')
@@ -198,6 +200,8 @@ def property_usage_count(relation):
 class LoginSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
+        if not self.user.is_staff:
+            raise AuthenticationFailed('Administrator access is required.')
         data['user'] = {
             'id': self.user.id,
             'username': self.user.username,
@@ -211,10 +215,24 @@ class LoginSerializer(TokenObtainPairSerializer):
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'admin_login'
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
+def health_ready(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+    except Exception:
+        return Response({'status': 'unavailable'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response({'status': 'ok'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
 def user_me(request):
     user = request.user
     return Response({

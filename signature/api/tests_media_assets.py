@@ -25,6 +25,7 @@ class MediaAssetApiTests(APITestCase):
         self.user = get_user_model().objects.create_user(
             username='media-assets-test',
             password='test-pass',
+            is_staff=True,
         )
 
     def create_image(self, relative_path, image_format='PNG', modified_at=None):

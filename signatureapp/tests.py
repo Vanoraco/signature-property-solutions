@@ -327,6 +327,7 @@ class PropertyApiMutationTests(APITestCase):
         self.user = get_user_model().objects.create_user(
             username='property-editor-test',
             password='test-pass',
+            is_staff=True,
         )
         self.client.force_authenticate(self.user)
         self.category = catagory.objects.create(

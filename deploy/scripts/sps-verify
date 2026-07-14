@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -r "$SCRIPT_DIR/common.sh" ]]; then
+  # shellcheck source=common.sh
+  source "$SCRIPT_DIR/common.sh"
+else
+  # shellcheck source=/usr/local/lib/sps-deploy/common.sh
+  source /usr/local/lib/sps-deploy/common.sh
+fi
+
+local_only=false
+legacy_backend=false
+attempts="${VERIFY_ATTEMPTS:-12}"
+delay_seconds="${VERIFY_DELAY_SECONDS:-5}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --local-only)
+      local_only=true
+      ;;
+    --legacy-backend)
+      legacy_backend=true
+      ;;
+    --attempts)
+      [[ $# -ge 2 ]] || die "--attempts requires a value."
+      attempts="$2"
+      shift
+      ;;
+    *)
+      die "Unknown option: $1"
+      ;;
+  esac
+  shift
+done
+
+[[ "$attempts" =~ ^[1-9][0-9]*$ ]] || die "VERIFY_ATTEMPTS must be a positive integer."
+[[ "$delay_seconds" =~ ^[0-9]+$ ]] || die "VERIFY_DELAY_SECONDS must be a non-negative integer."
+require_commands curl grep systemctl
+
+systemctl is-active --quiet sps-django.service || die "sps-django.service is not active."
+systemctl is-active --quiet sps-admin.service || die "sps-admin.service is not active."
+
+probe() {
+  local label="$1"
+  local url="$2"
+  local expected_pattern="$3"
+  shift 3
+
+  local attempt body
+  for ((attempt = 1; attempt <= attempts; attempt += 1)); do
+    if body="$(curl --fail --silent --show-error --location --max-time 15 "$@" "$url" 2>/dev/null)"; then
+      if [[ -z "$expected_pattern" ]] || grep -Eq "$expected_pattern" <<<"$body"; then
+        log "PASS: $label"
+        return 0
+      fi
+    fi
+    if (( attempt < attempts )); then
+      sleep "$delay_seconds"
+    fi
+  done
+
+  die "Health check failed after ${attempts} attempts: $label ($url)"
+}
+
+status_pattern='"status"[[:space:]]*:[[:space:]]*"ok"'
+proxy_headers=(-H 'X-Forwarded-Proto: https')
+
+if [[ "$legacy_backend" == true ]]; then
+  probe \
+    "Legacy Django homepage" \
+    "http://127.0.0.1:8000/" \
+    '' \
+    "${proxy_headers[@]}" -H 'Host: signaturepropertysolutions.com'
+
+  probe \
+    "Preserved Next admin login page" \
+    "http://127.0.0.1:3000/login" \
+    '' \
+    -H 'Host: admin.signaturepropertysolutions.com'
+
+  if [[ "$local_only" == false ]]; then
+    probe \
+      "Public legacy Django homepage" \
+      "${PUBLIC_SITE_URL:-https://signaturepropertysolutions.com}/" \
+      ''
+
+    probe \
+      "Public preserved admin login page" \
+      "${PUBLIC_ADMIN_URL:-https://admin.signaturepropertysolutions.com}/login" \
+      ''
+  fi
+else
+  probe \
+    "Django readiness and database" \
+    "http://127.0.0.1:8000/api/health/ready/" \
+    "$status_pattern" \
+    "${proxy_headers[@]}" -H 'Host: signaturepropertysolutions.com'
+
+  probe \
+    "Next admin API proxy" \
+    "http://127.0.0.1:3000/api/health/ready" \
+    "$status_pattern" \
+    "${proxy_headers[@]}" -H 'Host: admin.signaturepropertysolutions.com'
+
+  probe \
+    "Next admin login page" \
+    "http://127.0.0.1:3000/login" \
+    '' \
+    -H 'Host: admin.signaturepropertysolutions.com'
+
+  if [[ "$local_only" == false ]]; then
+    probe \
+      "Public Django readiness" \
+      "${PUBLIC_SITE_URL:-https://signaturepropertysolutions.com}/api/health/ready/" \
+      "$status_pattern"
+
+    probe \
+      "Public admin API proxy" \
+      "${PUBLIC_ADMIN_URL:-https://admin.signaturepropertysolutions.com}/api/health/ready" \
+      "$status_pattern"
+
+    probe \
+      "Public admin login page" \
+      "${PUBLIC_ADMIN_URL:-https://admin.signaturepropertysolutions.com}/login" \
+      ''
+  fi
+fi
+
+log "All requested deployment checks passed."

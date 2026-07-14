@@ -1,0 +1,38 @@
+[Unit]
+Description=Signature Property Solutions Django application
+After=network.target
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=sps
+Group=www-data
+WorkingDirectory=/var/www/signature-property-solutions
+EnvironmentFile=/etc/sps/django.env
+Environment=DJANGO_SETTINGS_MODULE=sps_settings
+Environment=PYTHONPATH=/etc/sps
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PATH=/var/www/signature-property-solutions/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStartPre=/usr/bin/test -x /var/www/signature-property-solutions/.venv/bin/gunicorn
+ExecStart=/var/www/signature-property-solutions/.venv/bin/gunicorn signature.wsgi:application --bind 127.0.0.1:8000 --workers 1 --timeout 60 --graceful-timeout 30 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile -
+ExecReload=/bin/kill -s HUP $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=35
+Restart=on-failure
+RestartSec=5
+UMask=0027
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/sps /var/www/signature-property-solutions/statics
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

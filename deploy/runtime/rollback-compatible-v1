@@ -1,0 +1,2 @@
+This commit supports environment-driven state, the database readiness endpoint,
+locked Python dependencies with Gunicorn, and a reproducible Next production build.

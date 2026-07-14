@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
-    LoginView, user_me, media_asset_list, media_asset_download,
+    LoginView, user_me, health_ready, media_asset_list, media_asset_download,
     HomeViewSet, CategoryViewSet, FacilityViewSet, AgentViewSet,
     PropertyViewSet, AboutViewSet, ServiceViewSet, ContactViewSet,
     TestimonialViewSet, PropertyRequestViewSet,
@@ -22,6 +22,7 @@ router.register(r'testimonials', TestimonialViewSet)
 router.register(r'requests', PropertyRequestViewSet)
 
 urlpatterns = [
+    path('health/ready/', health_ready, name='health_ready'),
     path('media-assets/', media_asset_list, name='media_asset_list'),
     path('media-assets/download/', media_asset_download, name='media_asset_download'),
     path('', include(router.urls)),

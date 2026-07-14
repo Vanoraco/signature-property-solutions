@@ -1,0 +1,33 @@
+[Unit]
+Description=Signature Property Solutions Next.js admin
+After=network.target sps-django.service
+Wants=sps-django.service
+
+[Service]
+Type=simple
+User=sps
+Group=www-data
+WorkingDirectory=/var/www/signature-property-solutions/admin-frontend
+EnvironmentFile=/etc/sps/admin.env
+Environment=NODE_ENV=production
+Environment=HOME=/var/lib/sps
+ExecStartPre=/usr/bin/test -d /var/www/signature-property-solutions/admin-frontend/.next
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3000
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5
+UMask=0027
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/sps /var/www/signature-property-solutions/admin-frontend/.next/cache
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

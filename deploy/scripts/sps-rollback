@@ -1,0 +1,233 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -r "$SCRIPT_DIR/common.sh" ]]; then
+  # shellcheck source=common.sh
+  source "$SCRIPT_DIR/common.sh"
+else
+  # shellcheck source=/usr/local/lib/sps-deploy/common.sh
+  source /usr/local/lib/sps-deploy/common.sh
+fi
+
+backup_path=""
+restore_state=false
+skip_public_verify=false
+allow_compatibility_runtime=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --backup)
+      [[ $# -ge 2 ]] || die "--backup requires a directory."
+      backup_path="$2"
+      shift
+      ;;
+    --restore-state)
+      restore_state=true
+      ;;
+    --skip-public-verify)
+      skip_public_verify=true
+      ;;
+    --allow-compatibility-runtime)
+      allow_compatibility_runtime=true
+      ;;
+    *)
+      die "Unknown option: $1"
+      ;;
+  esac
+  shift
+done
+
+require_root
+require_user
+require_commands git runuser flock sqlite3 tar sha256sum systemctl curl uv install python3 readlink
+load_env_file "$DJANGO_ENV_FILE"
+DATABASE_PATH="${DATABASE_PATH:-${STATE_DIR}/db.sqlite3}"
+MEDIA_ROOT="${MEDIA_ROOT:-${STATE_DIR}/media}"
+STATIC_ROOT="${STATIC_ROOT:-${APP_DIR}/statics}"
+UV_BIN="$(command -v uv)"
+NPM_BIN="/usr/bin/npm"
+[[ -x "$NPM_BIN" ]] || die "npm must be installed at $NPM_BIN to match sps-admin.service."
+run_as_app test -x "$UV_BIN" || die "The '$APP_USER' user cannot execute uv at $UV_BIN"
+run_as_app test -x "$NPM_BIN" || die "The '$APP_USER' user cannot execute npm at $NPM_BIN"
+[[ "$DATABASE_PATH" == "$STATE_DIR/db.sqlite3" ]] || die "DATABASE_PATH must be $STATE_DIR/db.sqlite3"
+[[ "$MEDIA_ROOT" == "$STATE_DIR/media" ]] || die "MEDIA_ROOT must be $STATE_DIR/media"
+[[ "$STATIC_ROOT" == "$APP_DIR/statics" ]] || die "STATIC_ROOT must be $APP_DIR/statics"
+[[ "${DJANGO_SETTINGS_MODULE:-}" == "sps_settings" ]] || die "DJANGO_SETTINGS_MODULE must be sps_settings"
+[[ -r "$CONFIG_DIR/sps_settings.py" && -r "$CONFIG_DIR/sps_auth.py" ]] \
+  || die "Deployment runtime modules are missing from $CONFIG_DIR"
+
+if [[ -z "$backup_path" ]]; then
+  last_success="$STATE_DIR/deployments/last-success.env"
+  [[ -r "$last_success" ]] || die "No last deployment metadata found; pass --backup explicitly."
+  backup_path="$(sed -n 's/^backup_path=//p' "$last_success")"
+fi
+
+[[ "$backup_path" == /* && -d "$backup_path" ]] || die "Backup directory is invalid: $backup_path"
+backup_path="$(readlink -f -- "$backup_path")"
+backup_root_real="$(readlink -f -- "$BACKUP_ROOT")"
+[[ "$backup_path" == "$backup_root_real"/* ]] || die "Backup must be inside $backup_root_real"
+[[ -r "$backup_path/manifest.env" && -r "$backup_path/SHA256SUMS" ]] \
+  || die "Backup manifest or checksums are missing."
+(
+  cd "$backup_path"
+  sha256sum --check SHA256SUMS
+)
+
+target_commit="$(sed -n 's/^git_commit=//p' "$backup_path/manifest.env")"
+[[ "$target_commit" =~ ^[0-9a-f]{40}$ ]] || die "Backup does not contain a valid Git commit."
+run_as_app git -C "$APP_DIR" cat-file -e "${target_commit}^{commit}" \
+  || die "Rollback commit is not available locally: $target_commit"
+reproducible_rollback=false
+if run_as_app git -C "$APP_DIR" cat-file -e "${target_commit}:deploy/runtime/rollback-compatible-v1" 2>/dev/null; then
+  reproducible_rollback=true
+fi
+if [[ "$reproducible_rollback" == false ]]; then
+  legacy_compatibility_commit="b44b491fe5dd171cdb9f9faa03246b3e52627b51"
+  [[ "$target_commit" == "$legacy_compatibility_commit" ]] \
+    || die "Target is neither reproducible nor the validated first-rollout compatibility commit."
+  [[ "$allow_compatibility_runtime" == true ]] \
+    || die "Target predates the reproducible baseline. Re-run with --allow-compatibility-runtime only after reviewing the runbook."
+fi
+
+if [[ "$restore_state" == true && "${CONFIRM_STATE_RESTORE:-}" != "YES" ]]; then
+  die "State restore discards newer database/media state. Re-run with CONFIRM_STATE_RESTORE=YES."
+fi
+if [[ "$restore_state" == true ]]; then
+  [[ -f "$backup_path/db.sqlite3" && -f "$backup_path/media.tar.gz" ]] \
+    || die "This backup does not contain both database and media state."
+fi
+
+exec 9>"$DEPLOY_LOCK_FILE"
+flock -n 9 || die "Another SPS deployment or rollback is already running."
+ensure_clean_checkout
+
+current_commit="$(run_as_app git -C "$APP_DIR" rev-parse HEAD)"
+backup_command=(/usr/local/sbin/sps-backup)
+if [[ ! -x "${backup_command[0]}" ]]; then
+  backup_command=(bash "$SCRIPT_DIR/sps-backup")
+fi
+rescue_backup="$("${backup_command[@]}")"
+log "Current state was backed up before rollback: $rescue_backup"
+
+rollback_succeeded=false
+on_exit() {
+  local status=$?
+  if [[ "$rollback_succeeded" == false ]]; then
+    log "Rollback did not complete. Rescue backup: $rescue_backup"
+    systemctl start sps-django.service sps-admin.service >/dev/null 2>&1 || true
+  fi
+  exit "$status"
+}
+trap on_exit EXIT
+
+systemctl stop sps-admin.service sps-django.service
+run_as_app git -C "$APP_DIR" switch --detach "$target_commit"
+
+if [[ "$reproducible_rollback" == true ]]; then
+  install -m 0644 "$APP_DIR/deploy/runtime/sps_settings.py" "$CONFIG_DIR/sps_settings.py"
+  install -m 0644 "$APP_DIR/deploy/runtime/sps_auth.py" "$CONFIG_DIR/sps_auth.py"
+  (
+    cd "$APP_DIR"
+    run_as_app "$UV_BIN" sync --frozen --no-dev
+    run_as_app "$APP_DIR/.venv/bin/python" manage.py check --deploy
+    run_as_app "$APP_DIR/.venv/bin/python" manage.py collectstatic --noinput
+  )
+else
+  log "Target predates the reproducible deployment baseline; preserving the current Python and compiled Next runtimes."
+  [[ -x "$APP_DIR/.venv/bin/gunicorn" ]] || die "Preserved Python runtime does not contain Gunicorn."
+  [[ -d "$APP_DIR/admin-frontend/node_modules" && -d "$APP_DIR/admin-frontend/.next" ]] \
+    || die "Preserved Next runtime is incomplete. Use the legacy VPS snapshot instead."
+  (
+    cd "$APP_DIR"
+    run_as_app "$APP_DIR/.venv/bin/python" manage.py check --deploy
+    run_as_app "$APP_DIR/.venv/bin/python" manage.py collectstatic --noinput
+  )
+fi
+
+if [[ "$restore_state" == true ]]; then
+  log "Restoring database and media from $backup_path"
+  integrity="$(sqlite3 "$backup_path/db.sqlite3" 'PRAGMA integrity_check;')"
+  [[ "$integrity" == "ok" ]] || die "Backup database integrity check failed: $integrity"
+
+  python3 - "$backup_path/media.tar.gz" <<'PY'
+import pathlib
+import sys
+import tarfile
+
+with tarfile.open(sys.argv[1], "r:gz") as archive:
+    for member in archive.getmembers():
+        path = pathlib.PurePosixPath(member.name)
+        if path.is_absolute() or ".." in path.parts or member.issym() or member.islnk():
+            raise SystemExit(f"Unsafe media archive member: {member.name}")
+PY
+
+  restore_stamp="$(date --utc '+%Y%m%dT%H%M%SZ')"
+  database_restore="${STATE_DIR}/.db.restore.$$"
+  media_restore="${STATE_DIR}/.media.restore.$$"
+  install -m 0640 -o "$APP_USER" -g "$APP_GROUP" "$backup_path/db.sqlite3" "$database_restore"
+  install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" "$media_restore"
+  tar --extract --gzip --file "$backup_path/media.tar.gz" --directory "$media_restore" \
+    --no-same-owner --no-same-permissions
+  chown -R "$APP_USER:$APP_GROUP" "$media_restore"
+
+  [[ ! -e "$DATABASE_PATH" ]] || mv -- "$DATABASE_PATH" "${DATABASE_PATH}.pre-rollback-${restore_stamp}"
+  mv -- "$database_restore" "$DATABASE_PATH"
+  [[ ! -e "$MEDIA_ROOT" ]] || mv -- "$MEDIA_ROOT" "${MEDIA_ROOT}.pre-rollback-${restore_stamp}"
+  mv -- "$media_restore" "$MEDIA_ROOT"
+fi
+
+load_env_file "$ADMIN_ENV_FILE"
+if [[ "$reproducible_rollback" == true ]]; then
+  (
+    cd "$APP_DIR/admin-frontend"
+    run_as_app "$NPM_BIN" ci --include=dev
+    run_as_app "$NPM_BIN" run build
+  )
+fi
+install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" "$APP_DIR/admin-frontend/.next/cache"
+
+if [[ "$reproducible_rollback" == true ]]; then
+  install -m 0644 "$APP_DIR/deploy/systemd/sps-django.service" /etc/systemd/system/sps-django.service
+  install -m 0644 "$APP_DIR/deploy/systemd/sps-admin.service" /etc/systemd/system/sps-admin.service
+fi
+systemctl daemon-reload
+systemctl restart sps-django.service sps-admin.service
+
+verify_command=(/usr/local/sbin/sps-verify)
+if [[ ! -x "${verify_command[0]}" ]]; then
+  verify_command=(bash "$SCRIPT_DIR/sps-verify")
+fi
+verify_options=()
+if [[ "$skip_public_verify" == true ]]; then
+  verify_options+=(--local-only)
+fi
+if [[ "$reproducible_rollback" == false ]]; then
+  verify_options+=(--legacy-backend)
+fi
+if (( ${#verify_options[@]} > 0 )); then
+  "${verify_command[@]}" "${verify_options[@]}"
+else
+  "${verify_command[@]}"
+fi
+
+rollback_metadata="${STATE_DIR}/deployments/last-rollback.env"
+cat >"$rollback_metadata" <<EOF
+rolled_back_at=$(date --utc '+%Y%m%dT%H%M%SZ')
+from_commit=${current_commit}
+to_commit=${target_commit}
+source_backup=${backup_path}
+rescue_backup=${rescue_backup}
+state_restored=${restore_state}
+reproducible_runtime=${reproducible_rollback}
+EOF
+chown "$APP_USER:$APP_GROUP" "$rollback_metadata"
+chmod 0640 "$rollback_metadata"
+
+rollback_succeeded=true
+trap - EXIT
+log "Rollback completed: ${current_commit:0:12} -> ${target_commit:0:12}"
+if [[ "$reproducible_rollback" == false ]]; then
+  log "Compatibility mode preserved the newer Python environment and compiled admin artifact."
+fi
+log "The checkout is intentionally detached. The next sps-deploy will return it to main."
