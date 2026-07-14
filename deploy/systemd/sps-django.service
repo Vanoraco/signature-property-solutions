@@ -7,6 +7,7 @@ Type=notify
 NotifyAccess=all
 User=sps
 Group=www-data
+SupplementaryGroups=sps
 WorkingDirectory=/var/www/signature-property-solutions
 EnvironmentFile=/etc/sps/django.env
 Environment=DJANGO_SETTINGS_MODULE=sps_settings
