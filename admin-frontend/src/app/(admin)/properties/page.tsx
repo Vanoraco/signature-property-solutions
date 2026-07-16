@@ -78,20 +78,13 @@ export default function PropertiesPage() {
 
   const propertiesQuery = useQuery(propertiesQueryOptions)
 
-  const categoriesQuery = useQuery({
-    ...lookupQueryOptions('categories'),
-    enabled: modalOpen,
-  })
-
-  const agentsQuery = useQuery({
-    ...agentsQueryOptions,
-    enabled: modalOpen,
-  })
-
-  const facilitiesQuery = useQuery({
-    ...lookupQueryOptions('facilities'),
-    enabled: modalOpen,
-  })
+  // Lookups are warmed by warmAdminQueryCache() on login and held fresh for
+  // 15 minutes, so fetch them on mount rather than gating on modalOpen.
+  // This makes the editor modal render instantly from cache instead of
+  // spinning while it lazily fetches categories/agents/facilities.
+  const categoriesQuery = useQuery(lookupQueryOptions('categories'))
+  const agentsQuery = useQuery(agentsQueryOptions)
+  const facilitiesQuery = useQuery(lookupQueryOptions('facilities'))
 
   const closePropertyModal = () => {
     setModalOpen(false)

@@ -9,7 +9,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 5 * 60_000,
+        // Lookups (categories, facilities, agents), testimonials, dashboard
+        // feeds, and property lists change rarely once warm, so hold them
+        // fresh for 15 minutes instead of refetching on every page mount.
+        staleTime: 15 * 60_000,
         gcTime: 30 * 60_000,
         retry: 1,
       },
