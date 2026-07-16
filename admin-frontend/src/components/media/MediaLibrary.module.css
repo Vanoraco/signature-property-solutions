@@ -91,7 +91,14 @@ button.asset:disabled { cursor: wait; opacity: .72; transform: none; }
   background: var(--admin-surface-subtle);
 }
 
-.thumbnail img { object-fit: cover; }
+.thumbnail img,
+.thumbnail video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .selectedMark {
   position: absolute;

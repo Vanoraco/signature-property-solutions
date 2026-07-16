@@ -558,6 +558,9 @@ img { max-width: 100%; height: auto; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .lux-contact-card:hover { border-color: var(--gold); }
 .lux-contact-card .social-links a { font-size: 1rem; margin-right: 1rem; }
@@ -568,7 +571,15 @@ img { max-width: 100%; height: auto; }
   margin-bottom: 0.5rem;
 }
 .lux-contact-card h5 { margin-bottom: 0.5rem; }
-.lux-contact-card p { color: var(--gray); margin: 0; font-size: 0.9rem; }
+.lux-contact-card p {
+  color: var(--gray);
+  margin: 0;
+  font-size: 0.9rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 .market-contact-card {
   background: var(--surface);
@@ -581,13 +592,24 @@ img { max-width: 100%; height: auto; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .market-contact-card i {
   font-size: 1.4rem;
   color: var(--gold);
   margin-bottom: 0.4rem;
 }
-.market-contact-card p { color: var(--gray); margin: 0; font-size: 0.9rem; }
+.market-contact-card p {
+  color: var(--gray);
+  margin: 0;
+  font-size: 0.9rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .market-muted { color: var(--gray); }
 
 /* Map */

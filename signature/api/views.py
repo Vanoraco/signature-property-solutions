@@ -42,6 +42,15 @@ SUPPORTED_MEDIA_IMAGE_FORMATS = {
     '.tiff': 'TIFF',
     '.webp': 'WEBP',
 }
+# Video formats are validated by extension only (no pixel decode like images),
+# so the listing cost is a stat() per file and is safe for large libraries.
+SUPPORTED_MEDIA_VIDEO_FORMATS = {
+    '.mp4': 'MP4',
+    '.webm': 'WEBM',
+    '.mov': 'QuickTime',
+    '.ogg': 'OGG',
+    '.ogv': 'OGG',
+}
 MAX_MEDIA_IMAGE_PIXELS = 40_000_000
 
 
@@ -122,14 +131,25 @@ def _media_asset_url(relative_path):
     return media_url + quote(relative_path, safe='/')
 
 
-def _media_asset_record(path, media_root):
+def _media_asset_record(path, media_root, kinds=frozenset({'image'})):
     try:
         resolved_path = path.resolve(strict=True)
         if not resolved_path.is_file() or not _is_within_media_root(resolved_path, media_root):
             return None
-        image_format = _inspected_image_format(resolved_path)
-        if not image_format:
+        suffix = resolved_path.suffix.lower()
+        is_image = suffix in SUPPORTED_MEDIA_IMAGE_FORMATS
+        is_video = suffix in SUPPORTED_MEDIA_VIDEO_FORMATS
+        if is_image and 'image' not in kinds:
+            is_image = False
+        if is_video and 'video' not in kinds:
+            is_video = False
+        if not is_image and not is_video:
             return None
+        if is_image:
+            # Existing contract: only list images PIL can actually decode so
+            # disguised.jpg and truncated files are excluded.
+            if not _inspected_image_format(resolved_path):
+                return None
         stat = resolved_path.stat()
         relative_path = resolved_path.relative_to(media_root).as_posix()
     except (OSError, RuntimeError, ValueError):
@@ -141,6 +161,7 @@ def _media_asset_record(path, media_root):
         'url': _media_asset_url(relative_path),
         'size': stat.st_size,
         'modified_at': datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        'kind': 'video' if is_video else 'image',
         '_modified_timestamp': stat.st_mtime,
     }
 
@@ -168,8 +189,9 @@ def _resolve_media_asset_path(raw_path):
 
     if not resolved_path.is_file() or not _is_within_media_root(resolved_path, media_root):
         raise ValidationError({'path': 'Invalid media path.'})
-    if resolved_path.suffix.lower() not in SUPPORTED_MEDIA_IMAGE_FORMATS:
-        raise ValidationError({'path': 'Only supported image files can be downloaded.'})
+    suffix = resolved_path.suffix.lower()
+    if suffix not in SUPPORTED_MEDIA_IMAGE_FORMATS and suffix not in SUPPORTED_MEDIA_VIDEO_FORMATS:
+        raise ValidationError({'path': 'Only supported image or video files can be downloaded.'})
     return resolved_path
 
 
@@ -177,11 +199,21 @@ def _resolve_media_asset_path(raw_path):
 @permission_classes([IsAdminUser])
 def media_asset_list(request):
     media_root = _media_root()
+    # kind=image (default) preserves the original image-only contract.
+    # kind=video lists video files. kind=all lists both. Any other value
+    # falls back to image-only so existing callers are unaffected.
+    raw_kind = (request.query_params.get('kind') or 'image').strip().lower()
+    if raw_kind == 'video':
+        kinds = frozenset({'video'})
+    elif raw_kind == 'all':
+        kinds = frozenset({'image', 'video'})
+    else:
+        kinds = frozenset({'image'})
     assets = []
     if media_root.is_dir():
         for directory, _, filenames in os.walk(media_root, followlinks=False):
             for filename in filenames:
-                record = _media_asset_record(Path(directory, filename), media_root)
+                record = _media_asset_record(Path(directory, filename), media_root, kinds)
                 if record:
                     assets.append(record)
 
@@ -196,6 +228,24 @@ def media_asset_list(request):
 def media_asset_download(request):
     resolved_path = _resolve_media_asset_path(request.query_params.get('path'))
     file_handle = resolved_path.open('rb')
+    suffix = resolved_path.suffix.lower()
+    if suffix in SUPPORTED_MEDIA_VIDEO_FORMATS:
+        # Videos are streamed without pixel-level verification (PIL does not
+        # decode video); we only check the file is readable.
+        try:
+            file_handle.seek(0, os.SEEK_END)
+            file_handle.seek(0)
+        except OSError:
+            file_handle.close()
+            raise ValidationError({'path': 'The selected video could not be read.'})
+        content_type = 'video/mp4' if suffix == '.mp4' else f'video/{suffix.lstrip(".")}'
+        return FileResponse(
+            file_handle,
+            as_attachment=True,
+            filename=resolved_path.name,
+            content_type=content_type,
+        )
+
     image_format = _verified_image_format(resolved_path, file_handle=file_handle)
     if not image_format:
         file_handle.close()

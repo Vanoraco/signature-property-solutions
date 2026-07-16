@@ -5,17 +5,31 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Check, FolderOpen, Images, LoaderCircle, Search } from 'lucide-react'
 import api from '@/lib/api'
-import { mediaAssetsQueryOptions, type MediaAsset } from '@/lib/admin-queries'
+import {
+  type MediaAsset,
+  type MediaAssetCollection,
+} from '@/lib/admin-queries'
 import Modal from '@/components/ui/Modal'
 import styles from './MediaLibrary.module.css'
 
 export type { MediaAsset } from '@/lib/admin-queries'
+
+export type MediaKind = 'image' | 'video'
 
 function inferImageType(filename: string) {
   const extension = filename.split('.').pop()?.toLowerCase()
   if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg'
   if (extension === 'svg') return 'image/svg+xml'
   return extension ? `image/${extension}` : 'application/octet-stream'
+}
+
+function inferVideoType(filename: string) {
+  const extension = filename.split('.').pop()?.toLowerCase()
+  if (extension === 'mp4') return 'video/mp4'
+  if (extension === 'webm') return 'video/webm'
+  if (extension === 'ogg' || extension === 'ogv') return 'video/ogg'
+  if (extension === 'mov') return 'video/quicktime'
+  return extension ? `video/${extension}` : 'application/octet-stream'
 }
 
 export async function mediaAssetToFile(asset: MediaAsset, signal?: AbortSignal) {
@@ -27,8 +41,11 @@ export async function mediaAssetToFile(asset: MediaAsset, signal?: AbortSignal) 
   })
   const blob = response.data
   const modifiedAt = Date.parse(asset.modified_at)
+  const inferredType = asset.kind === 'video'
+    ? inferVideoType(asset.name)
+    : inferImageType(asset.name)
   return new File([blob], asset.name, {
-    type: blob.type || inferImageType(asset.name),
+    type: blob.type || inferredType,
     lastModified: Number.isNaN(modifiedAt) ? Date.now() : modifiedAt,
   })
 }
@@ -37,6 +54,7 @@ interface MediaBrowserProps {
   selectedPath?: string | null
   onSelect?: (asset: MediaAsset) => void
   disabled?: boolean
+  mediaKind?: MediaKind
 }
 
 function formatFileSize(bytes: number) {
@@ -49,10 +67,18 @@ function folderName(path: string) {
   return folder && folder !== path ? folder : 'Root'
 }
 
-export function MediaBrowser({ selectedPath, onSelect, disabled = false }: MediaBrowserProps) {
+export function MediaBrowser({ selectedPath, onSelect, disabled = false, mediaKind = 'image' }: MediaBrowserProps) {
   const [search, setSearch] = useState('')
   const [folder, setFolder] = useState('All folders')
-  const assetsQuery = useQuery(mediaAssetsQueryOptions)
+  const assetsQuery = useQuery({
+    queryKey: mediaKind === 'video' ? ['media-assets', 'video'] : ['media-assets'],
+    queryFn: async ({ signal }) => {
+      const params = mediaKind === 'video' ? { kind: 'video' } : undefined
+      const response = await api.get<MediaAssetCollection>('/media-assets/', { params, signal })
+      return response.data
+    },
+    staleTime: 60_000,
+  })
 
   const assets = useMemo(() => assetsQuery.data?.results ?? [], [assetsQuery.data])
   const folders = useMemo(() => (
@@ -69,7 +95,7 @@ export function MediaBrowser({ selectedPath, onSelect, disabled = false }: Media
   if (assetsQuery.isLoading) {
     return (
       <div className={styles.state} role="status">
-        <LoaderCircle aria-hidden="true" className="animate-spin" size={20} /> Loading media library...
+        <LoaderCircle aria-hidden="true" className="animate-spin" size={20} /> Loading {mediaKind === 'video' ? 'videos' : 'media library'}...
       </div>
     )
   }
@@ -77,7 +103,7 @@ export function MediaBrowser({ selectedPath, onSelect, disabled = false }: Media
   if (assetsQuery.isError) {
     return (
       <div className={styles.state} role="alert">
-        <span>Media could not be loaded.</span>
+        <span>{mediaKind === 'video' ? 'Videos' : 'Media'} could not be loaded.</span>
         <button type="button" onClick={() => assetsQuery.refetch()}>Retry</button>
       </div>
     )
@@ -88,12 +114,12 @@ export function MediaBrowser({ selectedPath, onSelect, disabled = false }: Media
       <div className={styles.toolbar}>
         <label className={styles.searchBox}>
           <Search aria-hidden="true" size={15} />
-          <span className="sr-only">Search existing images</span>
+          <span className="sr-only">Search existing {mediaKind === 'video' ? 'videos' : 'images'}</span>
           <input
             type="search"
             value={search}
             onChange={event => setSearch(event.target.value)}
-            placeholder="Search images..."
+            placeholder={`Search ${mediaKind === 'video' ? 'videos' : 'images'}...`}
           />
         </label>
         <label className={styles.folderFilter}>
@@ -104,7 +130,7 @@ export function MediaBrowser({ selectedPath, onSelect, disabled = false }: Media
             {folders.map(value => <option key={value}>{value}</option>)}
           </select>
         </label>
-        <span className={styles.count}>{filtered.length} image{filtered.length === 1 ? '' : 's'}</span>
+        <span className={styles.count}>{filtered.length} {mediaKind === 'video' ? 'video' : 'image'}{filtered.length === 1 ? '' : 's'}</span>
       </div>
 
       {filtered.length > 0 ? (
@@ -114,7 +140,11 @@ export function MediaBrowser({ selectedPath, onSelect, disabled = false }: Media
             const content = (
               <>
                 <span className={styles.thumbnail}>
-                  <Image src={asset.url} alt="" fill sizes="150px" unoptimized />
+                  {mediaKind === 'video' || asset.kind === 'video' ? (
+                    <video src={asset.url} preload="metadata" muted playsInline />
+                  ) : (
+                    <Image src={asset.url} alt="" fill sizes="150px" unoptimized />
+                  )}
                   {selected ? <span className={styles.selectedMark}><Check aria-hidden="true" size={14} /></span> : null}
                 </span>
                 <span className={styles.assetCopy}>
@@ -143,7 +173,7 @@ export function MediaBrowser({ selectedPath, onSelect, disabled = false }: Media
       ) : (
         <div className={styles.empty}>
           <Images aria-hidden="true" size={28} />
-          <strong>No matching images</strong>
+          <strong>No matching {mediaKind === 'video' ? 'videos' : 'images'}</strong>
           <span>Try another search or folder.</span>
         </div>
       )}
@@ -156,6 +186,7 @@ interface MediaPickerDialogProps {
   onClose: () => void
   onSelect: (file: File, asset: MediaAsset) => void | Promise<void>
   title?: string
+  mediaKind?: MediaKind
 }
 
 export default function MediaPickerDialog({
@@ -163,6 +194,7 @@ export default function MediaPickerDialog({
   onClose,
   onSelect,
   title = 'Choose Existing Image',
+  mediaKind = 'image',
 }: MediaPickerDialogProps) {
   const [selected, setSelected] = useState<MediaAsset | null>(null)
   const [downloading, setDownloading] = useState(false)
@@ -196,7 +228,7 @@ export default function MediaPickerDialog({
       onClose()
     } catch {
       if (!controller.signal.aborted) {
-        setError('The selected image could not be prepared. Try another image.')
+        setError(`The selected ${mediaKind === 'video' ? 'video' : 'image'} could not be prepared. Try another ${mediaKind === 'video' ? 'video' : 'image'}.`)
       }
     } finally {
       if (downloadControllerRef.current === controller) {
@@ -211,7 +243,7 @@ export default function MediaPickerDialog({
       open={open}
       onClose={closePicker}
       title={title}
-      description="Select an image already stored in the media library."
+      description={`Select a ${mediaKind === 'video' ? 'video' : 'image'} already stored in the media library.`}
       size="lg"
       layer="nested"
       footer={(
@@ -221,13 +253,13 @@ export default function MediaPickerDialog({
             {downloading
               ? <LoaderCircle aria-hidden="true" className="animate-spin" size={15} />
               : <Check aria-hidden="true" size={15} />}
-            {downloading ? 'Preparing...' : 'Use Image'}
+            {downloading ? 'Preparing...' : mediaKind === 'video' ? 'Use Video' : 'Use Image'}
           </button>
         </>
       )}
     >
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
-      <MediaBrowser selectedPath={selected?.path} onSelect={setSelected} disabled={downloading} />
+      <MediaBrowser selectedPath={selected?.path} onSelect={setSelected} disabled={downloading} mediaKind={mediaKind} />
     </Modal>
   )
 }

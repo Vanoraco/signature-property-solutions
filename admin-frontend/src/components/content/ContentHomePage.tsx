@@ -32,6 +32,7 @@ export default function ContentHomePage() {
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
   const [apiErrors, setApiErrors] = useState<ContentApiErrors | null>(null)
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
+  const [videoPickerOpen, setVideoPickerOpen] = useState(false)
 
   const imagePreviewRef = useRef<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -299,6 +300,9 @@ export default function ContentHomePage() {
                     }}
                   />
                 </label>
+                <button type="button" className={styles.libraryButton} onClick={() => setVideoPickerOpen(true)}>
+                  <Images aria-hidden="true" size={15} /> Choose existing
+                </button>
               </div>
               <span className={styles.fileName}>{selectedVideo ? selectedVideo.name : videoSource ? 'Current video' : 'No video selected'}</span>
               {errors.video?.message ? <p className={styles.errorText}>{errors.video.message}</p> : null}
@@ -312,6 +316,14 @@ export default function ContentHomePage() {
         onClose={() => setMediaPickerOpen(false)}
         onSelect={file => selectImage(file)}
         title="Choose Hero Image"
+      />
+
+      <MediaPickerDialog
+        open={videoPickerOpen}
+        onClose={() => setVideoPickerOpen(false)}
+        onSelect={file => selectVideo(file)}
+        title="Choose Hero Video"
+        mediaKind="video"
       />
     </div>
   )

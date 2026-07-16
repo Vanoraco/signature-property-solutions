@@ -16,6 +16,8 @@ export interface MediaAsset {
   url: string
   size: number
   modified_at: string
+  /** 'image' or 'video'. Older responses may omit this; treat as 'image'. */
+  kind?: string
 }
 
 export interface MediaAssetCollection {
@@ -34,6 +36,7 @@ export const adminQueryKeys = {
   facilities: ['facilities'] as const,
   agents: ['agents'] as const,
   mediaAssets: ['media-assets'] as const,
+  mediaAssetsVideo: ['media-assets', 'video'] as const,
   dashboardRequests: ['dashboard', 'requests'] as const,
   dashboardTestimonials: ['dashboard', 'testimonials'] as const,
 }
@@ -69,6 +72,18 @@ export const mediaAssetsQueryOptions = queryOptions({
   queryKey: adminQueryKeys.mediaAssets,
   queryFn: async ({ signal }) => {
     const response = await api.get<MediaAssetCollection>('/media-assets/', { signal })
+    return response.data
+  },
+  staleTime: 60_000,
+})
+
+export const mediaAssetsVideoQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.mediaAssetsVideo,
+  queryFn: async ({ signal }) => {
+    const response = await api.get<MediaAssetCollection>('/media-assets/', {
+      params: { kind: 'video' },
+      signal,
+    })
     return response.data
   },
   staleTime: 60_000,

@@ -37,6 +37,14 @@ class MediaAssetApiTests(APITestCase):
             os.utime(path, (modified_at, modified_at))
         return path
 
+    def create_video(self, relative_path, content=b'fake-mp4-bytes', modified_at=None):
+        path = self.media_root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        if modified_at is not None:
+            os.utime(path, (modified_at, modified_at))
+        return path
+
     def authenticate(self):
         self.client.force_authenticate(self.user)
 
@@ -148,3 +156,56 @@ class MediaAssetApiTests(APITestCase):
         )
         self.assertEqual(missing_path_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(missing_file_response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_kind_image_excludes_videos(self):
+        self.create_image('products/one.png')
+        self.create_video('videos/tour.mp4')
+        self.authenticate()
+
+        response = self.client.get('/api/media-assets/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['path'], 'products/one.png')
+        self.assertEqual(response.data['results'][0]['kind'], 'image')
+
+    def test_list_kind_video_returns_only_videos(self):
+        self.create_image('products/one.png')
+        self.create_video('videos/tour.mp4')
+        self.authenticate()
+
+        response = self.client.get('/api/media-assets/', {'kind': 'video'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['path'], 'videos/tour.mp4')
+        self.assertEqual(response.data['results'][0]['kind'], 'video')
+        self.assertEqual(response.data['results'][0]['url'], '/images/videos/tour.mp4')
+
+    def test_list_kind_all_returns_images_and_videos(self):
+        self.create_image('products/one.png')
+        self.create_video('videos/tour.mp4')
+        self.create_video('videos/promo.webm')
+        (self.media_root / 'notes.txt').write_text('ignore', encoding='utf-8')
+        self.authenticate()
+
+        response = self.client.get('/api/media-assets/', {'kind': 'all'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        paths = sorted(asset['path'] for asset in response.data['results'])
+        self.assertEqual(paths, ['products/one.png', 'videos/promo.webm', 'videos/tour.mp4'])
+
+    def test_download_returns_a_video_file(self):
+        self.create_video('videos/tour.mp4', content=b'mp4-bytes')
+        self.authenticate()
+
+        response = self.client.get(
+            '/api/media-assets/download/',
+            {'path': 'videos/tour.mp4'},
+        )
+        self.addCleanup(response.close)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'video/mp4')
+        self.assertIn('tour.mp4', response['Content-Disposition'])
+        self.assertEqual(b''.join(response.streaming_content), b'mp4-bytes')
