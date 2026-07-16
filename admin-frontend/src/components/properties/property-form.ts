@@ -121,6 +121,35 @@ export function slugifyPropertyTitle(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
+/**
+ * Convert a video link into an iframe-embeddable URL.
+ *
+ * YouTube watch / youtu.be / shorts links are rewritten to the /embed/ form
+ * (raw watch and shorts URLs are blocked from framing by YouTube). Vimeo
+ * links become player.vimeo.com/video/<id>. Embeddable or unknown URLs are
+ * returned unchanged so the caller can decide whether to render them.
+ */
+export function getVideoEmbedUrl(value: string): string {
+  const url = (value ?? '').trim()
+  if (!url) return ''
+
+  const youtubePatterns = [
+    /youtube\.com\/watch\?v=([A-Za-z0-9_-]{6,})/,
+    /youtu\.be\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/,
+    /youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+  ]
+  for (const pattern of youtubePatterns) {
+    const match = url.match(pattern)
+    if (match) return `https://www.youtube.com/embed/${match[1]}`
+  }
+
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+
+  return url
+}
+
 export function propertyToFormValues(property?: PropertyRecord | null): PropertyFormValues {
   if (!property) return { ...emptyPropertyFormValues, facilitie: [] }
 

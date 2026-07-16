@@ -161,14 +161,12 @@ class PropertySearch:
             return qs.filter(property_types__slug=category)
 
         if type_param:
+            # Match by property type only; sale/rent is handled separately by
+            # _filter_status via the property_status field, so the two compose
+            # cleanly now that categories no longer encode the sale/rent intent.
             type_label = type_param.replace('-', ' ').title()
-            status_filter = (self.params.get('filter') or '').strip()
-            if status_filter in ('Sale', 'Rent'):
-                target = f"{type_label} for {status_filter}"
-            else:
-                target = type_label
             slugs = list(catagory.objects.filter(
-                catagorys__icontains=target
+                catagorys__icontains=type_label
             ).values_list('slug', flat=True))
             if slugs:
                 self._applied['type'] = type_param

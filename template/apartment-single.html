@@ -48,10 +48,10 @@
         </table>
 
         <!-- Video -->
-        {% if pro.video_link %}
+        {% if pro.video_embed_url %}
         <h4 class="mt-4 mb-3" style="color:var(--gold)">Video Tour</h4>
         <div class="ratio ratio-16x9 mb-4" style="border-radius:12px;overflow:hidden">
-          <iframe src="{{ pro.video_link }}" allowfullscreen></iframe>
+          <iframe src="{{ pro.video_embed_url }}" title="{{ pro.property_title }} video tour" allowfullscreen></iframe>
         </div>
         {% endif %}
 

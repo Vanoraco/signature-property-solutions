@@ -8,6 +8,7 @@ import PropertyMediaFields from './PropertyMediaFields'
 import {
   PROPERTY_FIELD_TABS,
   existingPropertyMedia,
+  getVideoEmbedUrl,
   propertyFormSchema,
   propertyToFormValues,
   slugifyPropertyTitle,
@@ -83,6 +84,7 @@ export default function PropertyForm({
   onRetryLookups,
   onSubmit,
 }: PropertyFormProps) {
+  const isCreate = !initialProperty
   const [tabSelection, setTabSelection] = useState<{ tab: TabId; apiErrors: NormalizedApiErrors | null }>(
     () => ({ tab: 'basic', apiErrors }),
   )
@@ -106,6 +108,8 @@ export default function PropertyForm({
   const title = useWatch({ control, name: 'property_title' })
   const selectedFacilities = useWatch({ control, name: 'facilitie' })
   const watchedMedia = useWatch({ control, name: PROPERTY_MEDIA_FIELDS })
+  const videoLink = useWatch({ control, name: 'video_link' })
+  const videoEmbedUrl = getVideoEmbedUrl(videoLink ?? '')
   const slugRegistration = register('slug')
   const mediaFiles = Object.fromEntries(
     PROPERTY_MEDIA_FIELDS.map((field, index) => [field, watchedMedia[index]]),
@@ -212,9 +216,15 @@ export default function PropertyForm({
             <Field label="Property title" htmlFor="property-property_title" error={errors.property_title?.message} required spanTwo>
               <input id="property-property_title" className={styles.input} {...register('property_title')} />
             </Field>
-            <Field label="Property ID" htmlFor="property-property_id" error={errors.property_id?.message} hint="Optional internal identifier.">
-              <input id="property-property_id" className={styles.input} {...register('property_id')} />
-            </Field>
+            {isCreate ? (
+              <Field label="Property ID" htmlFor="property-property_id" hint="Auto-generated on save.">
+                <div className={styles.autoValue}>Auto-generated on save</div>
+              </Field>
+            ) : (
+              <Field label="Property ID" htmlFor="property-property_id" error={errors.property_id?.message} hint="Optional internal identifier.">
+                <input id="property-property_id" className={styles.input} {...register('property_id')} />
+              </Field>
+            )}
             <Field label="Status" htmlFor="property-property_status" error={errors.property_status?.message} required>
               <select id="property-property_status" className={styles.select} {...register('property_status')}>
                 <option value="For Sale">For Sale</option>
@@ -334,10 +344,22 @@ export default function PropertyForm({
             onChange={(field, file) => setValue(field, file, { shouldDirty: true, shouldValidate: true })}
           />
           <div className={styles.videoField}>
-            <Field label="Video URL" htmlFor="property-video_link" error={errors.video_link?.message} hint="Use an HTTP or HTTPS link." spanTwo>
+            <Field label="Video URL" htmlFor="property-video_link" error={errors.video_link?.message} hint="Paste a YouTube or Vimeo link — it will render as an embedded video." spanTwo>
               <input id="property-video_link" type="url" className={styles.input} {...register('video_link')} />
             </Field>
           </div>
+          {videoEmbedUrl ? (
+            <div className={styles.videoPreview}>
+              <div className={styles.videoPreviewFrame}>
+                <iframe
+                  src={videoEmbedUrl}
+                  title="Video preview"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ) : null}
         </section>
       </form>
     </div>

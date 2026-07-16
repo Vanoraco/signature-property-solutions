@@ -1,6 +1,11 @@
+import re
+
 from django.db import models
 from multiselectfield import MultiSelectField
 from ckeditor.fields import RichTextField
+
+
+PROPERTY_ID_PREFIX = "SPS"
 
 # Create your models here.
 
@@ -108,7 +113,34 @@ class propertys(models.Model):
         else:
             self.price_amount = None
             self.price_currency = ''
+        # Auto-generate a property id when one was not supplied
+        if not self.property_id:
+            self.property_id = self._generate_property_id()
         super().save(*args, **kwargs)
+
+    def _generate_property_id(self):
+        """Generate the next sequential property id (e.g. SPS12).
+
+        Looks at the trailing number of every existing property_id and starts
+        one past the highest, then loops to guarantee uniqueness.
+        """
+        max_num = 0
+        existing_ids = (
+            propertys.objects
+            .exclude(property_id__isnull=True)
+            .exclude(property_id='')
+            .values_list('property_id', flat=True)
+        )
+        for pid in existing_ids:
+            match = re.search(r'(\d+)$', pid)
+            if match:
+                max_num = max(max_num, int(match.group(1)))
+        number = max_num + 1
+        while True:
+            candidate = f"{PROPERTY_ID_PREFIX}{number:02d}"
+            if not propertys.objects.filter(property_id=candidate).exists():
+                return candidate
+            number += 1
 
     def _parse_price(self):
         """Parse the free-text price into price_amount and price_currency.
@@ -140,6 +172,36 @@ class propertys(models.Model):
         else:
             self.price_amount = None
             self.price_currency = ''
+
+    @property
+    def video_embed_url(self):
+        """Convert a video link into a URL that can be embedded in an iframe.
+
+        YouTube watch / youtu.be / shorts links are rewritten to the /embed/
+        form (raw watch/shorts URLs are blocked from framing by YouTube).
+        Vimeo links become player.vimeo.com/video/<id>. Anything that already
+        looks embeddable (or is unrecognized) is returned unchanged.
+        """
+        url = (self.video_link or "").strip()
+        if not url:
+            return ""
+
+        youtube_patterns = (
+            r'youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})',
+            r'youtu\.be/([A-Za-z0-9_-]{6,})',
+            r'youtube\.com/shorts/([A-Za-z0-9_-]{6,})',
+            r'youtube(?:-nocookie)?\.com/embed/([A-Za-z0-9_-]{6,})',
+        )
+        for pattern in youtube_patterns:
+            match = re.search(pattern, url)
+            if match:
+                return f"https://www.youtube.com/embed/{match.group(1)}"
+
+        vimeo_match = re.search(r'vimeo\.com/(?:video/)?(\d+)', url)
+        if vimeo_match:
+            return f"https://player.vimeo.com/video/{vimeo_match.group(1)}"
+
+        return url
 
     def _property_type_name(self):
         if not self.property_types_id:
