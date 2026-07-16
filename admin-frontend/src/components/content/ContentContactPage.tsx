@@ -50,13 +50,15 @@ export default function ContentContactPage() {
     register,
     setError,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, dirtyFields },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: contactToFormValues(null),
     mode: 'onBlur',
     values: valuesForRecord,
   })
+
+  const dirtyMap = dirtyFields as Record<string, boolean>
 
   useEffect(() => {
     if (!apiErrors) return
@@ -149,7 +151,14 @@ export default function ContentContactPage() {
           </div>
         ) : null}
 
-        <Section title="Contact details" description="Phone numbers, email, and website shown across the site footer and contact page.">
+        <Section
+          title="Contact details"
+          description="Phone numbers, email, and website shown across the site footer and contact page."
+          fields={['phone_number', 'office_phone', 'email', 'website', 'address']}
+          dirtyFields={dirtyMap}
+          formId="content-contact-form"
+          saving={isSaving}
+        >
           <Field label="Primary phone" htmlFor="contact-phone_number" error={errors.phone_number?.message} required>
             <input id="contact-phone_number" type="tel" autoComplete="tel" {...inputProps('contact-phone_number', errors.phone_number?.message)} {...register('phone_number')} />
           </Field>
@@ -167,7 +176,14 @@ export default function ContentContactPage() {
           </Field>
         </Section>
 
-        <Section title="Map & socials" description="Google Maps embed URL and social profile links.">
+        <Section
+          title="Map & socials"
+          description="Google Maps embed URL and social profile links."
+          fields={['google_map', 'facebook', 'instagram', 'linkden']}
+          dirtyFields={dirtyMap}
+          formId="content-contact-form"
+          saving={isSaving}
+        >
           <Field label="Google Maps embed URL" htmlFor="contact-google_map" error={errors.google_map?.message} hint="Paste the src URL from Google Maps → Share → Embed a map." spanTwo>
             <textarea id="contact-google_map" {...textareaProps('contact-google_map', errors.google_map?.message, 3)} {...register('google_map')} />
           </Field>

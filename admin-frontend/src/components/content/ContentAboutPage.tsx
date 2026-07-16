@@ -52,13 +52,15 @@ export default function ContentAboutPage() {
     register,
     setError,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, dirtyFields },
   } = useForm<AboutFormValues>({
     resolver: zodResolver(aboutFormSchema),
     defaultValues: aboutToFormValues(null),
     mode: 'onBlur',
     values: valuesForRecord,
   })
+
+  const dirtyMap = dirtyFields as Record<string, boolean>
 
   useEffect(() => {
     if (!apiErrors) return
@@ -151,7 +153,14 @@ export default function ContentAboutPage() {
           </div>
         ) : null}
 
-        <Section title="Header" description="Top of the About page.">
+        <Section
+          title="Header"
+          description="Top of the About page."
+          fields={['hading', 'title']}
+          dirtyFields={dirtyMap}
+          formId="content-about-form"
+          saving={isSaving}
+        >
           <Field label="Heading" htmlFor="about-hading" error={errors.hading?.message} spanTwo>
             <input id="about-hading" {...inputProps('about-hading', errors.hading?.message)} {...register('hading')} />
           </Field>
@@ -160,7 +169,14 @@ export default function ContentAboutPage() {
           </Field>
         </Section>
 
-        <Section title="About us" description="The main company narrative shown on the About page.">
+        <Section
+          title="About us"
+          description="The main company narrative shown on the About page."
+          fields={['aboutus', 'vision', 'mission', 'value']}
+          dirtyFields={dirtyMap}
+          formId="content-about-form"
+          saving={isSaving}
+        >
           <Field label="About us copy" htmlFor="about-aboutus" error={errors.aboutus?.message} hint="Supports HTML (rich text)." spanTwo>
             <textarea id="about-aboutus" {...textareaProps('about-aboutus', errors.aboutus?.message, 8)} {...register('aboutus')} />
           </Field>
@@ -175,7 +191,14 @@ export default function ContentAboutPage() {
           </Field>
         </Section>
 
-        <Section title="Why choose us" description="Section describing why clients should pick Signature Property Solutions.">
+        <Section
+          title="Why choose us"
+          description="Section describing why clients should pick Signature Property Solutions."
+          fields={['why_choose_us_header', 'tytle', 'description']}
+          dirtyFields={dirtyMap}
+          formId="content-about-form"
+          saving={isSaving}
+        >
           <Field label="Section header" htmlFor="about-why_choose_us_header" error={errors.why_choose_us_header?.message} spanTwo>
             <input id="about-why_choose_us_header" {...inputProps('about-why_choose_us_header', errors.why_choose_us_header?.message)} {...register('why_choose_us_header')} />
           </Field>
@@ -187,7 +210,14 @@ export default function ContentAboutPage() {
           </Field>
         </Section>
 
-        <Section title="CEO profile" description="The leader featured on the About page.">
+        <Section
+          title="CEO profile"
+          description="The leader featured on the About page."
+          fields={['ceo_name', 'ceo_position', 'ceo_description', 'ceo_facebook', 'ceo_twitter', 'ceo_linkden']}
+          dirtyFields={dirtyMap}
+          formId="content-about-form"
+          saving={isSaving}
+        >
           <Field label="CEO name" htmlFor="about-ceo_name" error={errors.ceo_name?.message}>
             <input id="about-ceo_name" {...inputProps('about-ceo_name', errors.ceo_name?.message)} {...register('ceo_name')} />
           </Field>

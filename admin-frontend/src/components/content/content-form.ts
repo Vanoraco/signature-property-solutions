@@ -11,18 +11,24 @@ export const homeFormSchema = z.object({
     'Select a valid image file.',
   ).refine(value => value === null || value.type.startsWith('image/'), 'Select an image file.')
     .refine(value => value === null || value.size <= 10 * 1024 * 1024, 'Images must be 10 MB or smaller.'),
+  video: z.custom<File | null>(
+    value => value === null || (typeof File !== 'undefined' && value instanceof File),
+    'Select a valid video file.',
+  ).refine(value => value === null || value.type.startsWith('video/'), 'Select a video file.')
+    .refine(value => value === null || value.size <= 200 * 1024 * 1024, 'Videos must be 200 MB or smaller.'),
 })
 
 export type HomeFormValues = z.infer<typeof homeFormSchema>
 export type HomeFieldName = keyof HomeFormValues
 
-const homeScalarFields: Array<Exclude<HomeFieldName, 'image'>> = ['slogon', 'title']
+const homeScalarFields: Array<Exclude<HomeFieldName, 'image' | 'video'>> = ['slogon', 'title']
 
 export function homeToFormValues(record?: { slogon: string; title: string } | null): HomeFormValues {
   return {
     slogon: record?.slogon ?? '',
     title: record?.title ?? '',
     image: null,
+    video: null,
   }
 }
 
@@ -31,6 +37,9 @@ export function toHomeFormData(values: HomeFormValues) {
   homeScalarFields.forEach(field => data.append(field, values[field]))
   if (values.image && typeof File !== 'undefined' && values.image instanceof File) {
     data.append('image', values.image)
+  }
+  if (values.video && typeof File !== 'undefined' && values.video instanceof File) {
+    data.append('video', values.video)
   }
   return data
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, Check, ImageIcon, Images, LoaderCircle, Upload } from 'lucide-react'
+import { AlertCircle, Check, ImageIcon, Images, LoaderCircle, Upload, Video } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 import api from '@/lib/api'
 import AdminToast, {
@@ -25,7 +25,7 @@ import { pickSingleton, type HomeRecord, type SingletonCollection } from './type
 import styles from './ContentForm.module.css'
 
 const HOME_QUERY_KEY = ['content', 'home'] as const
-const fieldsTracked = new Set<string>(['slogon', 'title', 'image'])
+const fieldsTracked = new Set<string>(['slogon', 'title', 'image', 'video'])
 
 export default function ContentHomePage() {
   const queryClient = useQueryClient()
@@ -33,8 +33,10 @@ export default function ContentHomePage() {
   const [apiErrors, setApiErrors] = useState<ContentApiErrors | null>(null)
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
 
-  const previewRef = useRef<string | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
+  const imagePreviewRef = useRef<string | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const videoPreviewRef = useRef<string | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
 
   const recordQuery = useQuery({
     queryKey: HOME_QUERY_KEY,
@@ -52,7 +54,7 @@ export default function ContentHomePage() {
     setValue,
     setError,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, dirtyFields },
   } = useForm<HomeFormValues>({
     resolver: zodResolver(homeFormSchema),
     defaultValues: homeToFormValues(record),
@@ -60,9 +62,12 @@ export default function ContentHomePage() {
     values: record ? homeToFormValues(record) : undefined,
   })
   const selectedImage = useWatch({ control, name: 'image' })
+  const selectedVideo = useWatch({ control, name: 'video' })
+  const dirtyMap = dirtyFields as Record<string, boolean>
 
   useEffect(() => () => {
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+    if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current)
+    if (videoPreviewRef.current) URL.revokeObjectURL(videoPreviewRef.current)
   }, [])
 
   useEffect(() => {
@@ -73,11 +78,19 @@ export default function ContentHomePage() {
   }, [apiErrors, setError])
 
   const selectImage = (file: File) => {
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+    if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current)
     const nextPreview = URL.createObjectURL(file)
-    previewRef.current = nextPreview
-    setPreview(nextPreview)
+    imagePreviewRef.current = nextPreview
+    setImagePreview(nextPreview)
     setValue('image', file, { shouldDirty: true, shouldValidate: true })
+  }
+
+  const selectVideo = (file: File) => {
+    if (videoPreviewRef.current) URL.revokeObjectURL(videoPreviewRef.current)
+    const nextPreview = URL.createObjectURL(file)
+    videoPreviewRef.current = nextPreview
+    setVideoPreview(nextPreview)
+    setValue('video', file, { shouldDirty: true, shouldValidate: true })
   }
 
   const saveMutation = useMutation({
@@ -95,6 +108,7 @@ export default function ContentHomePage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: HOME_QUERY_KEY })
       setFeedback(createAdminToastFeedback('Home page content saved.'))
+      // The record refetch resets defaultValues, so dirtyFields clears
     },
     onError: error => {
       const data = (error as { response?: { data?: unknown } }).response?.data
@@ -103,10 +117,13 @@ export default function ContentHomePage() {
   })
 
   const submit = (values: HomeFormValues) => saveMutation.mutate(values)
-  const imageSource = preview ?? record?.image ?? null
+  const imageSource = imagePreview ?? record?.image ?? null
+  const videoSource = videoPreview ?? record?.video ?? null
   const isLoading = recordQuery.isLoading
   const isError = recordQuery.isError
   const isSaving = saveMutation.isPending
+  const heroImageDirty = dirtyMap.image === true
+  const heroVideoDirty = dirtyMap.video === true
 
   if (isLoading) {
     return (
@@ -165,7 +182,14 @@ export default function ContentHomePage() {
           </div>
         ) : null}
 
-        <Section title="Hero section" description="The headline banner shown at the top of the public homepage.">
+        <Section
+          title="Hero section"
+          description="The headline banner shown at the top of the public homepage."
+          fields={['slogon', 'title']}
+          dirtyFields={dirtyMap}
+          formId="content-home-form"
+          saving={isSaving}
+        >
           <Field label="Slogan" htmlFor="home-slogon" error={errors.slogon?.message} hint="Short tagline above the title." spanTwo>
             <input id="home-slogon" {...inputProps('home-slogon', errors.slogon?.message)} {...register('slogon')} />
           </Field>
@@ -174,10 +198,25 @@ export default function ContentHomePage() {
           </Field>
         </Section>
 
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h3>Hero background image</h3>
-            <p>Shown behind the hero section. Landscape-oriented images work best.</p>
+        <section className={`${styles.section} ${heroImageDirty ? styles.sectionDirty : ''}`}>
+          <div className={`${styles.sectionHead} ${heroImageDirty ? styles.sectionHeadDirty : ''}`}>
+            <div className={styles.sectionHeadCopy}>
+              <h3>Hero background image</h3>
+              <p>Shown behind the hero section. Landscape-oriented images work best.</p>
+            </div>
+            {heroImageDirty ? (
+              <button
+                type="submit"
+                form="content-home-form"
+                className={`btn btn-brass btn-sm ${styles.sectionSave}`}
+                disabled={isSaving}
+                aria-busy={isSaving}
+                title="Save changes in this section"
+              >
+                {isSaving ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} /> : <Check aria-hidden="true" size={14} />}
+                {isSaving ? 'Saving...' : 'Save section'}
+              </button>
+            ) : null}
           </div>
           <div className={styles.photoField}>
             <div className={styles.photoPreview}>
@@ -214,15 +253,58 @@ export default function ContentHomePage() {
           </div>
         </section>
 
-        <Section title="Hero video" description="Optional background video shown on the homepage hero. Uploaded as an MP4 / WebM file.">
-          <Field label="Current video" htmlFor="home-video-current" spanTwo>
-            {record?.video ? (
-              <a href={record.video} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Open current video in a new tab</a>
-            ) : (
-              <p className={styles.hint}>No video uploaded. Video management is handled by the Django admin at /admin.</p>
-            )}
-          </Field>
-        </Section>
+        <section className={`${styles.section} ${heroVideoDirty ? styles.sectionDirty : ''}`}>
+          <div className={`${styles.sectionHead} ${heroVideoDirty ? styles.sectionHeadDirty : ''}`}>
+            <div className={styles.sectionHeadCopy}>
+              <h3>Hero video</h3>
+              <p>Optional background video shown on the homepage hero. MP4 or WebM, 200 MB or smaller.</p>
+            </div>
+            {heroVideoDirty ? (
+              <button
+                type="submit"
+                form="content-home-form"
+                className={`btn btn-brass btn-sm ${styles.sectionSave}`}
+                disabled={isSaving}
+                aria-busy={isSaving}
+                title="Save changes in this section"
+              >
+                {isSaving ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} /> : <Check aria-hidden="true" size={14} />}
+                {isSaving ? 'Saving...' : 'Save section'}
+              </button>
+            ) : null}
+          </div>
+          <div className={styles.videoField}>
+            <div className={styles.videoPreview}>
+              {videoSource ? (
+                // useRef is used to revoke the object URL; controls below are fine
+                <video src={videoSource} controls playsInline preload="metadata" />
+              ) : (
+                <Video aria-hidden="true" size={28} />
+              )}
+            </div>
+            <div className={styles.photoDetails}>
+              <strong>Hero video</strong>
+              <div className={styles.photoActions}>
+                <label className={styles.fileButton}>
+                  <Upload aria-hidden="true" size={15} />
+                  {videoSource ? 'Replace video' : 'Choose video'}
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm,video/ogg"
+                    aria-label="Hero video file"
+                    onChange={event => {
+                      const file = event.target.files?.[0]
+                      if (file) selectVideo(file)
+                      event.target.value = ''
+                    }}
+                  />
+                </label>
+              </div>
+              <span className={styles.fileName}>{selectedVideo ? selectedVideo.name : videoSource ? 'Current video' : 'No video selected'}</span>
+              {errors.video?.message ? <p className={styles.errorText}>{errors.video.message}</p> : null}
+            </div>
+          </div>
+        </section>
       </form>
 
       <MediaPickerDialog
@@ -241,7 +323,7 @@ function Header({ actions }: { actions?: React.ReactNode }) {
       <div className="page-head-main">
         <div className="page-eyebrow">Content</div>
         <h1 className="page-title">Home Page</h1>
-        <p className="page-desc">Edit the hero section, slogan, and background image shown on the public homepage.</p>
+        <p className="page-desc">Edit the hero section, slogan, background image, and background video shown on the public homepage.</p>
       </div>
       {actions}
     </div>

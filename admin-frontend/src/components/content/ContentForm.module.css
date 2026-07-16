@@ -9,6 +9,7 @@
 
 .input, .textarea {
   width: 100%;
+  min-width: 0;
   min-height: 39px;
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -19,6 +20,9 @@
   font: inherit;
   font-size: 13px;
   transition: border-color .15s ease, box-shadow .15s ease;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
@@ -34,9 +38,29 @@
   background: var(--card);
   box-shadow: var(--shadow-sm);
 }
-.sectionHead { margin-bottom: 16px; }
-.sectionHead h3 { color: var(--ink); font-size: 14px; font-weight: 600; }
-.sectionHead p { margin-top: 3px; color: var(--text-faint); font-size: 12px; }
+.sectionDirty { border-color: var(--brass-tint); box-shadow: 0 0 0 1px var(--brass-tint), var(--shadow-sm); }
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 6px 0 8px;
+  background: var(--card);
+}
+.sectionHeadDirty {
+  box-shadow: 0 6px 10px -6px rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--brass-tint);
+  margin: -4px -4px 8px;
+  padding: 6px 4px 8px;
+}
+.sectionHeadCopy { min-width: 0; }
+.sectionHeadCopy h3 { color: var(--ink); font-size: 14px; font-weight: 600; }
+.sectionHeadCopy p { margin-top: 3px; color: var(--text-faint); font-size: 12px; }
+.sectionSave { flex: 0 0 auto; }
 
 .formAlert {
   display: flex;
@@ -99,6 +123,27 @@
 
 .photoActions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 
+.videoField {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.videoPreview {
+  position: relative;
+  display: grid;
+  width: 160px;
+  height: 104px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-faint);
+  background: var(--canvas);
+}
+.videoPreview video { width: 100%; height: 100%; object-fit: cover; }
+
 .libraryButton {
   min-height: 35px;
   display: inline-flex;
@@ -121,4 +166,7 @@
   .spanTwo { grid-column: auto; }
   .photoField { grid-template-columns: 82px minmax(0, 1fr); gap: 12px; }
   .photoPreview { width: 82px; height: 82px; }
+  .videoField { grid-template-columns: 120px minmax(0, 1fr); gap: 12px; }
+  .videoPreview { width: 120px; height: 80px; }
+  .sectionHead { position: static; }
 }
