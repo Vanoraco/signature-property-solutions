@@ -5,6 +5,8 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.db import connection
 from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery, Value
@@ -29,6 +31,7 @@ from .serializers import (
     AgentSerializer, PropertyListSerializer, PropertyDetailSerializer,
     AboutSerializer, ServiceSerializer, ContactSerializer,
     TestimonialSerializer, PropertyRequestSerializer, PropertyRequestListSerializer,
+    UserSerializer, GroupSerializer,
 )
 
 
@@ -322,6 +325,37 @@ def user_me(request):
 class HomeViewSet(viewsets.ModelViewSet):
     queryset = home.objects.all()
     serializer_class = HomeSerializer
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = get_user_model().objects.all().order_by('-id')
+    serializer_class = UserSerializer
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    ordering_fields = ['username', 'email', 'date_joined', 'id']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Only staff accounts are managed through the admin dashboard.
+        return queryset.filter(is_staff=True)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.pk == request.user.pk:
+            return Response(
+                {'detail': 'You cannot delete your own account while signed in.',
+                 'property_count': 0},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all().order_by('name')
+    serializer_class = GroupSerializer
+    search_fields = ['name']
+    ordering_fields = ['name', 'id']
 
 
 class PropertyReferenceDeleteGuardMixin:

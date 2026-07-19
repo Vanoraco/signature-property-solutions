@@ -3,6 +3,7 @@ import api from '@/lib/api'
 import { fetchCollection } from '@/lib/api-collection'
 import type { AgentRecord } from '@/components/agents/types'
 import type { PropertyRequest, Testimonial, ServiceRecord } from '@/components/dashboard/types'
+import type { UserRecord, GroupRecord } from '@/components/users/types'
 import type {
   CategoryRecord,
   FacilityRecord,
@@ -38,6 +39,8 @@ export const adminQueryKeys = {
   testimonials: ['testimonials'] as const,
   services: ['services'] as const,
   propertyRequests: ['property-requests'] as const,
+  users: ['users'] as const,
+  groups: ['groups'] as const,
   mediaAssets: ['media-assets'] as const,
   mediaAssetsVideo: ['media-assets', 'video'] as const,
   dashboardRequests: ['dashboard', 'requests'] as const,
@@ -79,6 +82,16 @@ export const servicesQueryOptions = queryOptions({
 export const propertyRequestsQueryOptions = queryOptions({
   queryKey: adminQueryKeys.propertyRequests,
   queryFn: ({ signal }) => fetchCollection<PropertyRequest>('/requests/?ordering=-created_at', signal),
+})
+
+export const usersQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.users,
+  queryFn: ({ signal }) => fetchCollection<UserRecord>('/users/', signal),
+})
+
+export const groupsQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.groups,
+  queryFn: ({ signal }) => fetchCollection<GroupRecord>('/groups/', signal),
 })
 
 export const dashboardTestimonialsQueryOptions = queryOptions({

@@ -6,7 +6,7 @@ from .views import (
     LoginView, user_me, health_ready, media_asset_list, media_asset_download,
     HomeViewSet, CategoryViewSet, FacilityViewSet, AgentViewSet,
     PropertyViewSet, AboutViewSet, ServiceViewSet, ContactViewSet,
-    TestimonialViewSet, PropertyRequestViewSet,
+    TestimonialViewSet, PropertyRequestViewSet, UserViewSet, GroupViewSet,
 )
 
 router = DefaultRouter()
@@ -20,6 +20,8 @@ router.register(r'services', ServiceViewSet)
 router.register(r'contact', ContactViewSet)
 router.register(r'testimonials', TestimonialViewSet)
 router.register(r'requests', PropertyRequestViewSet)
+router.register(r'users', UserViewSet)
+router.register(r'groups', GroupViewSet)
 
 urlpatterns = [
     path('health/ready/', health_ready, name='health_ready'),

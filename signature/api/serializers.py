@@ -1,8 +1,67 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
 from signatureapp.models import (
     home, catagory, facilities, egent, propertys,
     about, serevices, contact, testimonial, property_request,
 )
+
+
+User = get_user_model()
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    user_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Group
+        fields = ['id', 'name', 'user_count']
+
+    def get_user_count(self, obj):
+        return obj.user_set.count()
+
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True, required=False)
+    group_names = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'is_staff', 'is_active', 'is_superuser', 'groups', 'group_names',
+            'password', 'date_joined', 'last_login',
+        ]
+        read_only_fields = ['date_joined', 'last_login']
+
+    def get_group_names(self, obj):
+        return [g.name for g in obj.groups.all()]
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        groups = validated_data.pop('groups', [])
+        user = User(**validated_data)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save()
+        if groups:
+            user.groups.set(groups)
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        groups = validated_data.pop('groups', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        if groups is not None:
+            instance.groups.set(groups)
+        return instance
 
 
 class HomeSerializer(serializers.ModelSerializer):
