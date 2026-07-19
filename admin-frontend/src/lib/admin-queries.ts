@@ -2,7 +2,7 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { fetchCollection } from '@/lib/api-collection'
 import type { AgentRecord } from '@/components/agents/types'
-import type { PropertyRequest, Testimonial } from '@/components/dashboard/types'
+import type { PropertyRequest, Testimonial, ServiceRecord } from '@/components/dashboard/types'
 import type {
   CategoryRecord,
   FacilityRecord,
@@ -35,6 +35,9 @@ export const adminQueryKeys = {
   categories: ['categories'] as const,
   facilities: ['facilities'] as const,
   agents: ['agents'] as const,
+  testimonials: ['testimonials'] as const,
+  services: ['services'] as const,
+  propertyRequests: ['property-requests'] as const,
   mediaAssets: ['media-assets'] as const,
   mediaAssetsVideo: ['media-assets', 'video'] as const,
   dashboardRequests: ['dashboard', 'requests'] as const,
@@ -60,6 +63,21 @@ export function lookupQueryOptions<Kind extends LookupKind>(kind: Kind) {
 
 export const dashboardRequestsQueryOptions = queryOptions({
   queryKey: adminQueryKeys.dashboardRequests,
+  queryFn: ({ signal }) => fetchCollection<PropertyRequest>('/requests/?ordering=-created_at', signal),
+})
+
+export const testimonialsQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.testimonials,
+  queryFn: ({ signal }) => fetchCollection<Testimonial>('/testimonials/', signal),
+})
+
+export const servicesQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.services,
+  queryFn: ({ signal }) => fetchCollection<ServiceRecord>('/services/', signal),
+})
+
+export const propertyRequestsQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.propertyRequests,
   queryFn: ({ signal }) => fetchCollection<PropertyRequest>('/requests/?ordering=-created_at', signal),
 })
 

@@ -36,11 +36,31 @@ export interface PropertyRequest {
   property_type: string
   goal: string
   location: string
+  budget: string
+  message: string
+  source_page: string
   is_reviewed: boolean
   created_at: string
 }
 
 export interface Testimonial {
   id: number
+  name: string
+  role: string
+  location: string
+  quote: string
+  image: string | null
+  rating: number
   is_published: boolean
+  created_at: string
+}
+
+export interface ServiceRecord {
+  id: number
+  service_name: string
+  slug: string
+  short_discriptions: string
+  Discription: string
+  icon: string | null
+  image: string | null
 }
