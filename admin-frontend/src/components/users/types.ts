@@ -1,3 +1,5 @@
+import type { PermissionRecord } from '@/components/roles/types'
+
 export interface UserRecord {
   id: number
   username: string
@@ -13,8 +15,13 @@ export interface UserRecord {
   last_login: string | null
 }
 
-export interface GroupRecord {
+export type GroupRecord = {
   id: number
   name: string
   user_count: number
+  permissions: number[]
+  permission_details: PermissionRecord[]
 }
+
+// Re-export so existing imports of GroupRecord from users/types keep working.
+export type { PermissionRecord } from '@/components/roles/types'

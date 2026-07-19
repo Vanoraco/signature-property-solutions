@@ -4,6 +4,7 @@ import { fetchCollection } from '@/lib/api-collection'
 import type { AgentRecord } from '@/components/agents/types'
 import type { PropertyRequest, Testimonial, ServiceRecord } from '@/components/dashboard/types'
 import type { UserRecord, GroupRecord } from '@/components/users/types'
+import type { PermissionRecord } from '@/components/roles/types'
 import type {
   CategoryRecord,
   FacilityRecord,
@@ -92,6 +93,15 @@ export const usersQueryOptions = queryOptions({
 export const groupsQueryOptions = queryOptions({
   queryKey: adminQueryKeys.groups,
   queryFn: ({ signal }) => fetchCollection<GroupRecord>('/groups/', signal),
+})
+
+export const permissionsQueryOptions = queryOptions({
+  queryKey: ['permissions'] as const,
+  queryFn: async ({ signal }) => {
+    const response = await api.get<{ count: number; results: PermissionRecord[] }>('/permissions/', { signal })
+    return response.data
+  },
+  staleTime: 30 * 60_000,
 })
 
 export const dashboardTestimonialsQueryOptions = queryOptions({

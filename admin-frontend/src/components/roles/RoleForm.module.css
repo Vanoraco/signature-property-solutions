@@ -1,0 +1,93 @@
+.form { display: grid; gap: 20px; }
+
+.field { display: grid; align-content: start; gap: 6px; min-width: 0; }
+.label { color: var(--text); font-size: 11.5px; font-weight: 750; }
+.required { color: var(--danger); }
+
+.input {
+  width: 100%;
+  min-height: 39px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  outline: none;
+  color: var(--text);
+  background: var(--card);
+  font: inherit;
+  font-size: 13px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.input:focus { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-tint); }
+
+.hint, .errorText { margin: 0; font-size: 11.5px; line-height: 1.4; }
+.hint { color: var(--text-faint); }
+.errorText { color: var(--danger); }
+
+.formAlert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 9px 11px;
+  border: 1px solid var(--danger-tint);
+  border-radius: 7px;
+  color: var(--danger);
+  background: var(--danger-tint);
+  font-size: 12.5px;
+}
+
+.permissionGroups { display: grid; gap: 10px; max-height: 460px; overflow-y: auto; padding-right: 4px; }
+
+.permissionGroup {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--canvas);
+  overflow: hidden;
+}
+
+.permissionGroupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 12.5px;
+  text-transform: capitalize;
+}
+.permissionGroupHead strong { color: var(--text); text-transform: capitalize; }
+.permissionGroupCount { color: var(--text-faint); font-size: 11px; font-family: var(--font-mono); }
+
+.permissionList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+  padding: 10px 14px 12px;
+}
+
+.permissionOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+}
+.permissionOption:hover { border-color: var(--brass); }
+.permissionOption input { margin: 2px 0 0; }
+.permissionCopy { display: flex; flex-direction: column; min-width: 0; }
+.permissionCopy strong {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-transform: lowercase;
+}
+.permissionCopy span {
+  color: var(--text-faint);
+  font-size: 11px;
+  line-height: 1.35;
+}

@@ -10,15 +10,42 @@ from signatureapp.models import (
 User = get_user_model()
 
 
+class PermissionSerializer(serializers.ModelSerializer):
+    model = serializers.CharField(source='content_type.model', read_only=True)
+    app_label = serializers.CharField(source='content_type.app_label', read_only=True)
+
+    class Meta:
+        model = Permission
+        fields = ['id', 'name', 'codename', 'model', 'app_label']
+
+
 class GroupSerializer(serializers.ModelSerializer):
     user_count = serializers.SerializerMethodField()
+    permissions = serializers.PrimaryKeyRelatedField(
+        queryset=Permission.objects.select_related('content_type').all(),
+        many=True,
+        required=False,
+    )
+    permission_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Group
-        fields = ['id', 'name', 'user_count']
+        fields = ['id', 'name', 'user_count', 'permissions', 'permission_details']
 
     def get_user_count(self, obj):
         return obj.user_set.count()
+
+    def get_permission_details(self, obj):
+        return [
+            {
+                'id': p.id,
+                'name': p.name,
+                'codename': p.codename,
+                'model': p.content_type.model,
+                'app_label': p.content_type.app_label,
+            }
+            for p in obj.permissions.select_related('content_type').all()
+        ]
 
 
 class UserSerializer(serializers.ModelSerializer):

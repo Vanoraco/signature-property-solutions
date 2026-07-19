@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.db import connection
 from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery, Value
@@ -356,6 +356,33 @@ class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = GroupSerializer
     search_fields = ['name']
     ordering_fields = ['name', 'id']
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def list_permissions(request):
+    """Return the catalog of assignable permissions for the Roles editor.
+
+    Restricted to app-level permissions (signatureapp) plus User management
+    so the UI never offers internal Django permissions like LogEntry.
+    """
+    from django.contrib.contenttypes.models import ContentType
+    app_labels = ['signatureapp', 'auth']
+    content_types = ContentType.objects.filter(app_label__in=app_labels)
+    permissions = Permission.objects.filter(content_type__in=content_types).select_related('content_type')
+    return Response({
+        'count': permissions.count(),
+        'results': [
+            {
+                'id': p.id,
+                'name': p.name,
+                'codename': p.codename,
+                'model': p.content_type.model,
+                'app_label': p.content_type.app_label,
+            }
+            for p in permissions.order_by('content_type__app_label', 'content_type__model', 'codename')
+        ],
+    })
 
 
 class PropertyReferenceDeleteGuardMixin:

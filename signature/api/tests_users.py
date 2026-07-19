@@ -103,3 +103,32 @@ class GroupApiTests(APITestCase):
         renamed = self.client.patch(f'/api/groups/{group_id}/', {'name': 'Auditors'}, format='json')
         self.assertEqual(renamed.status_code, status.HTTP_200_OK)
         self.assertEqual(renamed.data['name'], 'Auditors')
+
+
+class PermissionsCatalogApiTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='perms-admin', password='pw', is_staff=True,
+        )
+        self.client.force_authenticate(self.admin)
+
+    def test_list_returns_app_permissions(self):
+        response = self.client.get('/api/permissions/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(response.data['count'], 4)
+        app_labels = {p['app_label'] for p in response.data['results']}
+        self.assertIn('signatureapp', app_labels)
+        self.assertIn('auth', app_labels)
+        # Internal Django permissions are filtered out
+        self.assertNotIn('admin', app_labels)
+
+    def test_group_can_be_assigned_permissions(self):
+        from django.contrib.auth.models import Permission
+        perm = Permission.objects.filter(content_type__app_label='signatureapp').first()
+        self.assertIsNotNone(perm)
+        group = Group.objects.create(name='Content Editors')
+        response = self.client.patch(f'/api/groups/{group.id}/', {
+            'permissions': [perm.id],
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertIn(perm, group.permissions.all())
