@@ -7,12 +7,10 @@ import Sidebar from './Sidebar'
 const mocks = vi.hoisted(() => ({
   dataPrefetch: vi.fn(),
   logout: vi.fn(),
-  routePrefetch: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/properties',
-  useRouter: () => ({ prefetch: mocks.routePrefetch }),
 }))
 
 vi.mock('next/link', () => ({
@@ -60,19 +58,14 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('Sidebar route intent prefetch', () => {
-  it('prefetches route bundles and data on hover, focus, and touch', () => {
+describe('Sidebar route data prefetch', () => {
+  it('prefetches route data on hover, focus, and touch', () => {
     const queryClient = renderSidebar()
 
     fireEvent.mouseEnter(screen.getByRole('link', { name: 'Categories' }))
     fireEvent.focus(screen.getByRole('link', { name: 'Facilities' }))
     fireEvent.touchStart(screen.getByRole('link', { name: 'Agents' }))
 
-    expect(mocks.routePrefetch.mock.calls.map(([href]) => href)).toEqual([
-      '/categories',
-      '/facilities',
-      '/agents',
-    ])
     expect(mocks.dataPrefetch).toHaveBeenNthCalledWith(1, queryClient, '/categories')
     expect(mocks.dataPrefetch).toHaveBeenNthCalledWith(2, queryClient, '/facilities')
     expect(mocks.dataPrefetch).toHaveBeenNthCalledWith(3, queryClient, '/agents')

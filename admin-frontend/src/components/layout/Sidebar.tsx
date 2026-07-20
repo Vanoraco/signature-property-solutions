@@ -2,7 +2,7 @@
 import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -74,15 +74,17 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNavigate }: SidebarProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Properties: true })
   const pathname = usePathname()
-  const router = useRouter()
   const queryClient = useQueryClient()
   const { logout } = useAuth()
   const visuallyCollapsed = collapsed && !mobileOpen
 
   const preloadRoute = useCallback((href: string) => {
-    router.prefetch(href)
+    // Only prefetch the data (React Query cache), NOT the RSC payload.
+    // router.prefetch() triggers ?_rsc= fetches for every hover/focus/
+    // touchstart, which floods the Node process with concurrent HTTP/2
+    // streams and causes ERR_HTTP2_PROTOCOL_ERROR on the VPS.
     void prefetchAdminRouteData(queryClient, href)
-  }, [queryClient, router])
+  }, [queryClient])
 
   const handleLogout = () => {
     onNavigate()
