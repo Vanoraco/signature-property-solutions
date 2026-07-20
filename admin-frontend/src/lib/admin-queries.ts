@@ -46,8 +46,10 @@ export const adminQueryKeys = {
   searchEvents: ['search-events'] as const,
   mediaAssets: ['media-assets'] as const,
   mediaAssetsVideo: ['media-assets', 'video'] as const,
-  dashboardRequests: ['dashboard', 'requests'] as const,
-  dashboardTestimonials: ['dashboard', 'testimonials'] as const,
+  // Dashboard and list pages consume the same collections. Sharing their
+  // keys prevents a second request when navigation follows the dashboard.
+  dashboardRequests: ['property-requests'] as const,
+  dashboardTestimonials: ['testimonials'] as const,
 }
 
 export const propertiesQueryOptions = queryOptions({
@@ -230,16 +232,8 @@ export async function prefetchAdminRouteData(queryClient: QueryClient, href: str
 }
 
 export async function warmAdminQueryCache(queryClient: QueryClient) {
-  await Promise.allSettled([
-    prefetchDashboardQueries(queryClient),
-    queryClient.prefetchQuery(lookupQueryOptions('categories')),
-    queryClient.prefetchQuery(lookupQueryOptions('facilities')),
-    queryClient.prefetchQuery(mediaAssetsQueryOptions),
-    queryClient.prefetchQuery(testimonialsQueryOptions),
-    queryClient.prefetchQuery(servicesQueryOptions),
-    queryClient.prefetchQuery(propertyRequestsQueryOptions),
-    queryClient.prefetchQuery(usersQueryOptions),
-    queryClient.prefetchQuery(groupsQueryOptions),
-    queryClient.prefetchQuery(searchEventsQueryOptions),
-  ])
+  // The dashboard uses these queries immediately after authentication. Other
+  // routes warm on explicit sidebar intent so they do not occupy the API's
+  // single worker while the user is trying to navigate.
+  await Promise.allSettled([prefetchDashboardQueries(queryClient)])
 }

@@ -46,7 +46,6 @@ interface BulkDeleteResult {
 
 const TESTIMONIAL_DEPENDENT_QUERY_KEYS = [
   adminQueryKeys.testimonials,
-  adminQueryKeys.dashboardTestimonials,
 ] as const
 
 async function invalidateTestimonialCaches(queryClient: QueryClient) {

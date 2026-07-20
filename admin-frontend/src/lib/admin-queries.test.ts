@@ -87,14 +87,12 @@ describe('admin route query prefetch', () => {
     expect(queryClient.getQueryState(['dashboard', 'agents'])).toBeUndefined()
   })
 
-  it('warms every implemented sidebar data source after authentication', async () => {
+  it('warms only data needed by the dashboard after authentication', async () => {
     const queryClient = createQueryClient()
 
     await warmAdminQueryCache(queryClient)
 
     expect(queryClient.getQueryData(adminQueryKeys.properties)).toEqual(collections['/properties/'])
-    expect(queryClient.getQueryData(adminQueryKeys.categories)).toEqual(collections['/categories/'])
-    expect(queryClient.getQueryData(adminQueryKeys.facilities)).toEqual(collections['/facilities/'])
     expect(queryClient.getQueryData(adminQueryKeys.agents)).toEqual(collections['/agents/'])
     expect(queryClient.getQueryData(adminQueryKeys.dashboardRequests)).toEqual(
       collections['/requests/?ordering=-created_at'],
@@ -102,6 +100,8 @@ describe('admin route query prefetch', () => {
     expect(queryClient.getQueryData(adminQueryKeys.dashboardTestimonials)).toEqual(
       collections['/testimonials/'],
     )
-    expect(queryClient.getQueryData(adminQueryKeys.mediaAssets)).toEqual(media)
+    expect(queryClient.getQueryData(adminQueryKeys.categories)).toBeUndefined()
+    expect(queryClient.getQueryData(adminQueryKeys.facilities)).toBeUndefined()
+    expect(queryClient.getQueryData(adminQueryKeys.mediaAssets)).toBeUndefined()
   })
 })

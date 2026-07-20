@@ -36,16 +36,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [isLogin, user])
 
   useEffect(() => {
-    if (isLogin || !user) return
+    if (isLogin || pathname !== '/' || !user) return
 
     void warmAdminQueryCache(queryClient)
 
-    // Route JS bundles are prefetched on sidebar hover/focus/touchstart
-    // via Sidebar.preloadRoute(). The idle warm-up below was preloading
-    // every route's RSC payload simultaneously, causing console "preloaded
-    // but not used" warnings and competing for HTTP/2 streams on first
-    // load. Removing it keeps navigation fast without the noise.
-  }, [isLogin, queryClient, router, user])
+    // Sidebar intent warms route data without asking Next to prefetch RSC
+    // payloads. This initial warm-up is intentionally dashboard-only.
+  }, [isLogin, pathname, queryClient, user])
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
   const closeCommandPalette = useCallback(() => setCommandPaletteOpen(false), [])

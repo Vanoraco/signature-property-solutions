@@ -14,8 +14,8 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a {...props}>{children}</a>
+  default: ({ children, prefetch, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => (
+    <a {...props} data-next-prefetch={String(prefetch)}>{children}</a>
   ),
 }))
 
@@ -39,7 +39,7 @@ vi.mock('@/lib/admin-queries', () => ({
   prefetchAdminRouteData: mocks.dataPrefetch,
 }))
 
-function renderSidebar() {
+function renderSidebar(onNavigate = vi.fn()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
@@ -47,7 +47,7 @@ function renderSidebar() {
         collapsed={false}
         mobileOpen={false}
         onToggleCollapsed={vi.fn()}
-        onNavigate={vi.fn()}
+        onNavigate={onNavigate}
       />
     </QueryClientProvider>,
   )
@@ -69,5 +69,19 @@ describe('Sidebar route data prefetch', () => {
     expect(mocks.dataPrefetch).toHaveBeenNthCalledWith(1, queryClient, '/categories')
     expect(mocks.dataPrefetch).toHaveBeenNthCalledWith(2, queryClient, '/facilities')
     expect(mocks.dataPrefetch).toHaveBeenNthCalledWith(3, queryClient, '/agents')
+  })
+
+  it('disables Next RSC prefetch and still navigates on click', () => {
+    const onNavigate = vi.fn()
+    renderSidebar(onNavigate)
+    const categories = screen.getByRole('link', { name: 'Categories' })
+
+    fireEvent.mouseEnter(categories)
+    fireEvent.focus(categories)
+    fireEvent.click(categories)
+
+    expect(mocks.dataPrefetch).toHaveBeenCalledTimes(1)
+    expect(categories).toHaveAttribute('data-next-prefetch', 'false')
+    expect(onNavigate).toHaveBeenCalledTimes(1)
   })
 })

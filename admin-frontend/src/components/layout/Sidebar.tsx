@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -77,13 +77,16 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
   const queryClient = useQueryClient()
   const { logout } = useAuth()
   const visuallyCollapsed = collapsed && !mobileOpen
+  const warmingRoutes = useRef(new Set<string>())
 
   const preloadRoute = useCallback((href: string) => {
-    // Only prefetch the data (React Query cache), NOT the RSC payload.
-    // router.prefetch() triggers ?_rsc= fetches for every hover/focus/
-    // touchstart, which floods the Node process with concurrent HTTP/2
-    // streams and causes ERR_HTTP2_PROTOCOL_ERROR on the VPS.
-    void prefetchAdminRouteData(queryClient, href)
+    if (warmingRoutes.current.has(href)) return
+    warmingRoutes.current.add(href)
+    // Warm only React Query data. `prefetch={false}` keeps Next from opening
+    // background RSC streams on sidebar hover, focus, or touch.
+    void Promise.resolve(prefetchAdminRouteData(queryClient, href))
+      .catch(() => undefined)
+      .finally(() => warmingRoutes.current.delete(href))
   }, [queryClient])
 
   const handleLogout = () => {
@@ -106,6 +109,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
 
       <Link
         href="/"
+        prefetch={false}
         onClick={onNavigate}
         onMouseEnter={() => preloadRoute('/')}
         onFocus={() => preloadRoute('/')}
@@ -117,7 +121,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
           <Image src="/headerlogo.png" alt="" fill sizes="220px" className="sidebar-logo-image" priority />
         </span>
         <span className="sidebar-logo-compact" aria-hidden="true">
-          <Image src="/favicon.png" alt="" fill sizes="42px" className="sidebar-favicon-image" priority />
+          <Image src="/favicon.png" alt="" fill sizes="42px" className="sidebar-favicon-image" />
         </span>
       </Link>
 
@@ -130,6 +134,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 onClick={onNavigate}
                 onMouseEnter={() => preloadRoute(item.href)}
                 onFocus={() => preloadRoute(item.href)}
@@ -167,6 +172,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
                     <Link
                       key={child.href}
                       href={child.href}
+                      prefetch={false}
                       onClick={onNavigate}
                       onMouseEnter={() => preloadRoute(child.href)}
                       onFocus={() => preloadRoute(child.href)}

@@ -18,7 +18,6 @@ import AdminToast, {
 
 const REQUEST_DEPENDENT_QUERY_KEYS = [
   adminQueryKeys.propertyRequests,
-  adminQueryKeys.dashboardRequests,
 ] as const
 
 async function invalidateRequestCaches(queryClient: QueryClient) {

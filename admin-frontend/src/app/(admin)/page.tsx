@@ -205,7 +205,7 @@ export default function DashboardPage() {
         <section className="panel">
           <div className="panel-head">
             <h3>Recent Property Requests</h3>
-            <Link href="/requests" className={styles.panelAction}>View all</Link>
+            <Link href="/requests" prefetch={false} className={styles.panelAction}>View all</Link>
           </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
         <section className="panel">
           <div className="panel-head">
             <h3>Live Search Activity</h3>
-            <Link href="/search" className={styles.panelAction}>View all</Link>
+            <Link href="/search" prefetch={false} className={styles.panelAction}>View all</Link>
           </div>
           <div className={`panel-body ${styles.searchList}`}>
             {liveSearchActivity.map((query) => (
