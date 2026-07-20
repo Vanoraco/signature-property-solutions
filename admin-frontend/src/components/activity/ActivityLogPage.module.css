@@ -1,0 +1,72 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.select {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  outline: none;
+  color: var(--text);
+  background: var(--card);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.select:focus { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-tint); }
+
+.logList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.logItem {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+}
+.logItem:last-child { border-bottom: 0; }
+
+.logIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--text-faint);
+}
+.logIconCreate { background: var(--success-tint); color: var(--success); }
+.logIconUpdate { background: var(--brass-tint); color: var(--brass-dark); }
+.logIconDelete { background: var(--danger-tint); color: var(--danger); }
+
+.logCopy { min-width: 0; }
+.logSummary { color: var(--text); font-weight: 600; font-size: 13px; line-height: 1.4; }
+.logMeta { color: var(--text-faint); font-size: 11.5px; margin-top: 2px; }
+
+.logTime { color: var(--text-faint); font-size: 11px; white-space: nowrap; font-family: var(--font-mono); }
+
+.state {
+  min-height: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 30px;
+  color: var(--text-faint);
+  text-align: center;
+  font-size: 12.5px;
+}
+.empty { flex-direction: column; }
+.empty strong { color: var(--text); font-family: var(--font-display); font-size: 14px; }

@@ -403,3 +403,58 @@ class property_request(models.Model):
 
     def __str__(self):
         return self.property_type or self.location or f"Request #{self.pk}"
+
+
+class ActivityLogEntry(models.Model):
+    """Append-only audit trail of staff actions across the admin dashboard.
+
+    Populated by post_save / post_delete signals on the models that matter
+    to the admin (properties, agents, lookups, content, testimonials,
+    services, requests, users, groups). Read-only through the API — entries
+    are never edited or deleted from the UI.
+    """
+
+    ACTIONS = [
+        ('create', 'Created'),
+        ('update', 'Updated'),
+        ('delete', 'Deleted'),
+        ('login', 'Signed in'),
+        ('login_failed', 'Failed sign-in'),
+    ]
+
+    actor = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activity_log_entries',
+    )
+    actor_username = models.CharField(max_length=150, blank=True)
+    action = models.CharField(max_length=20, choices=ACTIONS)
+    target_model = models.CharField(max_length=150)
+    target_id = models.IntegerField(null=True, blank=True)
+    target_label = models.CharField(max_length=300, blank=True)
+    summary = models.CharField(max_length=600, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'activity_log_entry'
+        verbose_name_plural = 'Activity Log'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.actor_username or 'system'} — {self.action} {self.target_model}"
+
+
+def _activity_log(actor_username, action, target_model, target_id=None, target_label='', summary=''):
+    """Insert helper used by signals. Safe to call without an admin user."""
+    if not target_model:
+        return
+    ActivityLogEntry.objects.create(
+        actor_username=actor_username,
+        action=action,
+        target_model=target_model,
+        target_id=target_id,
+        target_label=str(target_label)[:300] if target_label else '',
+        summary=str(summary)[:600] if summary else '',
+    )

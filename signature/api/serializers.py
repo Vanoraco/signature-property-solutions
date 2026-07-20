@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group, Permission
 from signatureapp.models import (
     home, catagory, facilities, egent, propertys,
     about, serevices, contact, testimonial, property_request,
+    ActivityLogEntry,
 )
 
 
@@ -209,3 +210,14 @@ class PropertyRequestListSerializer(serializers.ModelSerializer):
             'is_reviewed', 'created_at',
         ]
         read_only_fields = ['created_at']
+
+
+class ActivityLogEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivityLogEntry
+        fields = [
+            'id', 'actor', 'actor_username', 'action',
+            'target_model', 'target_id', 'target_label',
+            'summary', 'created_at',
+        ]
+        read_only_fields = fields
