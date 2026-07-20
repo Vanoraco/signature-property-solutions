@@ -7,9 +7,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, FileText, Building2, Megaphone, Inbox,
-  Shield, ImageIcon, ChevronLeft, ChevronRight, ChevronDown, LogOut
+  Shield, ImageIcon, ChevronLeft, ChevronRight, ChevronDown
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth'
 import { prefetchAdminRouteData } from '@/lib/admin-queries'
 
 type AdminNavLink = {
@@ -75,7 +74,6 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Properties: true })
   const pathname = usePathname()
   const queryClient = useQueryClient()
-  const { logout } = useAuth()
   const visuallyCollapsed = collapsed && !mobileOpen
   const warmingRoutes = useRef(new Set<string>())
 
@@ -88,11 +86,6 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
       .catch(() => undefined)
       .finally(() => warmingRoutes.current.delete(href))
   }, [queryClient])
-
-  const handleLogout = () => {
-    onNavigate()
-    logout()
-  }
 
   return (
     <aside id="sidebar" className={`sidebar ${visuallyCollapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
@@ -189,18 +182,6 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
             </div>
           )
         })}
-        <div className="nav-logout-wrap">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="nav-link sidebar-logout"
-            aria-label="Log out"
-            title={visuallyCollapsed ? 'Log out' : undefined}
-          >
-            <span className="nav-icon"><LogOut size={17} strokeWidth={1.9} /></span>
-            <span className="nav-label">Log out</span>
-          </button>
-        </div>
       </nav>
     </aside>
   )

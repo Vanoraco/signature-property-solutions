@@ -389,23 +389,6 @@ a { color: inherit; text-decoration: none; }
   background: transparent !important;
 }
 
-.nav-logout-wrap {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-
-.sidebar-logout {
-  margin-bottom: 0;
-  color: rgba(255,255,255,.68);
-}
-
-.sidebar-logout:hover,
-.sidebar-logout:focus-visible {
-  color: #fff;
-  background: rgba(198,73,63,.14);
-}
-
 .sidebar.collapsed .nav-label,
 .sidebar.collapsed .nav-caret,
 .sidebar.collapsed .nav-group-title,
@@ -710,6 +693,16 @@ a { color: inherit; text-decoration: none; }
   height: 48px;
   flex-basis: 48px;
   font-size: 16px;
+}
+
+.profile-danger-icon { color: var(--admin-danger-foreground); }
+
+.profile-signout-button { color: var(--admin-danger-foreground); }
+
+.profile-signout-button:hover,
+.profile-signout-button:focus-visible {
+  color: var(--admin-danger-foreground);
+  background: var(--danger-tint);
 }
 
 .badge-dot {

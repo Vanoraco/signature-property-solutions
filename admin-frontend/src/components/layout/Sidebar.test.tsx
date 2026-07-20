@@ -6,7 +6,6 @@ import Sidebar from './Sidebar'
 
 const mocks = vi.hoisted(() => ({
   dataPrefetch: vi.fn(),
-  logout: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -29,10 +28,6 @@ vi.mock('next/image', () => ({
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img {...props} />
   },
-}))
-
-vi.mock('@/lib/auth', () => ({
-  useAuth: () => ({ logout: mocks.logout }),
 }))
 
 vi.mock('@/lib/admin-queries', () => ({
@@ -83,5 +78,11 @@ describe('Sidebar route data prefetch', () => {
     expect(mocks.dataPrefetch).toHaveBeenCalledTimes(1)
     expect(categories).toHaveAttribute('data-next-prefetch', 'false')
     expect(onNavigate).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps logout out of the sidebar', () => {
+    renderSidebar()
+
+    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
   })
 })
