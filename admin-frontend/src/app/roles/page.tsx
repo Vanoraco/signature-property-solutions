@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, Check, Edit, LoaderCircle, Plus, Shield, Trash2, Users } from 'lucide-react'
+import { AlertCircle, Check, Edit, LoaderCircle, Plus, Search, Shield, Trash2, Users } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 import api from '@/lib/api'
 import { adminQueryKeys, groupsQueryOptions, permissionsQueryOptions } from '@/lib/admin-queries'
@@ -59,6 +59,7 @@ interface RoleFormProps {
 }
 
 function RoleForm({ formId = 'role-editor-form', initialRole, apiErrors, onSubmit }: RoleFormProps) {
+  const [permSearch, setPermSearch] = useState('')
   const {
     register,
     control,
@@ -74,7 +75,7 @@ function RoleForm({ formId = 'role-editor-form', initialRole, apiErrors, onSubmi
   const selected = useWatch({ control, name: 'permissions' })
 
   const permissionsQuery = useQuery(permissionsQueryOptions)
-  const permissions = permissionsQuery.data?.results ?? []
+  const permissions = useMemo(() => permissionsQuery.data?.results ?? [], [permissionsQuery.data])
 
   useEffect(() => {
     if (!apiErrors) return
@@ -90,7 +91,32 @@ function RoleForm({ formId = 'role-editor-form', initialRole, apiErrors, onSubmi
     setValue('permissions', next, { shouldDirty: true })
   }
 
-  const grouped = groupPermissionsByModel(permissions as PermissionRecord[])
+  const toggleAllInGroup = (groupPerms: PermissionRecord[]) => {
+    const allSelected = groupPerms.every(p => selected.includes(p.id))
+    if (allSelected) {
+      const groupIds = new Set(groupPerms.map(p => p.id))
+      setValue('permissions', selected.filter(id => !groupIds.has(id)), { shouldDirty: true })
+    } else {
+      const newIds = groupPerms.map(p => p.id).filter(id => !selected.includes(id))
+      setValue('permissions', [...selected, ...newIds], { shouldDirty: true })
+    }
+  }
+
+  const grouped = useMemo(() => {
+    const all = groupPermissionsByModel(permissions as PermissionRecord[])
+    const query = permSearch.trim().toLowerCase()
+    if (!query) return all
+    return all
+      .map(g => ({
+        ...g,
+        permissions: g.permissions.filter(p =>
+          p.codename.toLowerCase().includes(query) ||
+          p.name.toLowerCase().includes(query) ||
+          g.model.toLowerCase().includes(query)
+        ),
+      }))
+      .filter(g => g.permissions.length > 0)
+  }, [permissions, permSearch])
 
   return (
     <form id={formId} className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -106,40 +132,83 @@ function RoleForm({ formId = 'role-editor-form', initialRole, apiErrors, onSubmi
       </Field>
 
       <div className={styles.field}>
-        <span className={styles.label}>Permissions</span>
+        <span className={styles.label}>Permissions <span className={styles.permissionSummary}>{selected.length} selected</span></span>
         {permissionsQuery.isLoading ? (
           <p className={styles.hint}>Loading permissions…</p>
         ) : permissions.length === 0 ? (
           <p className={styles.hint}>No permissions available.</p>
         ) : (
-          <div className={styles.permissionGroups}>
-            {grouped.map(group => (
-              <details key={group.key} className={styles.permissionGroup} open>
-                <summary className={styles.permissionGroupHead}>
-                  <strong>{group.model}</strong>
-                  <span className={styles.permissionGroupCount}>{group.permissions.length} permission{group.permissions.length === 1 ? '' : 's'}</span>
-                </summary>
-                <div className={styles.permissionList}>
-                  {group.permissions.map(p => {
-                    const checked = selected.includes(p.id)
-                    return (
-                      <label key={p.id} className={styles.permissionOption}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => togglePermission(p.id)}
-                        />
-                        <span className={styles.permissionCopy}>
-                          <strong>{p.codename}</strong>
-                          <span>{p.name}</span>
+          <>
+            <div className={styles.permissionToolbar}>
+              <label className={styles.permissionSearch}>
+                <Search aria-hidden="true" size={14} />
+                <input
+                  type="search"
+                  value={permSearch}
+                  onChange={e => setPermSearch(e.target.value)}
+                  placeholder="Search permissions..."
+                />
+              </label>
+            </div>
+            <div className={styles.permissionGroups}>
+              {grouped.map(group => {
+                const groupIds = group.permissions.map(p => p.id)
+                const selectedCount = groupIds.filter(id => selected.includes(id)).length
+                const allSelected = selectedCount === groupIds.length && groupIds.length > 0
+                // Auto-expand groups that already have selected perms or match search
+                const hasSelected = selectedCount > 0
+                const isSearching = permSearch.trim().length > 0
+                return (
+                  <details
+                    key={group.key}
+                    className={styles.permissionGroup}
+                    open={hasSelected || isSearching}
+                  >
+                    <summary className={styles.permissionGroupHead}>
+                      <strong>{group.model}</strong>
+                      <span className={styles.permissionGroupMeta}>
+                        <span className={styles.permissionGroupCount}>
+                          {selectedCount}/{groupIds.length}
                         </span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </details>
-            ))}
-          </div>
+                        <button
+                          type="button"
+                          className={styles.selectAllBtn}
+                          onClick={e => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleAllInGroup(group.permissions)
+                          }}
+                        >
+                          {allSelected ? 'Clear' : 'All'}
+                        </button>
+                      </span>
+                    </summary>
+                    <div className={styles.permissionList}>
+                      {group.permissions.map(p => {
+                        const checked = selected.includes(p.id)
+                        return (
+                          <label key={p.id} className={styles.permissionOption}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => togglePermission(p.id)}
+                            />
+                            <span className={styles.permissionCopy}>
+                              <strong>{p.codename}</strong>
+                              <span>{p.name}</span>
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </details>
+                )
+              })}
+              {grouped.length === 0 ? (
+                <div className={styles.permissionEmpty}>No permissions match your search.</div>
+              ) : null}
+            </div>
+          </>
         )}
         {errors.permissions?.message ? <p className={styles.errorText}>{errors.permissions.message}</p> : null}
       </div>

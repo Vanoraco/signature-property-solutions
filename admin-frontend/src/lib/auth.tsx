@@ -27,7 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = localStorage.getItem('access_token')
     let loadingFrame: number | undefined
     if (token) {
-      api.get('/auth/me/')
+      // Use a silent request that does NOT trigger the 401 refresh interceptor
+      // — an expired token here simply means "go to login", not "try to refresh
+      // and retry" which would add a second round-trip and console error.
+      api.get('/auth/me/', { _silentAuth: true } as Parameters<typeof api.get>[1])
         .then(res => setUser(res.data))
         .catch(() => {
           localStorage.removeItem('access_token')

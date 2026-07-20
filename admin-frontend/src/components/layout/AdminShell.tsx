@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth'
-import { ADMIN_PREFETCH_ROUTES, warmAdminQueryCache } from '@/lib/admin-queries'
+import { warmAdminQueryCache } from '@/lib/admin-queries'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import CommandPalette from '@/components/layout/CommandPalette'
@@ -40,18 +40,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
     void warmAdminQueryCache(queryClient)
 
-    const warmRouteBundles = () => {
-      ADMIN_PREFETCH_ROUTES.forEach(route => router.prefetch(route))
-    }
-
-    const requestIdleCallback = window.requestIdleCallback?.bind(window)
-    if (requestIdleCallback) {
-      const idleId = requestIdleCallback(warmRouteBundles, { timeout: 1_500 })
-      return () => window.cancelIdleCallback(idleId)
-    }
-
-    const timerId = window.setTimeout(warmRouteBundles, 250)
-    return () => window.clearTimeout(timerId)
+    // Route JS bundles are prefetched on sidebar hover/focus/touchstart
+    // via Sidebar.preloadRoute(). The idle warm-up below was preloading
+    // every route's RSC payload simultaneously, causing console "preloaded
+    // but not used" warnings and competing for HTTP/2 streams on first
+    // load. Removing it keeps navigation fast without the noise.
   }, [isLogin, queryClient, router, user])
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])

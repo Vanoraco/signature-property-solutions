@@ -36,7 +36,52 @@
   font-size: 12.5px;
 }
 
-.permissionGroups { display: grid; gap: 10px; max-height: 460px; overflow-y: auto; padding-right: 4px; }
+/* Permission toolbar */
+.permissionToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.permissionSearch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--text-faint);
+}
+.permissionSearch:focus-within { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-tint); }
+.permissionSearch input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px;
+}
+.permissionSummary {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* Permission groups — collapsed by default */
+.permissionGroups {
+  display: grid;
+  gap: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 2px;
+}
 
 .permissionGroup {
   border: 1px solid var(--border);
@@ -44,50 +89,93 @@
   background: var(--canvas);
   overflow: hidden;
 }
+.permissionGroup[open] { border-color: var(--brass-tint); }
 
 .permissionGroupHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   cursor: pointer;
-  padding: 10px 14px;
+  padding: 9px 12px;
   background: var(--card);
-  border-bottom: 1px solid var(--border-soft);
   font-size: 12.5px;
-  text-transform: capitalize;
+  list-style: none;
 }
-.permissionGroupHead strong { color: var(--text); text-transform: capitalize; }
-.permissionGroupCount { color: var(--text-faint); font-size: 11px; font-family: var(--font-mono); }
+.permissionGroupHead::-webkit-details-marker { display: none; }
+.permissionGroupHead strong { color: var(--text); text-transform: capitalize; font-weight: 600; }
+.permissionGroupHead:hover { background: var(--canvas); }
+
+.permissionGroupMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.permissionGroupCount {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.selectAllBtn {
+  border: 0;
+  background: transparent;
+  color: var(--brass-dark);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.selectAllBtn:hover { background: var(--brass-tint); }
 
 .permissionList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 6px;
-  padding: 10px 14px 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 4px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--border-soft);
 }
 
 .permissionOption {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
+  padding: 6px 8px;
+  border-radius: 5px;
   cursor: pointer;
+  font-size: 12px;
+  transition: background .12s ease;
 }
-.permissionOption:hover { border-color: var(--brass); }
-.permissionOption input { margin: 2px 0 0; }
+.permissionOption:hover { background: var(--canvas); }
+.permissionOption input { margin: 0; flex-shrink: 0; }
 .permissionCopy { display: flex; flex-direction: column; min-width: 0; }
 .permissionCopy strong {
   color: var(--text);
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 11.5px;
   font-family: var(--font-mono);
   text-transform: lowercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .permissionCopy span {
   color: var(--text-faint);
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 10.5px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.permissionOption:has(input:checked) {
+  background: var(--brass-tint);
+}
+.permissionOption:has(input:checked) strong { color: var(--brass-dark); }
+
+.permissionEmpty {
+  padding: 20px;
+  color: var(--text-faint);
+  text-align: center;
+  font-size: 12px;
 }

@@ -21,6 +21,11 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    // Skip the refresh-retry flow for silent auth checks — an expired token
+    // on /auth/me/ means "go to login", not "try to refresh and retry".
+    if (originalRequest?._silentAuth) {
+      return Promise.reject(error)
+    }
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       try {
