@@ -1,10 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import ProfilePage from './page'
-
-const mocks = vi.hoisted(() => ({
-  logout: vi.fn(),
-}))
 
 vi.mock('@/lib/auth', () => ({
   useAuth: () => ({
@@ -14,24 +10,17 @@ vi.mock('@/lib/auth', () => ({
       is_staff: true,
       is_superuser: true,
     },
-    logout: mocks.logout,
   }),
 }))
 
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
 describe('ProfilePage', () => {
-  it('renders account details and logs out from the profile surface', () => {
+  it('renders the themed account dossier without a duplicate logout action', () => {
     render(<ProfilePage />)
 
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument()
     expect(screen.getAllByText('achi.admin')).not.toHaveLength(0)
     expect(screen.getAllByText('Super administrator')).not.toHaveLength(0)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Log out' }))
-
-    expect(mocks.logout).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('Protected admin workspace')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument()
   })
 })
