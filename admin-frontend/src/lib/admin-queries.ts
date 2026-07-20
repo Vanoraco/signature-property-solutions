@@ -193,6 +193,39 @@ export async function prefetchAdminRouteData(queryClient: QueryClient, href: str
     case '/media':
       await queryClient.prefetchQuery(mediaAssetsQueryOptions)
       break
+    case '/testimonials':
+      await queryClient.prefetchQuery(testimonialsQueryOptions)
+      break
+    case '/services':
+      await queryClient.prefetchQuery(servicesQueryOptions)
+      break
+    case '/requests':
+      await queryClient.prefetchQuery(propertyRequestsQueryOptions)
+      break
+    case '/users':
+      await Promise.all([
+        queryClient.prefetchQuery(usersQueryOptions),
+        queryClient.prefetchQuery(groupsQueryOptions),
+      ])
+      break
+    case '/roles':
+      await Promise.all([
+        queryClient.prefetchQuery(groupsQueryOptions),
+        queryClient.prefetchQuery(permissionsQueryOptions),
+      ])
+      break
+    case '/activity':
+      await queryClient.prefetchQuery({
+        queryKey: ['activity'],
+        queryFn: async ({ signal }) => {
+          const response = await api.get('/activity/', { signal })
+          return response.data
+        },
+      })
+      break
+    case '/search':
+      await queryClient.prefetchQuery(searchEventsQueryOptions)
+      break
   }
 }
 
@@ -202,5 +235,11 @@ export async function warmAdminQueryCache(queryClient: QueryClient) {
     queryClient.prefetchQuery(lookupQueryOptions('categories')),
     queryClient.prefetchQuery(lookupQueryOptions('facilities')),
     queryClient.prefetchQuery(mediaAssetsQueryOptions),
+    queryClient.prefetchQuery(testimonialsQueryOptions),
+    queryClient.prefetchQuery(servicesQueryOptions),
+    queryClient.prefetchQuery(propertyRequestsQueryOptions),
+    queryClient.prefetchQuery(usersQueryOptions),
+    queryClient.prefetchQuery(groupsQueryOptions),
+    queryClient.prefetchQuery(searchEventsQueryOptions),
   ])
 }
