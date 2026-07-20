@@ -458,3 +458,29 @@ def _activity_log(actor_username, action, target_model, target_id=None, target_l
         target_label=str(target_label)[:300] if target_label else '',
         summary=str(summary)[:600] if summary else '',
     )
+
+
+class SearchEvent(models.Model):
+    """Persisted record of a public-site search for analytics.
+
+    Captured from the properties listing page and the search-suggest
+    autocomplete endpoint so the admin can see what visitors are
+    looking for. Read-only through the API.
+    """
+
+    query = models.CharField(max_length=600, blank=True)
+    source = models.CharField(max_length=100, blank=True, help_text='Page or feature that triggered the search')
+    location_filter = models.CharField(max_length=200, blank=True)
+    property_type = models.CharField(max_length=200, blank=True)
+    status_filter = models.CharField(max_length=50, blank=True)
+    results_count = models.IntegerField(default=0)
+    pathway = models.CharField(max_length=200, blank=True, help_text='How the visitor arrived (landing, direct, organic, etc.)')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'search_event'
+        verbose_name_plural = 'Search Events'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.query or self.location_filter or f'Search #{self.pk}'

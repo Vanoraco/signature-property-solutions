@@ -18,6 +18,7 @@ from signatureapp.models import (
     testimonial,
     property_request,
     facilities,
+    SearchEvent,
 )
 from signatureapp.search import PropertySearch, building_types
 
@@ -507,6 +508,22 @@ def property_schema(pro):
     return json.dumps(schema)
 
 
+def _log_search_event(request, search, results_count):
+    """Persist a SearchEvent from the properties listing or suggest endpoint."""
+    try:
+        applied = search.applied_filters()
+        SearchEvent.objects.create(
+            query=applied.get('q', ''),
+            source=request.resolver_match.route if hasattr(request, 'resolver_match') and request.resolver_match else 'properties',
+            location_filter=applied.get('q', '') if 'q' in applied else '',
+            property_type=applied.get('type', ''),
+            status_filter=applied.get('filter', ''),
+            results_count=results_count,
+        )
+    except Exception:
+        pass
+
+
 def index(request):
     homes = home.objects.all()
     hom = homes.last()
@@ -621,6 +638,9 @@ def properties(request):
         ),
         'schema_json': organization_schema(contactss),
     }
+    # Persist search event for analytics (only when filters are active)
+    if active_count > 0 or applied.get('q'):
+        _log_search_event(request, search, all_properties.count())
     return render(request, 'properties.html', context)
 
 

@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group, Permission
 from signatureapp.models import (
     home, catagory, facilities, egent, propertys,
     about, serevices, contact, testimonial, property_request,
-    ActivityLogEntry,
+    ActivityLogEntry, SearchEvent,
 )
 
 
@@ -219,5 +219,16 @@ class ActivityLogEntrySerializer(serializers.ModelSerializer):
             'id', 'actor', 'actor_username', 'action',
             'target_model', 'target_id', 'target_label',
             'summary', 'created_at',
+        ]
+        read_only_fields = fields
+
+
+class SearchEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SearchEvent
+        fields = [
+            'id', 'query', 'source', 'location_filter',
+            'property_type', 'status_filter', 'results_count',
+            'pathway', 'created_at',
         ]
         read_only_fields = fields

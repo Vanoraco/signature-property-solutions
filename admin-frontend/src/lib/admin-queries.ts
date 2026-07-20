@@ -5,6 +5,7 @@ import type { AgentRecord } from '@/components/agents/types'
 import type { PropertyRequest, Testimonial, ServiceRecord } from '@/components/dashboard/types'
 import type { UserRecord, GroupRecord } from '@/components/users/types'
 import type { PermissionRecord } from '@/components/roles/types'
+import type { SearchEvent } from '@/components/search/types'
 import type {
   CategoryRecord,
   FacilityRecord,
@@ -42,6 +43,7 @@ export const adminQueryKeys = {
   propertyRequests: ['property-requests'] as const,
   users: ['users'] as const,
   groups: ['groups'] as const,
+  searchEvents: ['search-events'] as const,
   mediaAssets: ['media-assets'] as const,
   mediaAssetsVideo: ['media-assets', 'video'] as const,
   dashboardRequests: ['dashboard', 'requests'] as const,
@@ -102,6 +104,11 @@ export const permissionsQueryOptions = queryOptions({
     return response.data
   },
   staleTime: 30 * 60_000,
+})
+
+export const searchEventsQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.searchEvents,
+  queryFn: ({ signal }) => fetchCollection<SearchEvent>('/search-events/', signal),
 })
 
 export const dashboardTestimonialsQueryOptions = queryOptions({

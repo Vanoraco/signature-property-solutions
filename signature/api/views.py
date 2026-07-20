@@ -25,14 +25,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from signatureapp.models import (
     home, catagory, facilities, egent, propertys,
     about, serevices, contact, testimonial, property_request,
-    ActivityLogEntry,
+    ActivityLogEntry, SearchEvent,
 )
 from .serializers import (
     HomeSerializer, CategorySerializer, FacilitySerializer,
     AgentSerializer, PropertyListSerializer, PropertyDetailSerializer,
     AboutSerializer, ServiceSerializer, ContactSerializer,
     TestimonialSerializer, PropertyRequestSerializer, PropertyRequestListSerializer,
-    UserSerializer, GroupSerializer, ActivityLogEntrySerializer,
+    UserSerializer, GroupSerializer, ActivityLogEntrySerializer, SearchEventSerializer,
 )
 
 
@@ -368,8 +368,6 @@ class ActivityLogEntryViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Manual filtering on action, target_model, actor_username, target_id
-        # so the dashboard can navigate the log without requiring django-filter.
         for field in ('action', 'target_model', 'actor_username'):
             value = self.request.query_params.get(field)
             if value:
@@ -377,6 +375,22 @@ class ActivityLogEntryViewSet(viewsets.ReadOnlyModelViewSet):
         target_id = self.request.query_params.get('target_id')
         if target_id and target_id.isdigit():
             queryset = queryset.filter(target_id=int(target_id))
+        return queryset
+
+
+class SearchEventViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SearchEvent.objects.all().order_by('-created_at')
+    serializer_class = SearchEventSerializer
+    search_fields = ['query', 'location_filter', 'property_type', 'status_filter']
+    ordering_fields = ['created_at', 'results_count', 'id']
+    filterset_fields = ['source', 'status_filter', 'property_type']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        for field in ('source', 'status_filter', 'property_type'):
+            value = self.request.query_params.get(field)
+            if value:
+                queryset = queryset.filter(**{f'{field}__iexact': value})
         return queryset
 
 
