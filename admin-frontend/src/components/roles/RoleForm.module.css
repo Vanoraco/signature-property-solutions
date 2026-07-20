@@ -15,6 +15,7 @@
   background: var(--card);
   font: inherit;
   font-size: 13px;
+  box-sizing: border-box;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .input:focus { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-tint); }
@@ -36,13 +37,15 @@
   font-size: 12.5px;
 }
 
-/* Permission toolbar */
+/* --- Permission picker --- */
+
 .permissionToolbar {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
 }
+
 .permissionSearch {
   flex: 1;
   min-width: 0;
@@ -55,6 +58,7 @@
   border-radius: 7px;
   background: var(--card);
   color: var(--text-faint);
+  box-sizing: border-box;
 }
 .permissionSearch:focus-within { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-tint); }
 .permissionSearch input {
@@ -65,31 +69,30 @@
   background: transparent;
   color: var(--text);
   font-size: 12.5px;
-}
-.permissionSummary {
-  flex-shrink: 0;
-  font-size: 11.5px;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  white-space: nowrap;
+  font-family: inherit;
 }
 
-/* Permission groups — collapsed by default */
+.permissionSummary {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
 .permissionGroups {
-  display: grid;
-  gap: 6px;
-  max-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 400px;
   overflow-y: auto;
-  padding: 2px;
+  background: var(--canvas);
 }
 
 .permissionGroup {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--canvas);
-  overflow: hidden;
+  border-bottom: 1px solid var(--border-soft);
 }
-.permissionGroup[open] { border-color: var(--brass-tint); }
+.permissionGroup:last-child { border-bottom: 0; }
+.permissionGroup[open] { background: var(--card); }
 
 .permissionGroupHead {
   display: flex;
@@ -97,14 +100,13 @@
   justify-content: space-between;
   gap: 10px;
   cursor: pointer;
-  padding: 9px 12px;
-  background: var(--card);
+  padding: 10px 14px;
   font-size: 12.5px;
   list-style: none;
+  box-sizing: border-box;
 }
 .permissionGroupHead::-webkit-details-marker { display: none; }
 .permissionGroupHead strong { color: var(--text); text-transform: capitalize; font-weight: 600; }
-.permissionGroupHead:hover { background: var(--canvas); }
 
 .permissionGroupMeta {
   display: flex;
@@ -126,30 +128,45 @@
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
+  font-family: inherit;
 }
 .selectAllBtn:hover { background: var(--brass-tint); }
 
 .permissionList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 4px;
-  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 14px 10px;
   border-top: 1px solid var(--border-soft);
+  box-sizing: border-box;
 }
 
 .permissionOption {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 7px 8px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 12px;
+  min-height: 32px;
+  box-sizing: border-box;
   transition: background .12s ease;
 }
 .permissionOption:hover { background: var(--canvas); }
-.permissionOption input { margin: 0; flex-shrink: 0; }
-.permissionCopy { display: flex; flex-direction: column; min-width: 0; }
+.permissionOption input {
+  margin: 0;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.permissionCopy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
 .permissionCopy strong {
   color: var(--text);
   font-weight: 600;
@@ -168,13 +185,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.permissionOption:has(input:checked) {
-  background: var(--brass-tint);
-}
-.permissionOption:has(input:checked) strong { color: var(--brass-dark); }
 
 .permissionEmpty {
-  padding: 20px;
+  padding: 24px;
   color: var(--text-faint);
   text-align: center;
   font-size: 12px;

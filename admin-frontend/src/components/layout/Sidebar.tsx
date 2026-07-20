@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, FileText, Building2, Megaphone, Inbox,
-  Shield, Trophy, Image as ImageIcon, ChevronLeft, ChevronRight, ChevronDown, LogOut
+  Shield, ImageIcon, ChevronLeft, ChevronRight, ChevronDown, LogOut
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { prefetchAdminRouteData } from '@/lib/admin-queries'
@@ -55,7 +55,7 @@ export const ADMIN_NAV: ReadonlyArray<AdminNavItem> = [
     { href: '/roles', label: 'Roles & Permissions' },
     { href: '/activity', label: 'Activity Log' },
   ] },
-  { type: 'link', href: '/leaderboard', label: 'Agent Leaderboard', icon: Trophy },
+  // { type: 'link', href: '/leaderboard', label: 'Agent Leaderboard', icon: Trophy },
   { type: 'link', href: '/media', label: 'Media Library', icon: ImageIcon },
 ]
 
