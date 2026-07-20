@@ -70,6 +70,14 @@ export function normalizeRoleApiErrors(data: unknown): RoleApiErrors {
   return result
 }
 
+/** Convert a snake_case codename like "add_group" to "Add Group". */
+export function humanizeCodename(codename: string): string {
+  return codename
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 /** Group a flat permission list by model name. */
 export function groupPermissionsByModel(permissions: { id: number; name: string; codename: string; model: string; app_label: string }[]) {
   const groups: Record<string, { app_label: string; model: string; permissions: typeof permissions }> = {}

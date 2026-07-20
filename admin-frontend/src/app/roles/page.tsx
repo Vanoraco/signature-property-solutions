@@ -15,6 +15,7 @@ import Modal from '@/components/ui/Modal'
 import EntityTables, { type EntityColumn } from '@/components/lookups/EntityTable'
 import {
   groupPermissionsByModel,
+  humanizeCodename,
   normalizeRoleApiErrors,
   normalizeRoles,
   roleFormSchema,
@@ -194,7 +195,7 @@ function RoleForm({ formId = 'role-editor-form', initialRole, apiErrors, onSubmi
                               onChange={() => togglePermission(p.id)}
                             />
                             <span className={styles.permissionCopy}>
-                              <strong>{p.codename}</strong>
+                              <strong>{humanizeCodename(p.codename)}</strong>
                               <span>{p.name}</span>
                             </span>
                           </label>
@@ -339,7 +340,7 @@ export default function RolesPage() {
         ? <span className="text-text-faint">No permissions assigned</span>
         : (
           <span className="text-text-soft line-clamp-2">
-            {r.permission_details.map(p => p.codename).join(', ')}
+            {r.permission_details.map(p => humanizeCodename(p.codename)).join(', ')}
           </span>
         ),
     },
@@ -417,7 +418,7 @@ export default function RolesPage() {
           data={groups}
           entityLabel="Roles"
           searchPlaceholder="Search roles..."
-          searchText={(r) => `${r.name}\n${r.permission_details.map(p => p.codename).join('\n')}`}
+          searchText={(r) => `${r.name}\n${r.permission_details.map(p => `${p.codename} ${humanizeCodename(p.codename)}`).join('\n')}`}
           storageKey="signature-admin-roles-views"
           selectedIds={new Set()}
           onSelectionChange={() => {}}
