@@ -44,10 +44,6 @@ export default function ProfilePage() {
             <h2 id="profile-identity-title">{username}</h2>
             <p>{email}</p>
           </div>
-          <div className="profile-dossier-status">
-            <span className="profile-status-dot" aria-hidden="true" />
-            Active account
-          </div>
         </header>
 
         <div className="profile-dossier-grid">
@@ -108,11 +104,6 @@ export default function ProfilePage() {
             </dl>
           </aside>
         </div>
-
-        <footer className="profile-dossier-footer">
-          <span><span className="profile-status-dot" aria-hidden="true" /> Protected admin workspace</span>
-          <span>Account ID <b>{userId}</b></span>
-        </footer>
       </section>
     </div>
   )
