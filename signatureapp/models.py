@@ -307,6 +307,14 @@ class about(models.Model):
     ceo_facebook=models.CharField(max_length=600, blank=True)
     ceo_twitter=models.CharField(max_length=600, blank=True)
     ceo_linkden=models.CharField(max_length=600, blank=True)
+    hero_lead = models.TextField(blank=True)
+    commitment_promise = models.CharField(max_length=600, blank=True)
+    commitment = RichTextField(blank=True)
+    hero_eyebrow = models.CharField(max_length=600, blank=True)
+    hero_title = models.CharField(max_length=600, blank=True)
+    vision_statement = models.TextField(blank=True)
+    mission_statement = models.TextField(blank=True)
+    why_choose_title = models.CharField(max_length=600, blank=True)
 
 
     class Meta:
@@ -315,6 +323,80 @@ class about(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AboutIntroParagraph(models.Model):
+    page = models.ForeignKey(about, on_delete=models.CASCADE, related_name='intro_paragraphs')
+    key = models.SlugField(max_length=100)
+    text = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_about_intro_key'),
+        ]
+        verbose_name = "about intro paragraph"
+        verbose_name_plural = "About Intro Paragraphs"
+
+    def __str__(self):
+        return f"Intro paragraph {self.order + 1}"
+
+
+class AboutValueItem(models.Model):
+    page = models.ForeignKey(about, on_delete=models.CASCADE, related_name='value_items')
+    key = models.SlugField(max_length=100)
+    tag = models.CharField(max_length=200)
+    text = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_about_value_key'),
+        ]
+        verbose_name = "about value item"
+        verbose_name_plural = "About Value Items"
+
+    def __str__(self):
+        return self.tag
+
+
+class AboutWhyItem(models.Model):
+    page = models.ForeignKey(about, on_delete=models.CASCADE, related_name='why_items')
+    key = models.SlugField(max_length=100)
+    title = models.CharField(max_length=600)
+    text = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_about_why_key'),
+        ]
+        verbose_name = "about why choose us item"
+        verbose_name_plural = "About Why Choose Us Items"
+
+    def __str__(self):
+        return self.title
+
+
+class AboutCommitmentParagraph(models.Model):
+    page = models.ForeignKey(about, on_delete=models.CASCADE, related_name='commitment_paragraphs')
+    key = models.SlugField(max_length=100)
+    text = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_about_commitment_key'),
+        ]
+        verbose_name = "about commitment paragraph"
+        verbose_name_plural = "About Commitment Paragraphs"
+
+    def __str__(self):
+        return f"Commitment paragraph {self.order + 1}"
 
 class serevices(models.Model):
     icon= models.ImageField(upload_to ='partners')
@@ -327,9 +409,137 @@ class serevices(models.Model):
     class Meta:
         verbose_name =("serevices")
         verbose_name_plural =("Serevices")
-    
+
     def __str__(self):
         return self.service_name
+
+class servicespage(models.Model):
+    hero_eyebrow = models.CharField(max_length=600, blank=True)
+    hero_title = models.CharField(max_length=600, blank=True)
+    hero_lead = models.TextField(blank=True)
+    hero_image = models.ImageField(upload_to='services', blank=True)
+    intro = RichTextField(blank=True)
+    why_choose_title = models.CharField(max_length=600, blank=True)
+    process_title = models.CharField(max_length=600, blank=True)
+
+    class Meta:
+        verbose_name =("services page")
+        verbose_name_plural =("Services Page")
+
+    def __str__(self):
+        return "Services page content"
+
+class servicespage_why_item(models.Model):
+    page = models.ForeignKey(servicespage, on_delete=models.CASCADE, related_name='why_items')
+    key = models.SlugField(max_length=100, blank=True, null=True)
+    title = models.CharField(max_length=600)
+    text = models.TextField(blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_services_why_key'),
+        ]
+        verbose_name =("why choose us item")
+        verbose_name_plural =("Why Choose Us Items")
+
+    def __str__(self):
+        return self.title
+
+class servicespage_process_step(models.Model):
+    page = models.ForeignKey(servicespage, on_delete=models.CASCADE, related_name='process_steps')
+    key = models.SlugField(max_length=100, blank=True, null=True)
+    title = models.CharField(max_length=600)
+    text = models.TextField(blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_services_process_key'),
+        ]
+        verbose_name =("process step")
+        verbose_name_plural =("Process Steps")
+
+    def __str__(self):
+        return self.title
+
+
+class ServicesPageService(models.Model):
+    page = models.ForeignKey(servicespage, on_delete=models.CASCADE, related_name='service_items')
+    key = models.SlugField(max_length=100)
+    tag = models.CharField(max_length=200)
+    title = models.CharField(max_length=600)
+    tagline = models.CharField(max_length=600, blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'key'], name='unique_services_page_item_key'),
+        ]
+        verbose_name = "services page service"
+        verbose_name_plural = "Services Page Services"
+
+    def __str__(self):
+        return self.title
+
+
+class ServicesPageServiceParagraph(models.Model):
+    service = models.ForeignKey(ServicesPageService, on_delete=models.CASCADE, related_name='paragraphs')
+    key = models.SlugField(max_length=100)
+    text = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['service', 'key'], name='unique_service_paragraph_key'),
+        ]
+        verbose_name = "service paragraph"
+        verbose_name_plural = "Service Paragraphs"
+
+    def __str__(self):
+        return f"{self.service.title} paragraph {self.order + 1}"
+
+
+class ServicesPageServiceTagGroup(models.Model):
+    service = models.ForeignKey(ServicesPageService, on_delete=models.CASCADE, related_name='tag_groups')
+    key = models.SlugField(max_length=100)
+    title = models.CharField(max_length=200)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['service', 'key'], name='unique_service_tag_group_key'),
+        ]
+        verbose_name = "service tag group"
+        verbose_name_plural = "Service Tag Groups"
+
+    def __str__(self):
+        return f"{self.service.title}: {self.title}"
+
+
+class ServicesPageServiceTagItem(models.Model):
+    group = models.ForeignKey(ServicesPageServiceTagGroup, on_delete=models.CASCADE, related_name='items')
+    key = models.SlugField(max_length=100)
+    text = models.CharField(max_length=600)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['group', 'key'], name='unique_service_tag_item_key'),
+        ]
+        verbose_name = "service tag item"
+        verbose_name_plural = "Service Tag Items"
+
+    def __str__(self):
+        return self.text
+
+
 class contact(models.Model):
     google_map=models.CharField(max_length=600, blank=True)
     phone_number=models.CharField(max_length=600, blank=True)

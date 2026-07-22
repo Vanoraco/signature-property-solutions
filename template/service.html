@@ -1,38 +1,137 @@
 {% extends 'layouts/master.html' %}
 {% block content %}
-{% load static %}
 
-<div class="lux-page-header">
-  <div class="container">
-    <h1>Our Services</h1>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
-        <li class="breadcrumb-item active">Services</li>
-      </ol>
-    </nav>
+<div class="as-page">
+  <div class="as-wrap">
+    <div class="as-hero">
+      <div>
+        <span class="as-hero-eyebrow">{{ services_page.hero_eyebrow }}</span>
+        <h1>{{ services_page.hero_title }}</h1>
+        <p class="as-lead">{{ services_page.hero_lead }}</p>
+      </div>
+      {% if services_page.hero_image %}
+      <img class="as-hero-img" src="{{ services_page.hero_image.url }}" alt="{{ services_page.hero_title }}">
+      {% else %}
+      <div class="as-img-ph">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="as-img-ph-label">Add: hero image — apartment interior or building exterior</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <section class="as-block">
+      <div class="as-prose as-rich">{{ services_page.intro|safe }}</div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-block-head">
+        <span class="as-block-eyebrow">What we offer</span>
+        <h2>Services We Provide</h2>
+        <p class="as-block-sub">Select a service to see what's included.</p>
+      </div>
+
+      <div class="as-service-list">
+        {% for service in service_items %}
+        <div class="as-service-item{% if forloop.first %} as-open{% endif %}">
+          <button type="button" class="as-service-trigger" id="service-trigger-{{ service.key }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="service-panel-{{ service.key }}">
+            <span class="as-service-left">
+              <span class="as-service-tag">{{ service.tag }}</span>
+              <span class="as-service-titles">
+                <span class="as-service-title" role="heading" aria-level="3">{{ service.title }}</span>
+                <span class="as-tagline">{{ service.tagline }}</span>
+              </span>
+            </span>
+            <svg class="as-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="as-service-panel" id="service-panel-{{ service.key }}" role="region" aria-labelledby="service-trigger-{{ service.key }}" aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}"{% if not forloop.first %} inert{% endif %}>
+            <div class="as-service-panel-inner">
+              <div class="as-service-copy">
+                {% for paragraph in service.paragraphs.all %}
+                <p>{{ paragraph.text }}</p>
+                {% endfor %}
+              </div>
+              <div>
+                {% for group in service.tag_groups.all %}
+                <div class="as-taglist-title">{{ group.title }}</div>
+                <ul class="as-taglist">
+                  {% for item in group.items.all %}
+                  <li>{{ item.text }}</li>
+                  {% endfor %}
+                </ul>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-block-head">
+        <span class="as-block-eyebrow">Why choose us</span>
+        <h2>{{ services_page.why_choose_title }}</h2>
+      </div>
+      <div class="as-grid as-cols-3">
+        {% for item in why_items %}
+        <article class="as-card">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.text }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-block-head">
+        <span class="as-block-eyebrow">How it works</span>
+        <h2>{{ services_page.process_title }}</h2>
+      </div>
+      <div class="as-process-rail">
+        {% for step in process_steps %}
+        <div class="as-process-step">
+          <div class="as-num">{{ forloop.counter }}</div>
+          <div>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.text }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
   </div>
 </div>
 
-<section class="lux-section lux-section-dark">
-  <div class="container">
-    <div class="lux-section-title">
-      <h2>Services We Provide</h2>
-      <div class="gold-line"></div>
-    </div>
-    <div class="row g-4">
-      {% for service in serevice %}
-      <div class="col-md-6 col-lg-4">
-        <div class="lux-service-card">
-          <img src="{{ service.icon.url }}" alt="{{ service.service_name }}">
-          <h5>{{ service.service_name }}</h5>
-          <div class="lux-rich-text">{{ service.short_discriptions|safe|truncatewords_html:25 }}</div>
-          <a href="{% url 'servicesdt' service.slug %}" class="btn-gold-outline mt-3" style="display:inline-block;padding:0.5rem 1.5rem;font-size:0.8rem">Read More</a>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+  function refreshServicePanels() {
+    document.querySelectorAll('.as-service-item').forEach(function (item) {
+      var panel = item.querySelector('.as-service-panel');
+      if (panel) {
+        panel.style.maxHeight = item.classList.contains('as-open') ? panel.scrollHeight + 'px' : '0px';
+      }
+    });
+  }
+
+  refreshServicePanels();
+  document.querySelectorAll('.as-service-trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var item = btn.closest('.as-service-item');
+      var panel = document.getElementById(btn.getAttribute('aria-controls'));
+      var isOpen = item.classList.toggle('as-open');
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      if (isOpen) {
+        panel.removeAttribute('inert');
+      } else {
+        panel.setAttribute('inert', '');
+      }
+      panel.style.maxHeight = isOpen ? panel.scrollHeight + 'px' : '0px';
+    });
+  });
+  window.addEventListener('load', refreshServicePanels);
+  window.addEventListener('resize', refreshServicePanels);
+</script>
 {% endblock %}

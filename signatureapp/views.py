@@ -1,7 +1,7 @@
 import json
 
 from django.conf import settings
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -19,6 +19,9 @@ from signatureapp.models import (
     property_request,
     facilities,
     SearchEvent,
+    servicespage,
+    servicespage_why_item,
+    servicespage_process_step,
 )
 from signatureapp.search import PropertySearch, building_types
 
@@ -549,8 +552,12 @@ def index(request):
 
 
 def aboutus(request):
-    aboutss = about.objects.all()
-    aboute = aboutss.last()
+    aboute = about.objects.prefetch_related(
+        "intro_paragraphs",
+        "value_items",
+        "why_items",
+        "commitment_paragraphs",
+    ).last()
     contacts = contact.objects.all()
     contactss = contacts.last()
 
@@ -568,13 +575,27 @@ def aboutus(request):
 
 
 def services(request):
-    serevice = serevices.objects.all()
     contacts = contact.objects.all()
     contactss = contacts.last()
+    services_page = servicespage.objects.prefetch_related(
+        Prefetch(
+            "why_items",
+            queryset=servicespage_why_item.objects.filter(key__startswith="reference-"),
+        ),
+        Prefetch(
+            "process_steps",
+            queryset=servicespage_process_step.objects.filter(key__startswith="reference-"),
+        ),
+        "service_items__paragraphs",
+        "service_items__tag_groups__items",
+    ).last()
 
     context = {
-        "serevice": serevice,
         "contactss": contactss,
+        "services_page": services_page,
+        "service_items": services_page.service_items.all() if services_page else [],
+        "why_items": services_page.why_items.all() if services_page else [],
+        "process_steps": services_page.process_steps.all() if services_page else [],
         "seo": build_seo(
             request,
             "Real Estate Services in Ethiopia",

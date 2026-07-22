@@ -161,6 +161,72 @@
 .libraryButton:hover { color: var(--text); border-color: var(--brass); }
 .libraryButton:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
+.rowList { display: grid; gap: 10px; min-width: 0; }
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--canvas);
+}
+
+.rowFields { display: grid; gap: 6px; min-width: 0; }
+
+.rowIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--brass-tint);
+  color: var(--brass-dark);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rowRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-faint);
+  background: var(--card);
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+.rowRemove:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-tint); }
+
+.addRow {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 35px;
+  padding: 7px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  color: var(--text-soft);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.addRow:hover { color: var(--brass-dark); border-color: var(--brass); }
+
 @media (max-width: 700px) {
   .grid { grid-template-columns: 1fr; }
   .spanTwo { grid-column: auto; }
@@ -169,4 +235,7 @@
   .videoField { grid-template-columns: 120px minmax(0, 1fr); gap: 12px; }
   .videoPreview { width: 120px; height: 80px; }
   .sectionHead { position: static; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .rowFields { grid-column: 1 / -1; }
+  .rowRemove { margin-top: 0; }
 }

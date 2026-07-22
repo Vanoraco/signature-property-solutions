@@ -8,6 +8,7 @@ from .views import (
     PropertyViewSet, AboutViewSet, ServiceViewSet, ContactViewSet,
     TestimonialViewSet, PropertyRequestViewSet, UserViewSet, GroupViewSet,
     ActivityLogEntryViewSet, SearchEventViewSet, list_permissions,
+    ServicesPageViewSet,
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ router.register(r'agents', AgentViewSet)
 router.register(r'properties', PropertyViewSet)
 router.register(r'about', AboutViewSet)
 router.register(r'services', ServiceViewSet)
+router.register(r'services-page', ServicesPageViewSet)
 router.register(r'contact', ContactViewSet)
 router.register(r'testimonials', TestimonialViewSet)
 router.register(r'requests', PropertyRequestViewSet)

@@ -32,6 +32,7 @@ export const ADMIN_NAV: ReadonlyArray<AdminNavItem> = [
   { type: 'group', label: 'Content', icon: FileText, items: [
     { href: '/content/home', label: 'Home Page' },
     { href: '/content/about', label: 'About Page' },
+    { href: '/content/services', label: 'Services Page' },
     { href: '/content/contact', label: 'Contact Page' },
   ] },
   { type: 'group', label: 'Properties', icon: Building2, items: [

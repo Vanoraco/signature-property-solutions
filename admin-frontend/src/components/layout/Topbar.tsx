@@ -28,6 +28,7 @@ const PAGE_TITLES: Record<string, [string, string]> = {
   '/profile': ['Account', 'Profile'],
   '/content/home': ['Content', 'Home Page'],
   '/content/about': ['Content', 'About Page'],
+  '/content/services': ['Content', 'Services Page'],
   '/content/contact': ['Content', 'Contact Page'],
 }
 

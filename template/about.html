@@ -1,111 +1,85 @@
 {% extends 'layouts/master.html' %}
 {% block content %}
-{% load static %}
 
-<div class="lux-page-header">
-  <div class="container">
-    <h1>About Us</h1>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
-        <li class="breadcrumb-item active">About</li>
-      </ol>
-    </nav>
+<div class="as-page">
+  <div class="as-wrap">
+    <div class="as-hero">
+      <div>
+        <span class="as-hero-eyebrow">{{ about.hero_eyebrow }}</span>
+        <h1>{{ about.hero_title }}</h1>
+        <p class="as-lead">{{ about.hero_lead }}</p>
+      </div>
+      {% if about.image %}
+      <img class="as-hero-img" src="{{ about.image.url }}" alt="{{ about.hero_title }}">
+      {% else %}
+      <div class="as-img-ph">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="as-img-ph-label">Add: hero image — Addis Ababa skyline or office team</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <section class="as-block">
+      <div class="as-prose">
+        {% for paragraph in about.intro_paragraphs.all %}
+        <p>{{ paragraph.text|safe }}</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-vm-grid">
+        <div class="as-vm-card">
+          <h3>Our Vision</h3>
+          <p>{{ about.vision_statement }}</p>
+        </div>
+        <div class="as-vm-card as-alt">
+          <h3>Our Mission</h3>
+          <p>{{ about.mission_statement }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-block-head">
+        <span class="as-block-eyebrow">What we stand for</span>
+        <h2>Our Core Values</h2>
+      </div>
+      <div class="as-grid as-cols-4">
+        {% for value in about.value_items.all %}
+        <article class="as-value-card">
+          <span class="as-value-tag">{{ value.tag }}</span>
+          <span class="as-value-spacer" aria-hidden="true"></span>
+          <p>{{ value.text }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-block-head">
+        <span class="as-block-eyebrow">Why choose us</span>
+        <h2>{{ about.why_choose_title }}</h2>
+      </div>
+      <div class="as-grid as-cols-2">
+        {% for item in about.why_items.all %}
+        <article class="as-card">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.text }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="as-block">
+      <div class="as-closing">
+        <div class="as-promise">{{ about.commitment_promise }}</div>
+        {% for paragraph in about.commitment_paragraphs.all %}
+        <p>{{ paragraph.text|safe }}</p>
+        {% endfor %}
+      </div>
+    </section>
   </div>
 </div>
-
-<!-- Tabs Section -->
-<section class="lux-section lux-section-dark">
-  <div class="container">
-    <div class="lux-section-title">
-      <h2>Welcome to Signature Property Solutions</h2>
-      <div class="gold-line"></div>
-    </div>
-    <div class="row g-4 lux-tabs">
-      <div class="col-md-3">
-        <div class="nav flex-column nav-pills" role="tablist">
-          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#about-tab">About Company</button>
-          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#vision-tab">Our Vision</button>
-          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#mission-tab">Our Mission</button>
-          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#value-tab">Our Value</button>
-        </div>
-      </div>
-      <div class="col-md-9">
-        <div class="tab-content">
-          <div class="tab-pane fade show active" id="about-tab">
-            <div class="row align-items-center g-4">
-              <div class="col-md-6 lux-rich-text">{{ about.aboutus|safe }}</div>
-              <div class="col-md-6">
-                {% if about.aboutus_image %}<img src="{{ about.aboutus_image.url }}" alt="About" style="border-radius:12px">{% endif %}
-              </div>
-            </div>
-          </div>
-          <div class="tab-pane fade" id="vision-tab">
-            <div class="row align-items-center g-4">
-              <div class="col-md-6 lux-rich-text">{{ about.vision|safe }}</div>
-              <div class="col-md-6">
-                {% if about.vision_image %}<img src="{{ about.vision_image.url }}" alt="Vision" style="border-radius:12px">{% endif %}
-              </div>
-            </div>
-          </div>
-          <div class="tab-pane fade" id="mission-tab">
-            <div class="row align-items-center g-4">
-              <div class="col-md-6 lux-rich-text">{{ about.mission|safe }}</div>
-              <div class="col-md-6">
-                {% if about.mission_image %}<img src="{{ about.mission_image.url }}" alt="Mission" style="border-radius:12px">{% endif %}
-              </div>
-            </div>
-          </div>
-          <div class="tab-pane fade" id="value-tab">
-            <div class="row align-items-center g-4">
-              <div class="col-md-6 lux-rich-text">{{ about.value|safe }}</div>
-              <div class="col-md-6">
-                {% if about.value_image %}<img src="{{ about.value_image.url }}" alt="Value" style="border-radius:12px">{% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Why Choose Us -->
-<section class="lux-section lux-section-darker">
-  <div class="container">
-    <div class="lux-section-title">
-      <h2>Why Choose Us</h2>
-      <div class="gold-line"></div>
-      <p>{{ about.why_choose_us_header }}</p>
-    </div>
-    <div class="row align-items-center g-4">
-      <div class="col-md-5">
-        <h3>{{ about.tytle }}</h3>
-      </div>
-      <div class="col-md-7 lux-rich-text">{{ about.description|safe }}</div>
-    </div>
-  </div>
-</section>
-
-<!-- CEO -->
-<section class="lux-section lux-section-dark">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="lux-ceo text-center">
-          {% if about.ceo_image %}<img src="{{ about.ceo_image.url }}" alt="{{ about.ceo_name }}" class="mb-3">{% endif %}
-          <h3 style="color:var(--gold)">{{ about.ceo_name }}</h3>
-          <p style="color:var(--gray)">{{ about.ceo_position }}</p>
-          <div class="lux-rich-text text-start mt-3">{{ about.ceo_description|safe }}</div>
-          <div class="social-links mt-3">
-            <a href="{{ about.ceo_facebook }}"><i class="fab fa-facebook-f"></i></a>
-            <a href="{{ about.ceo_twitter }}"><i class="fab fa-twitter"></i></a>
-            <a href="{{ about.ceo_linkden }}"><i class="fab fa-linkedin-in"></i></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 {% endblock %}

@@ -26,6 +26,7 @@ from signatureapp.models import (
     home, catagory, facilities, egent, propertys,
     about, serevices, contact, testimonial, property_request,
     ActivityLogEntry, SearchEvent,
+    servicespage, servicespage_why_item, servicespage_process_step,
 )
 from .serializers import (
     HomeSerializer, CategorySerializer, FacilitySerializer,
@@ -33,6 +34,7 @@ from .serializers import (
     AboutSerializer, ServiceSerializer, ContactSerializer,
     TestimonialSerializer, PropertyRequestSerializer, PropertyRequestListSerializer,
     UserSerializer, GroupSerializer, ActivityLogEntrySerializer, SearchEventSerializer,
+    ServicesPageSerializer,
 )
 
 
@@ -500,7 +502,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
 
 class AboutViewSet(viewsets.ModelViewSet):
-    queryset = about.objects.all()
+    queryset = about.objects.prefetch_related(
+        'intro_paragraphs',
+        'value_items',
+        'why_items',
+        'commitment_paragraphs',
+    ).order_by('-id')
     serializer_class = AboutSerializer
 
 
@@ -509,6 +516,22 @@ class ServiceViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceSerializer
     search_fields = ['service_name', 'slug']
     ordering_fields = ['service_name', 'id']
+
+
+class ServicesPageViewSet(viewsets.ModelViewSet):
+    queryset = servicespage.objects.prefetch_related(
+        Prefetch(
+            'why_items',
+            queryset=servicespage_why_item.objects.filter(key__startswith='reference-'),
+        ),
+        Prefetch(
+            'process_steps',
+            queryset=servicespage_process_step.objects.filter(key__startswith='reference-'),
+        ),
+        'service_items__paragraphs',
+        'service_items__tag_groups__items',
+    ).order_by('-id')
+    serializer_class = ServicesPageSerializer
 
 
 class ContactViewSet(viewsets.ModelViewSet):
