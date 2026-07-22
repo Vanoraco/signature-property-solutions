@@ -11,7 +11,7 @@ import {
 } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, ArrowDown, ArrowUp, Check, LoaderCircle, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, ChevronUp, LoaderCircle, Plus, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import AdminToast, {
   createAdminToastFeedback,
@@ -56,10 +56,10 @@ function OrderActions({
   return (
     <div className={styles.rowActions}>
       <button type="button" className={styles.rowAction} onClick={() => onMove(index, index - 1)} disabled={index === 0} aria-label={`Move ${label} up`} title="Move up">
-        <ArrowUp aria-hidden="true" size={14} />
+        <ChevronUp aria-hidden="true" size={15} />
       </button>
       <button type="button" className={styles.rowAction} onClick={() => onMove(index, index + 1)} disabled={index === count - 1} aria-label={`Move ${label} down`} title="Move down">
-        <ArrowDown aria-hidden="true" size={14} />
+        <ChevronDown aria-hidden="true" size={15} />
       </button>
       <button type="button" className={`${styles.rowAction} ${styles.rowActionDanger}`} onClick={onRemove} aria-label={`Remove ${label}`} title="Remove">
         <Trash2 aria-hidden="true" size={14} />

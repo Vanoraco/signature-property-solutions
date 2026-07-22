@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, ArrowDown, ArrowUp, Check, LoaderCircle, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, ChevronUp, LoaderCircle, Plus, Trash2 } from 'lucide-react'
 import {
   useFieldArray,
   useForm,
@@ -100,7 +100,7 @@ function OrderActions({
         aria-label={`Move ${label} up`}
         title="Move up"
       >
-        <ArrowUp aria-hidden="true" size={14} />
+        <ChevronUp aria-hidden="true" size={15} />
       </button>
       <button
         type="button"
@@ -110,7 +110,7 @@ function OrderActions({
         aria-label={`Move ${label} down`}
         title="Move down"
       >
-        <ArrowDown aria-hidden="true" size={14} />
+        <ChevronDown aria-hidden="true" size={15} />
       </button>
       <button
         type="button"
