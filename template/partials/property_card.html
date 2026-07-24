@@ -3,7 +3,11 @@
   <div class="lux-prop-card">
     <div class="card-img">
       <a href="{% url 'properties-detail' property.slug %}">
+        {% if property.main_image %}
         <img src="{{ property.main_image.url }}" alt="{{ property.property_title }}">
+        {% else %}
+        <img src="{% static 'assets/images/property-placeholder.svg' %}" alt="{{ property.property_title }}">
+        {% endif %}
       </a>
       <span class="badge-status">{{ property.property_status }}</span>
     </div>

@@ -21,9 +21,17 @@
       <div class="col-lg-8">
         <!-- Gallery -->
         <div class="lux-gallery mb-4">
+          {% if pro.main_image %}
           <img id="mainImg" src="{{ pro.main_image.url }}" alt="{{ pro.property_title }}">
+          {% else %}
+          <img id="mainImg" src="{% static 'assets/images/property-placeholder.svg' %}" alt="{{ pro.property_title }}">
+          {% endif %}
           <div class="lux-gallery-thumbs">
+            {% if pro.main_image %}
             <img src="{{ pro.main_image.url }}" alt="thumb" class="active" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">
+            {% else %}
+            <img src="{% static 'assets/images/property-placeholder.svg' %}" alt="thumb" class="active" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">
+            {% endif %}
             {% if pro.slide_1 %}<img src="{{ pro.slide_1.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
             {% if pro.slide_2 %}<img src="{{ pro.slide_2.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
             {% if pro.slide_3 %}<img src="{{ pro.slide_3.url }}" alt="thumb" onclick="document.getElementById('mainImg').src=this.src; document.querySelectorAll('.lux-gallery-thumbs img').forEach(i=>i.classList.remove('active')); this.classList.add('active');">{% endif %}
@@ -111,7 +119,11 @@
         <div class="lux-prop-card">
           <div class="card-img">
             <a href="{% url 'properties-detail' propertys.slug %}">
+              {% if propertys.main_image %}
               <img src="{{ propertys.main_image.url }}" alt="{{ propertys.property_title }}">
+              {% else %}
+              <img src="{% static 'assets/images/property-placeholder.svg' %}" alt="{{ propertys.property_title }}">
+              {% endif %}
             </a>
           </div>
           <div class="card-body">
