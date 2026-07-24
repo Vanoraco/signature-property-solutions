@@ -145,12 +145,13 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- Sidebar ---------- */
 .sidebar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
   width: var(--sidebar-w);
   min-height: 100vh;
   flex: 0 0 var(--sidebar-w);
-  align-self: stretch;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   color: #fff;
