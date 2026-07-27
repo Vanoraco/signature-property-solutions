@@ -17,6 +17,11 @@ from signatureapp.models import (
 User = get_user_model()
 
 
+class RelativeImageField(serializers.ImageField):
+    def to_representation(self, value):
+        return value.url if value else None
+
+
 class PermissionSerializer(serializers.ModelSerializer):
     model = serializers.CharField(source='content_type.model', read_only=True)
     app_label = serializers.CharField(source='content_type.app_label', read_only=True)
@@ -99,6 +104,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class HomeSerializer(serializers.ModelSerializer):
+    logo = RelativeImageField(required=False, allow_null=True)
+
     class Meta:
         model = home
         fields = '__all__'

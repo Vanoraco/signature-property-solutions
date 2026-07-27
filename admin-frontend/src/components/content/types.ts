@@ -1,6 +1,7 @@
 export interface HomeRecord {
   id: number
   image: string | null
+  logo: string | null
   slogon: string
   title: string
   video: string | null

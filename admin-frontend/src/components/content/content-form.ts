@@ -7,6 +7,11 @@ const optionalLongText = z.string().max(200_000, 'Content is too long.')
 export const homeFormSchema = z.object({
   slogon: optionalText,
   title: optionalText,
+  logo: z.custom<File | null>(
+    value => value === null || (typeof File !== 'undefined' && value instanceof File),
+    'Select a valid image file.',
+  ).refine(value => value === null || value.type.startsWith('image/'), 'Select an image file.')
+    .refine(value => value === null || value.size <= 10 * 1024 * 1024, 'Images must be 10 MB or smaller.'),
   image: z.custom<File | null>(
     value => value === null || (typeof File !== 'undefined' && value instanceof File),
     'Select a valid image file.',
@@ -22,12 +27,13 @@ export const homeFormSchema = z.object({
 export type HomeFormValues = z.infer<typeof homeFormSchema>
 export type HomeFieldName = keyof HomeFormValues
 
-const homeScalarFields: Array<Exclude<HomeFieldName, 'image' | 'video'>> = ['slogon', 'title']
+const homeScalarFields: Array<Exclude<HomeFieldName, 'logo' | 'image' | 'video'>> = ['slogon', 'title']
 
 export function homeToFormValues(record?: { slogon: string; title: string } | null): HomeFormValues {
   return {
     slogon: record?.slogon ?? '',
     title: record?.title ?? '',
+    logo: null,
     image: null,
     video: null,
   }
@@ -36,6 +42,9 @@ export function homeToFormValues(record?: { slogon: string; title: string } | nu
 export function toHomeFormData(values: HomeFormValues) {
   const data = new FormData()
   homeScalarFields.forEach(field => data.append(field, values[field]))
+  if (values.logo && typeof File !== 'undefined' && values.logo instanceof File) {
+    data.append('logo', values.logo)
+  }
   if (values.image && typeof File !== 'undefined' && values.image instanceof File) {
     data.append('image', values.image)
   }

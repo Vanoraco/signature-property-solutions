@@ -25,15 +25,18 @@ import { pickSingleton, type HomeRecord, type SingletonCollection } from './type
 import styles from './ContentForm.module.css'
 
 const HOME_QUERY_KEY = ['content', 'home'] as const
-const fieldsTracked = new Set<string>(['slogon', 'title', 'image', 'video'])
+const fieldsTracked = new Set<string>(['slogon', 'title', 'logo', 'image', 'video'])
 
 export default function ContentHomePage() {
   const queryClient = useQueryClient()
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
   const [apiErrors, setApiErrors] = useState<ContentApiErrors | null>(null)
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
+  const [logoPickerOpen, setLogoPickerOpen] = useState(false)
   const [videoPickerOpen, setVideoPickerOpen] = useState(false)
 
+  const logoPreviewRef = useRef<string | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const imagePreviewRef = useRef<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const videoPreviewRef = useRef<string | null>(null)
@@ -62,11 +65,13 @@ export default function ContentHomePage() {
     mode: 'onBlur',
     values: record ? homeToFormValues(record) : undefined,
   })
+  const selectedLogo = useWatch({ control, name: 'logo' })
   const selectedImage = useWatch({ control, name: 'image' })
   const selectedVideo = useWatch({ control, name: 'video' })
   const dirtyMap = dirtyFields as Record<string, boolean>
 
   useEffect(() => () => {
+    if (logoPreviewRef.current) URL.revokeObjectURL(logoPreviewRef.current)
     if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current)
     if (videoPreviewRef.current) URL.revokeObjectURL(videoPreviewRef.current)
   }, [])
@@ -77,6 +82,14 @@ export default function ContentHomePage() {
       if (message) setError(field as keyof HomeFormValues, { type: 'server', message })
     })
   }, [apiErrors, setError])
+
+  const selectLogo = (file: File) => {
+    if (logoPreviewRef.current) URL.revokeObjectURL(logoPreviewRef.current)
+    const nextPreview = URL.createObjectURL(file)
+    logoPreviewRef.current = nextPreview
+    setLogoPreview(nextPreview)
+    setValue('logo', file, { shouldDirty: true, shouldValidate: true })
+  }
 
   const selectImage = (file: File) => {
     if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current)
@@ -118,11 +131,13 @@ export default function ContentHomePage() {
   })
 
   const submit = (values: HomeFormValues) => saveMutation.mutate(values)
+  const logoSource = logoPreview ?? record?.logo ?? '/headerlogo.png'
   const imageSource = imagePreview ?? record?.image ?? null
   const videoSource = videoPreview ?? record?.video ?? null
   const isLoading = recordQuery.isLoading
   const isError = recordQuery.isError
   const isSaving = saveMutation.isPending
+  const logoDirty = dirtyMap.logo === true
   const heroImageDirty = dirtyMap.image === true
   const heroVideoDirty = dirtyMap.video === true
 
@@ -198,6 +213,57 @@ export default function ContentHomePage() {
             <input id="home-title" {...inputProps('home-title', errors.title?.message)} {...register('title')} />
           </Field>
         </Section>
+
+        <section className={`${styles.section} ${logoDirty ? styles.sectionDirty : ''}`}>
+          <div className={`${styles.sectionHead} ${logoDirty ? styles.sectionHeadDirty : ''}`}>
+            <div className={styles.sectionHeadCopy}>
+              <h3>Site logo</h3>
+              <p>Used in the public navigation and admin sidebar. A transparent horizontal PNG or WebP works best.</p>
+            </div>
+            {logoDirty ? (
+              <button
+                type="submit"
+                form="content-home-form"
+                className={`btn btn-brass btn-sm ${styles.sectionSave}`}
+                disabled={isSaving}
+                aria-busy={isSaving}
+                title="Save logo"
+              >
+                {isSaving ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} /> : <Check aria-hidden="true" size={14} />}
+                {isSaving ? 'Saving...' : 'Save logo'}
+              </button>
+            ) : null}
+          </div>
+          <div className={styles.photoField}>
+            <div className={`${styles.photoPreview} ${styles.logoPreview}`}>
+              <Image src={logoSource} alt="Site logo preview" fill sizes="104px" unoptimized />
+            </div>
+            <div className={styles.photoDetails}>
+              <strong>Navigation logo</strong>
+              <div className={styles.photoActions}>
+                <label className={styles.fileButton}>
+                  <Upload aria-hidden="true" size={15} />
+                  Replace logo
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    aria-label="Site logo file"
+                    onChange={event => {
+                      const file = event.target.files?.[0]
+                      if (file) selectLogo(file)
+                      event.target.value = ''
+                    }}
+                  />
+                </label>
+                <button type="button" className={styles.libraryButton} onClick={() => setLogoPickerOpen(true)}>
+                  <Images aria-hidden="true" size={15} /> Choose existing
+                </button>
+              </div>
+              <span className={styles.fileName}>{selectedLogo ? selectedLogo.name : record?.logo ? 'Current uploaded logo' : 'Default logo'}</span>
+              {errors.logo?.message ? <p className={styles.errorText}>{errors.logo.message}</p> : null}
+            </div>
+          </div>
+        </section>
 
         <section className={`${styles.section} ${heroImageDirty ? styles.sectionDirty : ''}`}>
           <div className={`${styles.sectionHead} ${heroImageDirty ? styles.sectionHeadDirty : ''}`}>
@@ -312,6 +378,13 @@ export default function ContentHomePage() {
       </form>
 
       <MediaPickerDialog
+        open={logoPickerOpen}
+        onClose={() => setLogoPickerOpen(false)}
+        onSelect={file => selectLogo(file)}
+        title="Choose Site Logo"
+      />
+
+      <MediaPickerDialog
         open={mediaPickerOpen}
         onClose={() => setMediaPickerOpen(false)}
         onSelect={file => selectImage(file)}
@@ -335,7 +408,7 @@ function Header({ actions }: { actions?: React.ReactNode }) {
       <div className="page-head-main">
         <div className="page-eyebrow">Content</div>
         <h1 className="page-title">Home Page</h1>
-        <p className="page-desc">Edit the hero section, slogan, background image, and background video shown on the public homepage.</p>
+        <p className="page-desc">Edit site branding and homepage hero content.</p>
       </div>
       {actions}
     </div>

@@ -12,6 +12,7 @@ PROPERTY_ID_PREFIX = "SPS"
 
 class home(models.Model):
     image= models.ImageField(upload_to ='home info', blank=True )
+    logo = models.ImageField(upload_to='site-logo/', blank=True, null=True)
     slogon = models.CharField(max_length=600, blank=True)
     title = models.CharField(max_length=600, blank=True)
     video = models.FileField(upload_to='videos_uploaded',null=True,)

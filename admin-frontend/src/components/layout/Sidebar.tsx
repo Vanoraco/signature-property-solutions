@@ -3,13 +3,15 @@ import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, FileText, Building2, Megaphone, Inbox,
   Shield, ImageIcon, ChevronLeft, ChevronRight, ChevronDown
 } from 'lucide-react'
 import { prefetchAdminRouteData } from '@/lib/admin-queries'
+import api from '@/lib/api'
+import { pickSingleton, type HomeRecord, type SingletonCollection } from '@/components/content/types'
 
 type AdminNavLink = {
   type: 'link'
@@ -75,6 +77,15 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Properties: true })
   const pathname = usePathname()
   const queryClient = useQueryClient()
+  const homeQuery = useQuery({
+    queryKey: ['content', 'home'],
+    queryFn: async ({ signal }) => {
+      const response = await api.get<SingletonCollection<HomeRecord>>('/home/', { signal })
+      return response.data
+    },
+    staleTime: 15 * 60_000,
+  })
+  const logo = pickSingleton(homeQuery.data)?.logo
   const visuallyCollapsed = collapsed && !mobileOpen
   const warmingRoutes = useRef(new Set<string>())
 
@@ -112,10 +123,10 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapsed, onNa
         aria-label="Signature Property Solutions admin"
       >
         <span className="sidebar-logo-full" aria-hidden="true">
-          <Image src="/headerlogo.png" alt="" fill sizes="220px" className="sidebar-logo-image" priority />
+          <Image src={logo ?? '/headerlogo.png'} alt="" fill sizes="220px" className="sidebar-logo-image" priority unoptimized />
         </span>
         <span className="sidebar-logo-compact" aria-hidden="true">
-          <Image src="/favicon.png" alt="" fill sizes="42px" className="sidebar-favicon-image" />
+          <Image src={logo ?? '/favicon.png'} alt="" fill sizes="42px" className="sidebar-favicon-image" unoptimized />
         </span>
       </Link>
 

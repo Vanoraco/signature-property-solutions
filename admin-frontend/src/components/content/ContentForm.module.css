@@ -96,6 +96,8 @@
 }
 
 .photoPreview img { object-fit: cover; }
+.logoPreview { background: var(--ink); }
+.logoPreview img { object-fit: contain; padding: 8px; }
 .photoDetails { display: grid; justify-items: start; gap: 7px; min-width: 0; }
 .photoDetails strong { color: var(--text); font-size: 12.5px; }
 .photoDetails span { color: var(--text-faint); font-size: 11.5px; line-height: 1.4; }

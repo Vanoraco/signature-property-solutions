@@ -3,7 +3,11 @@
   <div class="container">
     <div class="row">
       <div class="col-md-4 mb-4">
+        {% if site_home.logo %}
+        <img src="{{ site_home.logo.url }}" alt="Signature Property Solutions" class="footer-logo">
+        {% else %}
         <img src="{% static 'assets/images/footer-logo.png' %}" alt="Signature" class="footer-logo">
+        {% endif %}
         <p>Notice: Our company, represented solely by Mr. Mhretab Abebe and operating exclusively through the signaturepropertysolutions.com website, hereby declares that we bear no responsibility for services conducted via alternative websites or intermediaries.</p>
       </div>
       <div class="col-md-4 mb-4">
