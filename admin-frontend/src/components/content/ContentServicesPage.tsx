@@ -307,10 +307,6 @@ function ServiceItemEditor({
         <div className={styles.subsection}>
           <div className={styles.subsectionHead}>
             <span className={styles.subsectionLabel}>Description paragraphs</span>
-            <button type="button" className={styles.addRow} onClick={() => paragraphs.append({ id: null, key: '', text: '' })}>
-              <Plus aria-hidden="true" size={14} />
-              Add paragraph
-            </button>
           </div>
           <div className={styles.compactList}>
             {paragraphs.fields.map((field, paragraphIndex) => {
@@ -341,24 +337,15 @@ function ServiceItemEditor({
               )
             })}
           </div>
+          <button type="button" className={styles.addRow} onClick={() => paragraphs.append({ id: null, key: '', text: '' })}>
+            <Plus aria-hidden="true" size={14} />
+            Add paragraph
+          </button>
         </div>
 
         <div className={styles.subsection}>
           <div className={styles.subsectionHead}>
             <span className={styles.subsectionLabel}>Tag groups</span>
-            <button
-              type="button"
-              className={styles.addRow}
-              onClick={() => groups.append({
-                id: null,
-                key: '',
-                title: '',
-                items: [{ id: null, key: '', text: '' }],
-              })}
-            >
-              <Plus aria-hidden="true" size={14} />
-              Add group
-            </button>
           </div>
           <div className={styles.tagGroupList}>
             {groups.fields.map((group, groupIndex) => (
@@ -375,6 +362,19 @@ function ServiceItemEditor({
               />
             ))}
           </div>
+          <button
+            type="button"
+            className={styles.addRow}
+            onClick={() => groups.append({
+              id: null,
+              key: '',
+              title: '',
+              items: [{ id: null, key: '', text: '' }],
+            })}
+          >
+            <Plus aria-hidden="true" size={14} />
+            Add group
+          </button>
         </div>
       </div>
     </details>
