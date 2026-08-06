@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
 import {
-  AlertTriangle,
   Check,
   ChevronDown,
   GripVertical,
@@ -282,17 +281,32 @@ export default function FormBuilderPage() {
       </div>
 
       {dirty && !isSaving && (
-        <div
-          role="status"
-          className="mb-4 flex items-center gap-2 rounded-[6px] border border-brass/40 bg-brass/5 px-3 py-2 text-[12.5px] text-ink"
-        >
-          <AlertTriangle size={15} className="shrink-0 text-brass" />
-          <span>
-            <strong>Unsaved changes.</strong> Click &quot;Save Changes&quot; to publish — edits here
-            only apply to this form once you save.
-          </span>
-        </div>
-      )}
+              <div
+                role="status"
+                className="relative mb-5 overflow-hidden rounded-[10px] border border-brass/20 bg-brass-tint/60 px-6 py-5"
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -top-4 -left-1 select-none font-display text-[96px] leading-none text-brass/25"
+                >
+                  ✦
+                </span>
+                <span aria-hidden="true" className="absolute inset-y-5 left-0 w-[2px] bg-brass/70" />
+                <div className="relative ml-4">
+                  <p className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.22em] text-brass-dark">
+                    <span aria-hidden="true" className="h-px w-5 bg-brass-dark/60" />
+                    Unsaved changes
+                  </p>
+                  <p className="mt-2 font-display text-[16px] leading-snug text-ink">
+                    Changes are staged, not yet in your live form.
+                  </p>
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-text-soft">
+                    Press <span className="font-semibold text-ink">&ldquo;Save Changes&rdquo;</span> at the top
+                    right to publish them to the Request a Property form.
+                  </p>
+                </div>
+              </div>
+            )}
 
       <div className="fb-layout">
         <section className="panel" aria-labelledby="form-fields-heading">
