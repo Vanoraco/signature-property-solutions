@@ -1,17 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
 import {
   Check,
   ChevronDown,
   GripVertical,
+  LoaderCircle,
   Pencil,
   Plus,
   Save,
   Trash2,
   X,
 } from 'lucide-react'
+import api from '@/lib/api'
 import Modal from '@/components/ui/Modal'
 import AdminToast, {
   createAdminToastFeedback,
@@ -42,20 +45,20 @@ const FIELD_TYPE_META: Record<FieldType, string> = {
 }
 
 const INITIAL_FIELDS: FormField[] = [
-  { id: 'f1', label: 'Full Name', type: 'text', required: true },
-  { id: 'f2', label: 'Phone Number', type: 'tel', required: true },
-  { id: 'f3', label: 'Email Address', type: 'email', required: false },
+  { id: 'name', label: 'Full Name', type: 'text', required: true },
+  { id: 'phone_number', label: 'Phone Number', type: 'tel', required: true },
+  { id: 'email', label: 'Email Address', type: 'email', required: false },
   {
-    id: 'f4',
+    id: 'property_type',
     label: 'Property Type',
     type: 'select',
     required: true,
     options: ['Apartment', 'Penthouse', 'House', 'Building', 'Warehouse', 'Office', 'Land'],
   },
-  { id: 'f5', label: 'Goal', type: 'select', required: true, options: ['Rent', 'Buy', 'Invest', 'Other'] },
-  { id: 'f6', label: 'Preferred Location', type: 'text', required: false },
-  { id: 'f7', label: 'Budget', type: 'text', required: false },
-  { id: 'f8', label: 'Message', type: 'textarea', required: true },
+  { id: 'goal', label: 'Goal', type: 'select', required: true, options: ['Rent', 'Buy', 'Invest', 'Other'] },
+  { id: 'location', label: 'Preferred Location', type: 'text', required: false },
+  { id: 'budget', label: 'Budget', type: 'text', required: false },
+  { id: 'message', label: 'Message', type: 'textarea', required: true },
 ]
 
 const controlClass =
@@ -68,13 +71,77 @@ function newFieldId() {
   return `field-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
+interface RequestFormFieldRow {
+  key: string
+  label: string
+  field_type: FieldType
+  is_required: boolean
+  options?: string[]
+  position: number
+}
+
+function toFormField(row: RequestFormFieldRow): FormField {
+  return {
+    id: row.key,
+    label: row.label,
+    type: row.field_type,
+    required: row.is_required,
+    ...(row.field_type === 'select' ? { options: row.options ?? [] } : {}),
+  }
+}
+
+function toRequestRow(field: FormField) {
+  return {
+    key: field.id,
+    label: field.label,
+    type: field.type,
+    required: field.required,
+    options: field.type === 'select' ? (field.options ?? []) : [],
+  }
+}
+
 export default function FormBuilderPage() {
+  const queryClient = useQueryClient()
   const [fields, setFields] = useState<FormField[]>(INITIAL_FIELDS)
+  const [hydrated, setHydrated] = useState(false)
   const [draft, setDraft] = useState<FieldDraft | null>(null)
   const [editorError, setEditorError] = useState('')
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
+
+  const fieldsQuery = useQuery({
+    queryKey: ['request-form-fields'],
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<{ count: number; results: RequestFormFieldRow[] }>(
+        '/request-form-fields/',
+        { signal },
+      )
+      const rows = data?.results ?? []
+      return rows.length ? rows.map(toFormField) : INITIAL_FIELDS
+    },
+  })
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      api.put('/request-form-fields/save-all/', {
+              fields: fields.map(toRequestRow),
+            }),
+    onSuccess: () => {
+      showFeedback('Form changes saved')
+      void queryClient.invalidateQueries({ queryKey: ['request-form-fields'] })
+    },
+    onError: () => {
+      showFeedback('Failed to save form changes. Please try again.', 'danger')
+    },
+  })
+
+  useEffect(() => {
+    if (!hydrated && fieldsQuery.data) {
+      setFields(fieldsQuery.data)
+      setHydrated(true)
+    }
+  }, [fieldsQuery.data, hydrated])
 
   const showFeedback = (message: string, tone: AdminToastFeedback['tone'] = 'success') => {
     setFeedback(createAdminToastFeedback(message, tone))
@@ -180,13 +247,11 @@ export default function FormBuilderPage() {
     moveField(field.id, index + (event.key === 'ArrowUp' ? -1 : 1))
   }
 
-  const handleSaveChanges = () => {
-    showFeedback('Form changes saved')
-  }
+  const isSaving = saveMutation.isPending
 
   return (
-    <div>
-      <div className="page-head">
+      <div>
+        <div className="page-head">
         <div>
           <div className="page-eyebrow">Marketing</div>
           <h1 className="page-title">Form Builder</h1>
@@ -194,9 +259,14 @@ export default function FormBuilderPage() {
             Customize the &quot;Request a Property&quot; lead form shown across the public site. Drag to reorder.
           </p>
         </div>
-        <button type="button" className="btn btn-brass" onClick={handleSaveChanges}>
-          <Save size={16} />
-          Save Changes
+        <button
+          type="button"
+          className="btn btn-brass"
+          onClick={() => saveMutation.mutate()}
+          disabled={isSaving}
+        >
+          {isSaving ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
+          {isSaving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
 

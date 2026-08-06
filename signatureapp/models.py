@@ -606,6 +606,10 @@ class property_request(models.Model):
     source_page = models.CharField(max_length=600, blank=True)
     is_reviewed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Full submission captured from the (customizable) request form: maps each
+    # field key to its submitted value. Known keys are also mirrored into the
+    # typed columns above so existing consumers keep working.
+    answers = models.JSONField(default=dict, blank=True)
 
     class Meta:
         verbose_name = ("property_request")
@@ -614,6 +618,35 @@ class property_request(models.Model):
 
     def __str__(self):
         return self.property_type or self.location or f"Request #{self.pk}"
+
+
+class request_form_field(models.Model):
+    FIELD_TYPES = [
+        ("text", "Text"),
+        ("tel", "Phone"),
+        ("email", "Email"),
+        ("textarea", "Paragraph"),
+        ("select", "Dropdown"),
+    ]
+
+    # Stable machine key used as the rendered input name. The admin builder
+    # generates these; the defaults match property_request columns so known
+    # answers keep flowing into the typed fields.
+    key = models.CharField(max_length=100, unique=True)
+    label = models.CharField(max_length=200)
+    field_type = models.CharField(max_length=30, choices=FIELD_TYPES, default="text")
+    is_required = models.BooleanField(default=False)
+    options = models.JSONField(default=list, blank=True)
+    position = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = ("request_form_field")
+        verbose_name_plural = ("Request Form Fields")
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return self.label
 
 
 class ActivityLogEntry(models.Model):

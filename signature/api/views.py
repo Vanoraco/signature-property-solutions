@@ -14,7 +14,7 @@ from django.db.models.functions import Coalesce
 from django.http import FileResponse
 from PIL import Image, UnidentifiedImageError
 from rest_framework import viewsets, filters, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
@@ -25,7 +25,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from signatureapp.models import (
     home, catagory, facilities, egent, propertys,
     about, serevices, contact, testimonial, property_request,
-    ActivityLogEntry, SearchEvent,
+    ActivityLogEntry, SearchEvent, request_form_field,
     servicespage, servicespage_why_item, servicespage_process_step,
 )
 from .serializers import (
@@ -34,7 +34,7 @@ from .serializers import (
     AboutSerializer, ServiceSerializer, ContactSerializer,
     TestimonialSerializer, PropertyRequestSerializer, PropertyRequestListSerializer,
     UserSerializer, GroupSerializer, ActivityLogEntrySerializer, SearchEventSerializer,
-    ServicesPageSerializer,
+    ServicesPageSerializer, RequestFormFieldSerializer,
 )
 
 
@@ -557,3 +557,70 @@ class PropertyRequestViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return PropertyRequestListSerializer
         return PropertyRequestSerializer
+
+
+class RequestFormFieldViewSet(viewsets.ModelViewSet):
+    """Persist the admin form builder configuration for the public
+    "Request a Property" form. The builder saves the whole ordered list in
+    one round trip through the save-all action."""
+
+    queryset = request_form_field.objects.all().order_by('position', 'id')
+    serializer_class = RequestFormFieldSerializer
+    search_fields = ['label', 'key']
+    ordering_fields = ['position', 'id']
+
+    @action(detail=False, methods=['put'], url_path='save-all')
+    @transaction.atomic
+    def save_all(self, request):
+        raw_fields = request.data.get('fields')
+        if raw_fields is None:
+            raw_fields = request.data
+        if not isinstance(raw_fields, list):
+            raise ValidationError({'fields': 'Expected a list of form fields.'})
+
+        valid_types = {choice[0] for choice in request_form_field.FIELD_TYPES}
+        incoming = []
+        for index, raw in enumerate(raw_fields):
+            if not isinstance(raw, dict):
+                continue
+            key = str(raw.get('key') or '').strip()
+            label = str(raw.get('label') or '').strip()
+            if not key or not label:
+                continue
+            field_type = str(raw.get('type') or raw.get('field_type') or 'text').strip()
+            if field_type not in valid_types:
+                raise ValidationError({'fields': f"Unknown field type '{field_type}'."})
+            raw_options = raw.get('options')
+            options = (
+                [str(option).strip() for option in raw_options if str(option).strip()]
+                if isinstance(raw_options, list)
+                else []
+            )
+            incoming.append({
+                'key': key,
+                'label': label,
+                'field_type': field_type,
+                'is_required': bool(raw.get('required', False)),
+                'options': options,
+                'position': index,
+            })
+
+        existing = {field.key: field for field in request_form_field.objects.all()}
+        incoming_keys = {item['key'] for item in incoming}
+        for key in set(existing) - incoming_keys:
+            existing[key].delete()
+        for item in incoming:
+            field = existing.get(item['key'])
+            if field is None:
+                request_form_field.objects.create(**item)
+            else:
+                for attr, value in item.items():
+                    setattr(field, attr, value)
+                field.save()
+
+        return Response(
+            RequestFormFieldSerializer(
+                request_form_field.objects.all().order_by('position', 'id'),
+                many=True,
+            ).data,
+        )

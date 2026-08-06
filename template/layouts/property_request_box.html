@@ -9,26 +9,43 @@
       {% csrf_token %}
       <input type="hidden" name="source_page" value="{{ request.get_full_path }}">
       <div class="request-grid">
-        <input type="text" name="name" placeholder="Name">
-        <input type="tel" name="phone_number" placeholder="Phone or WhatsApp">
-        <input type="email" name="email" placeholder="Email">
-        <select name="property_type">
-          <option value="">Property type</option>
-          {% for cat in categories %}
-          <option value="{{ cat.catagorys }}">{{ cat.catagorys }}</option>
-          {% endfor %}
-        </select>
-        <select name="goal">
-          <option value="">Purpose</option>
-          <option value="Rent">Rent</option>
-          <option value="Buy">Buy</option>
-          <option value="Invest">Invest</option>
-          <option value="Other">Other</option>
-        </select>
-        <input type="text" name="location" placeholder="Preferred location">
-        <input type="text" name="budget" placeholder="Budget range">
+        {% for field in request_form_fields %}
+          {% if field.field_type == 'textarea' %}
+            <textarea style="grid-column:1/-1" name="{{ field.key }}" {% if field.is_required %}required{% endif %} placeholder="{{ field.label }}"></textarea>
+          {% elif field.field_type == 'select' %}
+            <select name="{{ field.key }}" {% if field.is_required %}required{% endif %}>
+              <option value="">{{ field.label }}</option>
+              {% for option in field.options %}
+              <option value="{{ option }}">{{ option }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="{{ field.field_type }}" name="{{ field.key }}" {% if field.is_required %}required{% endif %} placeholder="{{ field.label }}">
+          {% endif %}
+        {% empty %}
+          <input type="text" name="name" placeholder="Name">
+          <input type="tel" name="phone_number" placeholder="Phone or WhatsApp">
+          <input type="email" name="email" placeholder="Email">
+          <select name="property_type">
+            <option value="">Property type</option>
+            {% for cat in categories %}
+            <option value="{{ cat.catagorys }}">{{ cat.catagorys }}</option>
+            {% endfor %}
+          </select>
+          <select name="goal">
+            <option value="">Purpose</option>
+            <option value="Rent">Rent</option>
+            <option value="Buy">Buy</option>
+            <option value="Invest">Invest</option>
+            <option value="Other">Other</option>
+          </select>
+          <input type="text" name="location" placeholder="Preferred location">
+          <input type="text" name="budget" placeholder="Budget range">
+        {% endfor %}
       </div>
+      {% if not request_form_fields %}
       <textarea name="message" required placeholder="Describe what you wanted but could not find"></textarea>
+      {% endif %}
       <button type="submit" class="btn-gold">Submit Request</button>
     </form>
   </div>

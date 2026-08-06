@@ -10,7 +10,7 @@ from signatureapp.models import (
     AboutIntroParagraph, AboutValueItem, AboutWhyItem,
     AboutCommitmentParagraph, ServicesPageService,
     ServicesPageServiceParagraph, ServicesPageServiceTagGroup,
-    ServicesPageServiceTagItem,
+    ServicesPageServiceTagItem, request_form_field,
 )
 
 
@@ -480,6 +480,15 @@ class PropertyRequestListSerializer(serializers.ModelSerializer):
             'is_reviewed', 'created_at',
         ]
         read_only_fields = ['created_at']
+
+
+class RequestFormFieldSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = request_form_field
+        fields = [
+            'key', 'label', 'field_type', 'is_required',
+            'options', 'position',
+        ]
 
 
 class ActivityLogEntrySerializer(serializers.ModelSerializer):

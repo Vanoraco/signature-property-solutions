@@ -836,21 +836,39 @@ def submit_property_request(request):
     if request.method != "POST":
         return redirect("properties")
 
-    message = request.POST.get("message", "").strip()
     source_page = request.POST.get("source_page", "").strip() or request.META.get("HTTP_REFERER", "")
     redirect_to = source_page if source_page.startswith("/") else request.META.get("HTTP_REFERER", "/properties")
 
-    if message:
+    # Collect the full submission keyed by the (configurable) field keys so
+    # custom fields added through the admin form builder are preserved too.
+    answers = {}
+    for raw_key, raw_value in request.POST.items():
+        key = raw_key.strip()
+        if not key or key in ("csrfmiddlewaretoken", "source_page"):
+            continue
+        value = str(raw_value or "").strip()
+        answers[key] = value
+
+    has_content = any(value for value in answers.values())
+
+    if has_content:
+        def pick(*names):
+            for name in names:
+                if answers.get(name):
+                    return answers[name]
+            return ""
+
         property_request.objects.create(
-            name=request.POST.get("name", "").strip(),
-            phone_number=request.POST.get("phone_number", "").strip(),
-            email=request.POST.get("email", "").strip(),
-            property_type=request.POST.get("property_type", "").strip(),
-            goal=request.POST.get("goal", "").strip(),
-            location=request.POST.get("location", "").strip(),
-            budget=request.POST.get("budget", "").strip(),
-            message=message,
+            name=pick("name"),
+            phone_number=pick("phone_number", "phone", "tel"),
+            email=pick("email"),
+            property_type=pick("property_type"),
+            goal=pick("goal"),
+            location=pick("location"),
+            budget=pick("budget"),
+            message=pick("message"),
             source_page=source_page,
+            answers=answers,
         )
         separator = "&" if "?" in redirect_to else "?"
         return redirect(f"{redirect_to}{separator}request_submitted=1#property-request")
