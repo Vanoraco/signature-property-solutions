@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
 import {
+  AlertTriangle,
   Check,
   ChevronDown,
   GripVertical,
@@ -103,6 +104,8 @@ function toRequestRow(field: FormField) {
 export default function FormBuilderPage() {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState<FieldDraft | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<FormField | null>(null)
+  const [dirty, setDirty] = useState(false)
   const [editorError, setEditorError] = useState('')
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
@@ -127,6 +130,7 @@ export default function FormBuilderPage() {
   const fields = formFieldsQuery.data ?? INITIAL_FIELDS
 
   const updateFields = (updater: (current: FormField[]) => FormField[]) => {
+      setDirty(true)
       queryClient.setQueryData<FormField[]>(['request-form-fields'], current => updater(current ?? []))
     }
 
@@ -136,9 +140,10 @@ export default function FormBuilderPage() {
         fields: fields.map(toRequestRow),
       }),
     onSuccess: () => {
-      showFeedback('Form changes saved')
-      void queryClient.invalidateQueries({ queryKey: ['request-form-fields'] })
-    },
+          setDirty(false)
+          showFeedback('Form changes saved')
+          void queryClient.invalidateQueries({ queryKey: ['request-form-fields'] })
+        },
     onError: () => {
       showFeedback('Failed to save form changes. Please try again.', 'danger')
     },
@@ -209,10 +214,15 @@ export default function FormBuilderPage() {
     )
   }
 
-  const removeField = (id: string) => {
-    updateFields(current => current.filter(field => field.id !== id))
-    showFeedback('Field removed')
-  }
+  const removeField = (current: FormField[], id: string) =>
+      current.filter(field => field.id !== id)
+
+    const confirmDeleteField = () => {
+      if (!deleteTarget) return
+      updateFields(current => removeField(current, deleteTarget.id))
+      showFeedback(`"${deleteTarget.label}" removed. Click Save Changes to publish.`)
+      setDeleteTarget(null)
+    }
 
   const moveField = (id: string, targetIndex: number) => {
     updateFields(current => {
@@ -270,6 +280,19 @@ export default function FormBuilderPage() {
           {isSaving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
+
+      {dirty && !isSaving && (
+        <div
+          role="status"
+          className="mb-4 flex items-center gap-2 rounded-[6px] border border-brass/40 bg-brass/5 px-3 py-2 text-[12.5px] text-ink"
+        >
+          <AlertTriangle size={15} className="shrink-0 text-brass" />
+          <span>
+            <strong>Unsaved changes.</strong> Click &quot;Save Changes&quot; to publish — edits here
+            only apply to this form once you save.
+          </span>
+        </div>
+      )}
 
       <div className="fb-layout">
         <section className="panel" aria-labelledby="form-fields-heading">
@@ -372,8 +395,8 @@ export default function FormBuilderPage() {
                         className="btn btn-danger-ghost btn-sm"
                         style={{ width: 32, height: 32, padding: 0, justifyContent: 'center' }}
                         aria-label={`Delete ${field.label}`}
-                        title="Delete field"
-                        onClick={() => removeField(field.id)}
+                                                title="Delete field"
+                                                onClick={() => setDeleteTarget(field)}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -567,7 +590,29 @@ export default function FormBuilderPage() {
         )}
       </Modal>
 
-      {feedback ? (
+            <Modal
+              open={Boolean(deleteTarget)}
+              onClose={() => setDeleteTarget(null)}
+              title="Delete field?"
+              footer={
+                <>
+                  <button type="button" className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="btn btn-danger" onClick={confirmDeleteField}>
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </>
+              }
+            >
+              <p className="text-[13.5px] text-text-soft">
+                &quot;{deleteTarget?.label}&quot; will be removed from the form. This applies immediately
+                and takes effect on the public site once you click &quot;Save Changes.&quot;
+              </p>
+            </Modal>
+
+            {feedback ? (
         <AdminToast
           eventId={feedback.id}
           tone={feedback.tone}
