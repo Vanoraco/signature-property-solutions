@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
 import {
@@ -102,15 +102,13 @@ function toRequestRow(field: FormField) {
 
 export default function FormBuilderPage() {
   const queryClient = useQueryClient()
-  const [fields, setFields] = useState<FormField[]>(INITIAL_FIELDS)
-  const [hydrated, setHydrated] = useState(false)
   const [draft, setDraft] = useState<FieldDraft | null>(null)
   const [editorError, setEditorError] = useState('')
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
 
-  const fieldsQuery = useQuery({
+  const formFieldsQuery = useQuery({
     queryKey: ['request-form-fields'],
     queryFn: async ({ signal }) => {
       const { data } = await api.get<{ count: number; results: RequestFormFieldRow[] }>(
@@ -120,13 +118,23 @@ export default function FormBuilderPage() {
       const rows = data?.results ?? []
       return rows.length ? rows.map(toFormField) : INITIAL_FIELDS
     },
+    // The query cache is the single source of truth for the working copy:
+    // the builder edits it through updateFields, so there is no local
+    // state to keep in sync and nothing is lost on refetch.
+    placeholderData: INITIAL_FIELDS,
   })
+
+  const fields = formFieldsQuery.data ?? INITIAL_FIELDS
+
+  const updateFields = (updater: (current: FormField[]) => FormField[]) => {
+      queryClient.setQueryData<FormField[]>(['request-form-fields'], current => updater(current ?? []))
+    }
 
   const saveMutation = useMutation({
     mutationFn: () =>
       api.put('/request-form-fields/save-all/', {
-              fields: fields.map(toRequestRow),
-            }),
+        fields: fields.map(toRequestRow),
+      }),
     onSuccess: () => {
       showFeedback('Form changes saved')
       void queryClient.invalidateQueries({ queryKey: ['request-form-fields'] })
@@ -135,13 +143,6 @@ export default function FormBuilderPage() {
       showFeedback('Failed to save form changes. Please try again.', 'danger')
     },
   })
-
-  useEffect(() => {
-    if (!hydrated && fieldsQuery.data) {
-      setFields(fieldsQuery.data)
-      setHydrated(true)
-    }
-  }, [fieldsQuery.data, hydrated])
 
   const showFeedback = (message: string, tone: AdminToastFeedback['tone'] = 'success') => {
     setFeedback(createAdminToastFeedback(message, tone))
@@ -193,7 +194,7 @@ export default function FormBuilderPage() {
         : {}),
     }
 
-    setFields(current =>
+    updateFields(current =>
       draft.isNew
         ? [...current, nextField]
         : current.map(field => (field.id === nextField.id ? nextField : field)),
@@ -203,18 +204,18 @@ export default function FormBuilderPage() {
   }
 
   const toggleRequired = (id: string) => {
-    setFields(current =>
+    updateFields(current =>
       current.map(field => (field.id === id ? { ...field, required: !field.required } : field)),
     )
   }
 
   const removeField = (id: string) => {
-    setFields(current => current.filter(field => field.id !== id))
+    updateFields(current => current.filter(field => field.id !== id))
     showFeedback('Field removed')
   }
 
   const moveField = (id: string, targetIndex: number) => {
-    setFields(current => {
+    updateFields(current => {
       const fromIndex = current.findIndex(field => field.id === id)
       if (fromIndex < 0 || targetIndex < 0 || targetIndex >= current.length || fromIndex === targetIndex) {
         return current
