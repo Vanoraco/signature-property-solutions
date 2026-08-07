@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { Check, LoaderCircle, Trash2 } from 'lucide-react'
+import { Check, LoaderCircle, MousePointerClick, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import {
   propertyRequestsQueryOptions,
@@ -10,6 +10,7 @@ import {
 } from '@/lib/admin-queries'
 import type { PropertyRequest } from '@/components/dashboard/types'
 import EntityTables, { type EntityColumn } from '@/components/lookups/EntityTable'
+import StatusMenu, { type StatusOption } from '@/app/requests/StatusMenu'
 import Modal from '@/components/ui/Modal'
 import AdminToast, {
   createAdminToastFeedback,
@@ -67,16 +68,16 @@ function goalBadge(goal: string): GoalBadge {
   }
 }
 
-const REQUEST_STATUSES = [
+const REQUEST_STATUSES: StatusOption[] = [
   { value: 'new', label: 'New', className: 'chip-danger' },
   { value: 'called', label: 'Called', className: 'chip-gray' },
   { value: 'talked', label: 'Talked', className: 'chip-brass' },
   { value: 'followed_up', label: 'Followed Up', className: 'chip-gray' },
   { value: 'converted', label: 'Converted', className: 'chip-success' },
   { value: 'closed', label: 'Closed', className: 'chip-gray' },
-] as const
+]
 
-function statusMeta(value?: string) {
+function statusMeta(value?: string): StatusOption {
   return REQUEST_STATUSES.find(status => status.value === value) ?? REQUEST_STATUSES[0]
 }
 
@@ -86,6 +87,8 @@ export default function PropertyRequestsPage() {
   const [deleteTarget, setDeleteTarget] = useState<PropertyRequest | null>(null)
   const [feedback, setFeedback] = useState<AdminToastFeedback | null>(null)
   const [pendingId, setPendingId] = useState<number | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkTargets, setBulkTargets] = useState<PropertyRequest[] | null>(null)
 
   const requestsQuery = useQuery(propertyRequestsQueryOptions)
 
@@ -123,6 +126,21 @@ export default function PropertyRequestsPage() {
     onError: () => {
       setDeleteTarget(null)
       setFeedback(createAdminToastFeedback('The property request could not be deleted.', 'danger'))
+    },
+  })
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (rows: PropertyRequest[]) => Promise.all(rows.map(row => api.delete(`/requests/${row.id}/`))),
+    onSuccess: async (_result, rows) => {
+      await invalidateRequestCaches(queryClient)
+      setBulkTargets(null)
+      setSelectedIds(new Set())
+      const count = rows.length
+      setFeedback(createAdminToastFeedback(`${count} request${count === 1 ? '' : 's'} deleted.`))
+    },
+    onError: () => {
+      setBulkTargets(null)
+      setFeedback(createAdminToastFeedback('Some selected requests could not be deleted.', 'danger'))
     },
   })
 
@@ -179,29 +197,14 @@ export default function PropertyRequestsPage() {
       label: 'Status',
       className: 'min-w-[150px]',
       sortVal: r => r.status ?? 'new',
-      render: r => {
-        const meta = statusMeta(r.status)
-        return (
-          <label className="relative inline-flex items-center">
-            <span className={`chip ${meta.className}`}>{meta.label}</span>
-            <select
-              value={r.status ?? 'new'}
-              onChange={event => {
-                event.stopPropagation()
-                updateStatus.mutate({ request: r, status: event.target.value })
-              }}
-              disabled={pendingId === r.id}
-              aria-label={`Change status of request ${r.id}`}
-              title="Update status"
-              className="absolute inset-0 cursor-pointer opacity-0"
-            >
-              {REQUEST_STATUSES.map(status => (
-                <option key={status.value} value={status.value}>{status.label}</option>
-              ))}
-            </select>
-          </label>
-        )
-      },
+      render: r => (
+        <StatusMenu
+          value={r.status ?? 'new'}
+          options={REQUEST_STATUSES}
+          onChange={status => updateStatus.mutate({ request: r, status })}
+          disabled={pendingId === r.id}
+        />
+      ),
     },
     {
       key: 'actions',
@@ -252,6 +255,15 @@ export default function PropertyRequestsPage() {
         </div>
       </div>
 
+      <div className="mt-4 flex max-w-full items-start gap-3 rounded-[10px] border border-brass/25 bg-brass-tint/60 px-4 py-3.5">
+        <MousePointerClick aria-hidden="true" size={16} className="mt-0.5 shrink-0 text-brass-dark" />
+        <p className="text-[13px] leading-relaxed text-text-soft">
+          <span className="font-medium text-text">Status is clickable.</span>{' '}
+          Click a lead&apos;s status to move it through the pipeline — Called, Talked, Followed Up,
+          Converted, or Closed.
+        </p>
+      </div>
+
       {feedback ? (
         <AdminToast
           eventId={feedback.id}
@@ -278,9 +290,12 @@ export default function PropertyRequestsPage() {
           searchPlaceholder="Search requests..."
           searchText={requestSearchText}
           storageKey="signature-admin-requests-views"
-          selectedIds={new Set()}
-          onSelectionChange={() => {}}
-          onRequestBulkDelete={() => {}}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onRequestBulkDelete={(rows) => {
+            setFeedback(null)
+            setBulkTargets(rows)
+          }}
           emptyMessage="No requests have been received yet"
         />
       )}
@@ -299,22 +314,12 @@ export default function PropertyRequestsPage() {
           <div className="grid grid-cols-2 gap-4 text-[13.5px]">
             <div>
               <div className="text-text-faint text-[11.5px] uppercase tracking-wider mb-1">Status</div>
-              <div>
-                <label className="relative inline-flex items-center">
-                  <span className={`chip ${statusMeta(viewing.status).className}`}>{statusMeta(viewing.status).label}</span>
-                  <select
-                    value={viewing.status ?? 'new'}
-                    onChange={event => updateStatus.mutate({ request: viewing, status: event.target.value })}
-                    disabled={pendingId === viewing.id}
-                    aria-label="Update status"
-                    className="absolute inset-0 cursor-pointer opacity-0"
-                  >
-                    {REQUEST_STATUSES.map(status => (
-                      <option key={status.value} value={status.value}>{status.label}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <StatusMenu
+                value={viewing.status ?? 'new'}
+                options={REQUEST_STATUSES}
+                onChange={status => updateStatus.mutate({ request: viewing, status })}
+                disabled={pendingId === viewing.id}
+              />
             </div>
             <div>
               <div className="text-text-faint text-[11.5px] uppercase tracking-wider mb-1">Name</div>
@@ -383,6 +388,44 @@ export default function PropertyRequestsPage() {
       >
         <p className="text-text-soft text-[13.5px]">
           Delete the request from {deleteTarget?.name || 'this contact'}? This action cannot be undone.
+        </p>
+      </Modal>
+
+      <Modal
+        open={bulkTargets !== null}
+        onClose={() => setBulkTargets(null)}
+        title="Delete Selected Requests?"
+        size="default"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => setBulkTargets(null)}
+              className="btn btn-ghost"
+              disabled={bulkDeleteMutation.isPending}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (bulkTargets) bulkDeleteMutation.mutate(bulkTargets) }}
+              className="btn btn-danger"
+              disabled={bulkDeleteMutation.isPending}
+              aria-busy={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending
+                ? <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                : <Trash2 aria-hidden="true" size={14} />}
+              {bulkDeleteMutation.isPending
+                ? 'Deleting...'
+                : `Delete ${bulkTargets?.length ?? 0}`}
+            </button>
+          </>
+        )}
+      >
+        <p className="text-text-soft text-[13.5px]">
+          Delete {bulkTargets?.length ?? 0} selected request{bulkTargets?.length === 1 ? '' : 's'}?
+          This action cannot be undone.
         </p>
       </Modal>
     </div>
