@@ -595,6 +595,17 @@ class property_request(models.Model):
         ("Other", "Other"),
     ]
 
+    # Lead pipeline: how far the inquiry has progressed. Kept in sync with
+    # is_reviewed (anything beyond "new" counts as reviewed).
+    SUBMIT_STATUSES = [
+        ("new", "New"),
+        ("called", "Called"),
+        ("talked", "Talked"),
+        ("followed_up", "Followed Up"),
+        ("converted", "Converted"),
+        ("closed", "Closed"),
+    ]
+
     name = models.CharField(max_length=200, blank=True)
     phone_number = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
@@ -605,6 +616,7 @@ class property_request(models.Model):
     message = models.TextField()
     source_page = models.CharField(max_length=600, blank=True)
     is_reviewed = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=SUBMIT_STATUSES, default="new")
     created_at = models.DateTimeField(auto_now_add=True)
     # Full submission captured from the (customizable) request form: maps each
     # field key to its submitted value. Known keys are also mirrored into the
@@ -618,6 +630,13 @@ class property_request(models.Model):
 
     def __str__(self):
         return self.property_type or self.location or f"Request #{self.pk}"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy is_reviewed boolean in sync with the pipeline status
+        # so existing consumers (dashboard new-leads count, Django admin list)
+        # keep working without a second source of truth.
+        self.is_reviewed = self.status != "new"
+        super().save(*args, **kwargs)
 
 
 class request_form_field(models.Model):

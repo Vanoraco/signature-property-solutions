@@ -40,6 +40,7 @@ export interface PropertyRequest {
   message: string
   source_page: string
   is_reviewed: boolean
+  status: string
   created_at: string
 }
 

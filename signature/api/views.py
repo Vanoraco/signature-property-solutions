@@ -550,8 +550,8 @@ class TestimonialViewSet(viewsets.ModelViewSet):
 class PropertyRequestViewSet(viewsets.ModelViewSet):
     queryset = property_request.objects.all()
     search_fields = ['name', 'email', 'property_type', 'location', 'message']
-    ordering_fields = ['name', 'created_at', 'is_reviewed', 'id']
-    filterset_fields = ['is_reviewed', 'goal']
+    ordering_fields = ['name', 'created_at', 'is_reviewed', 'status', 'id']
+    filterset_fields = ['is_reviewed', 'goal', 'status']
 
     def get_serializer_class(self):
         if self.action == 'list':

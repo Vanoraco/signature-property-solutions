@@ -475,10 +475,10 @@ class PropertyRequestListSerializer(serializers.ModelSerializer):
     class Meta:
         model = property_request
         fields = [
-            'id', 'name', 'phone_number', 'email', 'property_type',
-            'goal', 'location', 'budget', 'message', 'source_page',
-            'is_reviewed', 'created_at',
-        ]
+                    'id', 'name', 'phone_number', 'email', 'property_type',
+                    'goal', 'location', 'budget', 'message', 'source_page',
+                    'is_reviewed', 'status', 'created_at',
+                ]
         read_only_fields = ['created_at']
 
 

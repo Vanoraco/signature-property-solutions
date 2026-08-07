@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { Check, Eye, EyeOff, LoaderCircle, Trash2 } from 'lucide-react'
+import { Check, LoaderCircle, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import {
   propertyRequestsQueryOptions,
@@ -67,6 +67,19 @@ function goalBadge(goal: string): GoalBadge {
   }
 }
 
+const REQUEST_STATUSES = [
+  { value: 'new', label: 'New', className: 'chip-danger' },
+  { value: 'called', label: 'Called', className: 'chip-gray' },
+  { value: 'talked', label: 'Talked', className: 'chip-brass' },
+  { value: 'followed_up', label: 'Followed Up', className: 'chip-gray' },
+  { value: 'converted', label: 'Converted', className: 'chip-success' },
+  { value: 'closed', label: 'Closed', className: 'chip-gray' },
+] as const
+
+function statusMeta(value?: string) {
+  return REQUEST_STATUSES.find(status => status.value === value) ?? REQUEST_STATUSES[0]
+}
+
 export default function PropertyRequestsPage() {
   const queryClient = useQueryClient()
   const [viewing, setViewing] = useState<PropertyRequest | null>(null)
@@ -76,21 +89,18 @@ export default function PropertyRequestsPage() {
 
   const requestsQuery = useQuery(propertyRequestsQueryOptions)
 
-  const toggleReviewed = useMutation({
-    mutationFn: (request: PropertyRequest) => api.patch(`/requests/${request.id}/`, {
-      is_reviewed: !request.is_reviewed,
-    }),
-    onMutate: (request) => {
+  const updateStatus = useMutation({
+    mutationFn: ({ request, status }: { request: PropertyRequest; status: string }) =>
+      api.patch(`/requests/${request.id}/`, { status }),
+    onMutate: ({ request }) => {
       setPendingId(request.id)
       setFeedback(null)
     },
-    onSuccess: async (_response, request) => {
+    onSuccess: async (_response, { request, status }) => {
       await invalidateRequestCaches(queryClient)
-      setFeedback(createAdminToastFeedback(
-        request.is_reviewed ? 'Marked as new.' : 'Marked as reviewed.',
-      ))
+      setFeedback(createAdminToastFeedback(`Marked as ${statusMeta(status).label}.`))
       setViewing(current => (current && current.id === request.id
-        ? { ...current, is_reviewed: !current.is_reviewed }
+        ? { ...current, status }
         : current))
     },
     onError: (error) => {
@@ -165,15 +175,33 @@ export default function PropertyRequestsPage() {
       render: r => <span className="cell-sub whitespace-nowrap">{formatDate(r.created_at)}</span>,
     },
     {
-      key: 'is_reviewed',
+      key: 'status',
       label: 'Status',
-      className: 'min-w-[120px]',
-      sortVal: r => (r.is_reviewed ? 1 : 0),
-      render: r => (
-        <span className={`chip ${r.is_reviewed ? 'chip-success' : 'chip-danger'}`}>
-          {r.is_reviewed ? 'Reviewed' : 'New'}
-        </span>
-      ),
+      className: 'min-w-[150px]',
+      sortVal: r => r.status ?? 'new',
+      render: r => {
+        const meta = statusMeta(r.status)
+        return (
+          <label className="relative inline-flex items-center">
+            <span className={`chip ${meta.className}`}>{meta.label}</span>
+            <select
+              value={r.status ?? 'new'}
+              onChange={event => {
+                event.stopPropagation()
+                updateStatus.mutate({ request: r, status: event.target.value })
+              }}
+              disabled={pendingId === r.id}
+              aria-label={`Change status of request ${r.id}`}
+              title="Update status"
+              className="absolute inset-0 cursor-pointer opacity-0"
+            >
+              {REQUEST_STATUSES.map(status => (
+                <option key={status.value} value={status.value}>{status.label}</option>
+              ))}
+            </select>
+          </label>
+        )
+      },
     },
     {
       key: 'actions',
@@ -181,25 +209,6 @@ export default function PropertyRequestsPage() {
       className: 'w-[132px]',
       render: r => (
         <div className="entity-row-actions">
-          <button
-            type="button"
-            aria-label={r.is_reviewed ? `Mark request ${r.id} as new` : `Mark request ${r.id} as reviewed`}
-            title={r.is_reviewed ? 'Mark as new' : 'Mark as reviewed'}
-            onClick={event => {
-              event.stopPropagation()
-              toggleReviewed.mutate(r)
-            }}
-            disabled={pendingId === r.id}
-            className="entity-row-action"
-          >
-            {pendingId === r.id ? (
-              <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
-            ) : r.is_reviewed ? (
-              <EyeOff aria-hidden="true" size={14} />
-            ) : (
-              <Eye aria-hidden="true" size={14} />
-            )}
-          </button>
           <button
             type="button"
             aria-label={`View request ${r.id} details`}
@@ -284,25 +293,29 @@ export default function PropertyRequestsPage() {
           description={`Received ${formatDateTime(viewing.created_at)}`}
           size="lg"
           footer={(
-            <>
-              <button
-                type="button"
-                onClick={() => toggleReviewed.mutate(viewing)}
-                disabled={pendingId === viewing.id}
-                className="btn btn-ghost"
-              >
-                {pendingId === viewing.id
-                  ? <LoaderCircle aria-hidden="true" className="animate-spin" size={15} />
-                  : viewing.is_reviewed
-                    ? <EyeOff aria-hidden="true" size={15} />
-                    : <Eye aria-hidden="true" size={15} />}
-                {viewing.is_reviewed ? 'Mark as new' : 'Mark as reviewed'}
-              </button>
-              <button type="button" className="btn btn-primary" onClick={() => setViewing(null)}>Close</button>
-            </>
+            <button type="button" className="btn btn-primary" onClick={() => setViewing(null)}>Close</button>
           )}
         >
           <div className="grid grid-cols-2 gap-4 text-[13.5px]">
+            <div>
+              <div className="text-text-faint text-[11.5px] uppercase tracking-wider mb-1">Status</div>
+              <div>
+                <label className="relative inline-flex items-center">
+                  <span className={`chip ${statusMeta(viewing.status).className}`}>{statusMeta(viewing.status).label}</span>
+                  <select
+                    value={viewing.status ?? 'new'}
+                    onChange={event => updateStatus.mutate({ request: viewing, status: event.target.value })}
+                    disabled={pendingId === viewing.id}
+                    aria-label="Update status"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                  >
+                    {REQUEST_STATUSES.map(status => (
+                      <option key={status.value} value={status.value}>{status.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
             <div>
               <div className="text-text-faint text-[11.5px] uppercase tracking-wider mb-1">Name</div>
               <div className="text-text">{viewing.name || '—'}</div>
