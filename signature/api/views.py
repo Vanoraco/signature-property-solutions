@@ -1,6 +1,6 @@
 import os
 import warnings
-from datetime import datetime, timezone
+from datetime import datetime, time as datetime_time, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
@@ -12,6 +12,7 @@ from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.http import FileResponse
+from django.utils import timezone as dj_timezone
 from PIL import Image, UnidentifiedImageError
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -394,6 +395,96 @@ class SearchEventViewSet(viewsets.ReadOnlyModelViewSet):
             if value:
                 queryset = queryset.filter(**{f'{field}__iexact': value})
         return queryset
+
+
+REQUEST_PIPELINE = [
+    ('new', 'New'),
+    ('called', 'Called'),
+    ('talked', 'Talked'),
+    ('followed_up', 'Followed Up'),
+    ('converted', 'Converted'),
+    ('closed', 'Closed'),
+]
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def analytics_summary(request):
+    """Real aggregated analytics for the admin dashboard.
+
+    Built entirely from data this application already records: property
+    requests (weekly trend, by goal / property type / pipeline status) and
+    public-site search events (top search terms). There is intentionally no
+    fabricated visitor/page-view/traffic-source data here.
+    """
+    now = dj_timezone.now()
+    today = now.date()
+
+    # --- Weekly property-request trend (last 8 weeks, Monday buckets) ---
+    this_monday = today - timedelta(days=today.weekday())
+    anchor = dj_timezone.make_aware(
+        datetime.combine(this_monday - timedelta(weeks=7), datetime_time.min),
+        dj_timezone.get_current_timezone(),
+    )
+    weeks = []
+    for index in range(8):
+        bucket_start = anchor + timedelta(weeks=index)
+        bucket_end = bucket_start + timedelta(weeks=1)
+        count = property_request.objects.filter(
+            created_at__gte=bucket_start, created_at__lt=bucket_end
+        ).count()
+        weeks.append({'label': bucket_start.strftime('%b %d'), 'count': count})
+
+    # --- Requests by goal ---
+    goal_totals = {name: 0 for name in ('Rent', 'Buy', 'Invest', 'Other')}
+    for row in property_request.objects.values('goal').annotate(amount=Count('id')):
+        label = (row['goal'] or '').strip() or 'Other'
+        if label not in goal_totals:
+            goal_totals[label] = 0
+        goal_totals[label] += row['amount']
+    by_goal = [{'label': label, 'count': count} for label, count in goal_totals.items()]
+
+    # --- Requests by pipeline status ---
+    status_totals = {key: 0 for key, _label in REQUEST_PIPELINE}
+    for row in property_request.objects.values('status').annotate(amount=Count('id')):
+        key = (row['status'] or 'new').strip() or 'new'
+        if key not in status_totals:
+            status_totals[key] = 0
+        status_totals[key] += row['amount']
+    by_status = [
+        {'label': label, 'count': status_totals[key]}
+        for key, label in REQUEST_PIPELINE
+    ]
+
+    # --- Requests by property type ---
+    type_totals: dict[str, int] = {}
+    for row in property_request.objects.values('property_type').annotate(amount=Count('id')):
+        label = (row['property_type'] or '').strip() or 'Not specified'
+        type_totals[label] = type_totals.get(label, 0) + row['amount']
+    by_type = [
+        {'label': label, 'count': count}
+        for label, count in sorted(type_totals.items(), key=lambda item: item[1], reverse=True)
+    ]
+
+    # --- Top search terms (last 30 days) ---
+    since = now - timedelta(days=30)
+    term_totals: dict[str, int] = {}
+    for term in SearchEvent.objects.filter(created_at__gte=since).exclude(query='').values_list('query', flat=True):
+        normalized = (term or '').strip()
+        if normalized:
+            term_totals[normalized] = term_totals.get(normalized, 0) + 1
+    top_terms = [
+        {'term': term, 'count': count}
+        for term, count in sorted(term_totals.items(), key=lambda item: item[1], reverse=True)[:6]
+    ]
+
+    return Response({
+        'weeks': weeks,
+        'by_goal': by_goal,
+        'by_status': by_status,
+        'by_type': by_type,
+        'top_terms': top_terms,
+    })
 
 
 @api_view(['GET'])

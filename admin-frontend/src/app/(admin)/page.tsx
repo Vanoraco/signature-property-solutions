@@ -9,9 +9,9 @@ import {
   dashboardRequestsQueryOptions,
   dashboardTestimonialsQueryOptions,
   propertiesQueryOptions,
+  searchEventsQueryOptions,
 } from '@/lib/admin-queries'
 import { useAuth } from '@/lib/auth'
-import { liveSearchActivity } from '@/components/dashboard/analytics'
 import styles from '@/components/dashboard/Dashboard.module.css'
 
 const CHART_PLACEHOLDERS = [0, 1, 2, 3] as const
@@ -54,6 +54,19 @@ function formatDate(value: string) {
     minute: '2-digit',
   }).format(date)
   return `${day} · ${time}`
+}
+
+const STATUS_CHIP: Record<string, { label: string; className: string }> = {
+  new: { label: 'New', className: 'chip-danger' },
+  called: { label: 'Called', className: 'chip-gray' },
+  talked: { label: 'Talked', className: 'chip-brass' },
+  followed_up: { label: 'Followed Up', className: 'chip-gray' },
+  converted: { label: 'Converted', className: 'chip-success' },
+  closed: { label: 'Closed', className: 'chip-gray' },
+}
+
+function statusChip(status?: string) {
+  return STATUS_CHIP[status ?? ''] ?? STATUS_CHIP.new
 }
 
 function displayName(username?: string) {
@@ -118,6 +131,11 @@ export default function DashboardPage() {
     enabled,
     retry: 1,
   })
+  const searchEventsQuery = useQuery({
+    ...searchEventsQueryOptions,
+    enabled,
+    retry: 1,
+  })
 
   const queries = [propertiesQuery, agentsQuery, requestsQuery, testimonialsQuery]
   const isLoading = queries.some((query) => query.isPending)
@@ -156,11 +174,12 @@ export default function DashboardPage() {
   const testimonials = testimonialsQuery.data ?? { count: 0, results: [] }
   const forSale = properties.results.filter((property) => property.property_status === 'For Sale').length
   const forRent = properties.results.filter((property) => property.property_status === 'For Rent').length
-  const newLeads = requests.results.filter((request) => !request.is_reviewed).length
+  const newLeads = requests.results.filter((request) => request.status === 'new').length
   const publishedTestimonials = testimonials.results.filter((testimonial) => testimonial.is_published).length
   const recentRequests = [...requests.results]
     .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
     .slice(0, 5)
+  const recentSearches = (searchEventsQuery.data?.results ?? []).slice(0, 5)
 
   const stats = [
     { label: 'Total Properties', value: properties.count, icon: House, sub: `${forSale} for sale · ${forRent} for rent` },
@@ -222,7 +241,7 @@ export default function DashboardPage() {
                     <td>{request.property_type || '—'}</td>
                     <td><span className="chip chip-brass">{request.goal || 'Not specified'}</span></td>
                     <td><span className="cell-sub">{formatDate(request.created_at)}</span></td>
-                    <td><span className={`chip ${request.is_reviewed ? 'chip-success' : 'chip-danger'}`}>{request.is_reviewed ? 'Reviewed' : 'New'}</span></td>
+                    <td><span className={`chip ${statusChip(request.status).className}`}>{statusChip(request.status).label}</span></td>
                   </tr>
                 )) : (
                   <tr><td colSpan={5} className={styles.emptyCell}>No property requests have been received yet.</td></tr>
@@ -238,15 +257,17 @@ export default function DashboardPage() {
             <Link href="/search" prefetch={false} className={styles.panelAction}>View all</Link>
           </div>
           <div className={`panel-body ${styles.searchList}`}>
-            {liveSearchActivity.map((query) => (
-              <div className={styles.searchItem} key={query.id}>
+            {recentSearches.length > 0 ? recentSearches.map((event) => (
+              <div className={styles.searchItem} key={event.id}>
                 <div className={`stat-icon ${styles.searchIcon}`}><Search size={13} /></div>
                 <div className={styles.searchCopy}>
-                  <div className={`font-mono ${styles.searchText}`}>&quot;{query.searchText}&quot;</div>
-                  <div className="cell-sub">{query.location} · {query.resultsCount} results · {formatDate(query.createdAt)}</div>
+                  <div className={`font-mono ${styles.searchText}`}>&quot;{event.query || event.location_filter || 'Search'}&quot;</div>
+                  <div className="cell-sub">{(event.location_filter ? `${event.location_filter} · ` : '')}{event.results_count} results · {formatDate(event.created_at)}</div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="py-6 text-center text-[12.5px] text-text-faint">No searches logged yet.</div>
+            )}
           </div>
         </section>
       </div>

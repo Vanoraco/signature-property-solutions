@@ -7,9 +7,9 @@ from .views import (
     HomeViewSet, CategoryViewSet, FacilityViewSet, AgentViewSet,
     PropertyViewSet, AboutViewSet, ServiceViewSet, ContactViewSet,
     TestimonialViewSet, PropertyRequestViewSet, UserViewSet, GroupViewSet,
-    ActivityLogEntryViewSet, SearchEventViewSet, list_permissions,
-    ServicesPageViewSet, RequestFormFieldViewSet,
-)
+    ActivityLogEntryViewSet, SearchEventViewSet, list_permissions, analytics_summary,
+        ServicesPageViewSet, RequestFormFieldViewSet,
+    )
 
 router = DefaultRouter()
 router.register(r'home', HomeViewSet)
@@ -34,6 +34,7 @@ urlpatterns = [
     path('media-assets/', media_asset_list, name='media_asset_list'),
     path('media-assets/download/', media_asset_download, name='media_asset_download'),
     path('permissions/', list_permissions, name='list_permissions'),
+    path('analytics/', analytics_summary, name='analytics_summary'),
     path('', include(router.urls)),
     path('auth/login/', LoginView.as_view(), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

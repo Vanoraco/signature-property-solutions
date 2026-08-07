@@ -3,6 +3,17 @@
   flex-wrap: wrap;
 }
 
+.emptyChart {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  text-align: center;
+  padding: 24px;
+}
+
 .trafficCard {
   display: flex;
   gap: 16px;

@@ -65,3 +65,16 @@ export interface ServiceRecord {
   icon: string | null
   image: string | null
 }
+
+export interface AnalyticsSlice {
+  label: string
+  count: number
+}
+
+export interface DashboardAnalytics {
+  weeks: AnalyticsSlice[]
+  by_goal: AnalyticsSlice[]
+  by_status: AnalyticsSlice[]
+  by_type: AnalyticsSlice[]
+  top_terms: { term: string; count: number }[]
+}

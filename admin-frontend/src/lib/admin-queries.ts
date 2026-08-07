@@ -2,7 +2,7 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { fetchCollection } from '@/lib/api-collection'
 import type { AgentRecord } from '@/components/agents/types'
-import type { PropertyRequest, Testimonial, ServiceRecord } from '@/components/dashboard/types'
+import type { PropertyRequest, Testimonial, ServiceRecord, DashboardAnalytics } from '@/components/dashboard/types'
 import type { UserRecord, GroupRecord } from '@/components/users/types'
 import type { PermissionRecord } from '@/components/roles/types'
 import type { SearchEvent } from '@/components/search/types'
@@ -116,6 +116,14 @@ export const searchEventsQueryOptions = queryOptions({
 export const dashboardTestimonialsQueryOptions = queryOptions({
   queryKey: adminQueryKeys.dashboardTestimonials,
   queryFn: ({ signal }) => fetchCollection<Testimonial>('/testimonials/', signal),
+})
+
+export const analyticsQueryOptions = queryOptions({
+  queryKey: ['analytics'] as const,
+  queryFn: async ({ signal }) => {
+    const response = await api.get<DashboardAnalytics>('/analytics/', { signal })
+    return response.data
+  },
 })
 
 export const mediaAssetsQueryOptions = queryOptions({
